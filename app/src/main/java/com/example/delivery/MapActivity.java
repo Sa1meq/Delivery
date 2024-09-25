@@ -17,6 +17,10 @@ import com.yandex.runtime.image.ImageProvider;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -27,6 +31,8 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
     private MapView mapView;
     private static final int REQUEST_LOCATION_PERMISSION = 1;
     private MapObjectCollection mapObjects;
+    private Point userLocation;
+    private static final String TAG = "MapActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +42,17 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
         setContentView(R.layout.activity_map);
         mapView = findViewById(R.id.mapview);
         mapObjects = mapView.getMap().getMapObjects().addCollection();
+
+        Button locationButton = findViewById(R.id.button_location);
+        locationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (userLocation != null) {
+                    moveCameraToUserLocation(userLocation);
+                } else {
+                }
+            }
+        });
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
@@ -54,27 +71,35 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
 
     private void displayUserLocation() {
         LocationManager locationManager = MapKitFactory.getInstance().createLocationManager();
-
-        // Проверка разрешений
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationManager.subscribeForLocationUpdates(
-                    0.0, // Запросите наименьший интервал обновлений (в секундах)
-                    0, // Запросите наименьший интервал времени между обновлениями (в миллисекундах)
-                    1, // Минимальная точность (в метрах)
-                    false, // Можно использовать только актуальные данные
-                    FilteringMode.OFF, // FilteringMode (можно передать null для отключения фильтрации)
+                    0.0,
+                    0,
+                    1,
+                    false,
+                    FilteringMode.OFF,
                     Purpose.GENERAL,
-                    this// Listener для получения обновлений
+                    this
             );
         }
     }
 
 
+    private void moveCameraToUserLocation(Point userLocation) {
+        mapView.getMap().move(
+                new CameraPosition(userLocation, 15.0f, 0.0f, 0.0f),
+                new com.yandex.mapkit.Animation(
+                        com.yandex.mapkit.Animation.Type.SMOOTH,
+                        1.5f
+                ),
+                null
+        );
+    }
 
     @Override
     public void onLocationUpdated(@NonNull Location location) {
         if (location != null) {
-            Point userLocation = new Point(
+            userLocation = new Point(
                     location.getPosition().getLatitude(),
                     location.getPosition().getLongitude()
             );
@@ -82,9 +107,9 @@ public class MapActivity extends AppCompatActivity implements LocationListener {
             PlacemarkMapObject userPlacemark = mapObjects.addPlacemark(userLocation);
             userPlacemark.setIcon(ImageProvider.fromResource(this, R.drawable.ic_launcher_background));
 
-            // Перемещаем камеру к текущему местоположению пользователя
-            mapView.getMap().move(new CameraPosition(userLocation, 15.0f, 0, 0));
+            moveCameraToUserLocation(userLocation);
         }
+
     }
 
     @Override

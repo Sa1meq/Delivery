@@ -50,6 +50,5 @@ dependencies {
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
-    implementation ("com.yandex.android:maps.mobile:4.8.0-lite")
-    implementation ("com.yandex.android:maps.mobile:4.8.0-full")
+    implementation("com.yandex.android:maps.mobile:4.8.0-full")
 }

@@ -52,7 +52,7 @@ public class Authorization extends AppCompatActivity {
 
                     Intent intent = new Intent(Authorization.this, MainActivity.class);
                     startActivity(intent);
-                    finish(); // Закрыть активность авторизации
+                    finish();
                 })
                 .exceptionally(e -> {
                     runOnUiThread(() -> errorTextView.setText("Ошибка авторизации: " + e.getMessage()));
@@ -60,7 +60,7 @@ public class Authorization extends AppCompatActivity {
                 });
     }
 
-        public void onClickGoToRegistration(View view) {
+    public void onClickGoToRegistration(View view) {
         Intent intent = new Intent(Authorization.this, Registration.class);
         startActivity(intent);
         finish();

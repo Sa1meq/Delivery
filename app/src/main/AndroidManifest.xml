@@ -18,14 +18,15 @@
     >
         <activity
             android:name=".MainActivity"
-            android:exported="true"/>
+            android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        </activity>
         <activity android:name=".Authorization" />
         <activity android:name=".Registration"
             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name=".MapActivity"
@@ -33,7 +34,7 @@
         </activity>
         <meta-data
             android:name="com.yandex.maps.mobile.API_KEY"
-            android:value="37174936-b5e1-4db7-86b0-9a3a32e1ff5d"/>
+            android:value="307886ac-d49c-4f2f-b74d-1eb3fb10141c"/>
     </application>
 
 </manifest>

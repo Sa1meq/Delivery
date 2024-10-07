@@ -5,6 +5,8 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -14,6 +16,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.yandex.mapkit.GeoObject;
 import com.yandex.mapkit.MapKitFactory;
@@ -26,6 +30,7 @@ import com.yandex.mapkit.directions.driving.DrivingRouter;
 import com.yandex.mapkit.directions.driving.DrivingRouterType;
 import com.yandex.mapkit.directions.driving.DrivingSession;
 import com.yandex.mapkit.directions.driving.VehicleOptions;
+import com.yandex.mapkit.geometry.BoundingBox;
 import com.yandex.mapkit.geometry.Geometry;
 import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.map.CameraPosition;
@@ -44,6 +49,7 @@ import com.yandex.mapkit.search.SuggestItem;
 import com.yandex.mapkit.search.SuggestResponse;
 import com.yandex.mapkit.search.SuggestSession;
 import com.yandex.mapkit.search.SuggestOptions;
+import com.yandex.mapkit.search.SuggestType;
 import com.yandex.runtime.Error;
 
 import java.util.ArrayList;
@@ -62,12 +68,18 @@ public class MainActivity extends AppCompatActivity {
     private SearchManager searchManager;
     private SuggestSession suggestSession;
 
+    // Добавляем RecyclerView и адаптер для подсказок
+    private RecyclerView suggestionsRecyclerView;
+    private AddressSuggestionAdapter suggestionAdapter;
+    private List<String> suggestions = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         MapKitFactory.setApiKey("307886ac-d49c-4f2f-b74d-1eb3fb10141c");
         super.onCreate(savedInstanceState);
         MapKitFactory.initialize(this);
         setContentView(R.layout.activity_main);
+
         mapView = findViewById(R.id.mapView);
         drivingRouter = DirectionsFactory.getInstance().createDrivingRouter(DrivingRouterType.COMBINED);
         mapObjects = mapView.getMap().getMapObjects().addCollection();
@@ -77,6 +89,11 @@ public class MainActivity extends AppCompatActivity {
         endAddressEditText = findViewById(R.id.endAddressEditText);
         searchButton = findViewById(R.id.searchButton);
         getRouteButton = findViewById(R.id.getRouteButton);
+
+        suggestionsRecyclerView = findViewById(R.id.suggestionsRecyclerView);
+        suggestionAdapter = new AddressSuggestionAdapter(suggestions, this::onSuggestionClick);
+        suggestionsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        suggestionsRecyclerView.setAdapter(suggestionAdapter);
 
         searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,6 +108,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        startAddressEditText.addTextChangedListener(new AddressTextWatcher());
+        endAddressEditText.addTextChangedListener(new AddressTextWatcher());
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
@@ -117,6 +137,37 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void getSuggestions(String query) {
+        SuggestOptions suggestOptions = new SuggestOptions();
+        suggestOptions.setSuggestTypes(SuggestType.GEO.value);
+
+        // Создайте BoundingBox вокруг текущей позиции пользователя (или заданной области)
+        BoundingBox boundingBox = new BoundingBox(
+                new Point(54.0, 27.5),  // Северо-Западный угол (пример)
+                new Point(53.8, 27.6)   // Южно-Восточный угол (пример)
+        );
+
+        suggestSession = searchManager.createSuggestSession();
+        suggestSession.suggest(query, boundingBox, suggestOptions, new SuggestSession.SuggestListener() {
+            @Override
+            public void onResponse(@NonNull SuggestResponse suggestResponse) {
+                suggestions.clear();
+                for (SuggestItem item : suggestResponse.getItems()) {
+                    suggestions.add(item.getDisplayText());
+                }
+                suggestionAdapter.notifyDataSetChanged();
+                suggestionsRecyclerView.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onError(@NonNull Error error) {
+                Toast.makeText(MainActivity.this, "Ошибка получения подсказок", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
 
     private void searchAddress(String address, boolean isStart) {
         SearchOptions searchOptions = new SearchOptions();
@@ -170,6 +221,12 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
+    // Обработка нажатия на элемент подсказок
+    private void onSuggestionClick(String suggestion) {
+        startAddressEditText.setText(suggestion);
+        suggestionsRecyclerView.setVisibility(View.GONE);
+    }
+
     private void handleMapTap(Point point) {
         if (routePoints.size() == 2) {
             mapObjects.clear();
@@ -203,7 +260,6 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
-                // Очищаем предыдущие маршруты
                 mapObjects.clear();
 
                 for (DrivingRoute route : drivingRoutes) {
@@ -218,8 +274,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
-
     private void displayUserLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -228,47 +282,44 @@ public class MainActivity extends AppCompatActivity {
             if (location != null) {
                 userLocation = new Point(location.getLatitude(), location.getLongitude());
             } else {
-                // Если не удается найти местоположение, используем Минск
-                userLocation = new Point(53.9045, 27.5590);
+                userLocation = new Point(53.9, 27.56667); // Минск по умолчанию
             }
 
-            mapView.getMap().move(new CameraPosition(userLocation, 15.0f, 0.0f, 0.0f));
-
-            // Добавляем метку пользователя
-            if (userPlacemark != null) {
-                mapObjects.remove(userPlacemark);
-            }
             userPlacemark = mapObjects.addPlacemark(userLocation);
+            mapView.getMap().move(new CameraPosition(userLocation, 12, 0, 0));
         }
-    }
-
-    @Override
-    protected void onStop() {
-        if (mapView != null) {
-            mapView.onStop();
-        }
-        MapKitFactory.getInstance().onStop();
-        super.onStop();
     }
 
     @Override
     protected void onStart() {
+        mapView.onStart();
         super.onStart();
-        if (mapView != null) {
-            mapView.onStart();
-        }
-        MapKitFactory.getInstance().onStart();
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_LOCATION_PERMISSION) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                displayUserLocation();
+    protected void onStop() {
+        mapView.onStop();
+        super.onStop();
+    }
+
+
+    private class AddressTextWatcher implements TextWatcher {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            String query = s.toString();
+            if (query.length() >= 3) {
+                getSuggestions(query);
             } else {
-                Toast.makeText(this, "Необходимо разрешение на доступ к местоположению", Toast.LENGTH_SHORT).show();
+                suggestions.clear();
+                suggestionAdapter.notifyDataSetChanged();
+                suggestionsRecyclerView.setVisibility(View.GONE);
             }
         }
+
+        @Override
+        public void afterTextChanged(Editable s) {}
     }
 }

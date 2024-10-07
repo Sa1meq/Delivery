@@ -1,44 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:mapkit="http://yandex.ru/mapkit"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
+    <!-- Область карты -->
     <com.yandex.mapkit.mapview.MapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
-    <EditText
-        android:id="@+id/startAddressEditText"
+    <!-- Панель управления с вводом адресов -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Начальный адрес"
-        android:layout_alignParentTop="true"
-        android:layout_margin="8dp"/>
+        android:padding="16dp"
+        android:orientation="vertical">
 
-    <EditText
-        android:id="@+id/endAddressEditText"
+        <EditText
+            android:id="@+id/startAddressEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Введите начальный адрес" />
+
+        <EditText
+            android:id="@+id/endAddressEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Введите конечный адрес" />
+
+        <Button
+            android:id="@+id/searchButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Поиск адреса" />
+
+        <Button
+            android:id="@+id/getRouteButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Получить маршрут" />
+    </LinearLayout>
+
+    <!-- RecyclerView для отображения подсказок -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/suggestionsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Конечный адрес"
-        android:layout_below="@id/startAddressEditText"
-        android:layout_margin="8dp"/>
-
-    <Button
-        android:id="@+id/searchButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Поиск"
-        android:layout_below="@id/endAddressEditText"
-        android:layout_margin="8dp"/>
-
-    <Button
-        android:id="@+id/getRouteButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Построить маршрут"
-        android:layout_below="@id/searchButton"
-        android:layout_margin="8dp"/>
-
-</RelativeLayout>
+        android:visibility="gone"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+</LinearLayout>

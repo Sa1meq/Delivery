@@ -34,7 +34,6 @@ import com.yandex.mapkit.geometry.BoundingBox;
 import com.yandex.mapkit.geometry.Geometry;
 import com.yandex.mapkit.geometry.Point;
 import com.yandex.mapkit.map.CameraPosition;
-import com.yandex.mapkit.map.InputListener;
 import com.yandex.mapkit.map.MapObjectCollection;
 import com.yandex.mapkit.map.PlacemarkMapObject;
 import com.yandex.mapkit.mapview.MapView;
@@ -67,17 +66,19 @@ public class MainActivity extends AppCompatActivity {
     private Button searchButton, getRouteButton;
     private SearchManager searchManager;
     private SuggestSession suggestSession;
+    private boolean isStartFieldActive = true; // По умолчанию активное поле - стартовый адрес
 
-    // Добавляем RecyclerView и адаптер для подсказок
+
     private RecyclerView suggestionsRecyclerView;
     private AddressSuggestionAdapter suggestionAdapter;
     private List<String> suggestions = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        MapKitFactory.setApiKey("307886ac-d49c-4f2f-b74d-1eb3fb10141c");
-        super.onCreate(savedInstanceState);
+        // Используйте правильный API ключ
+        MapKitFactory.setApiKey("37174936-b5e1-4db7-86b0-9a3a32e1ff5d");
         MapKitFactory.initialize(this);
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         mapView = findViewById(R.id.mapView);
@@ -103,32 +104,24 @@ public class MainActivity extends AppCompatActivity {
                 if (!startAddress.isEmpty() && !endAddress.isEmpty()) {
                     searchAddress(startAddress, true);
                     searchAddress(endAddress, false);
+                    suggestionsRecyclerView.setVisibility(View.GONE);
                 } else {
                     Toast.makeText(MainActivity.this, "Введите оба адреса", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+        startAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = hasFocus);
+        endAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = !hasFocus);
 
         startAddressEditText.addTextChangedListener(new AddressTextWatcher());
         endAddressEditText.addTextChangedListener(new AddressTextWatcher());
 
+        // Проверка разрешений на доступ к геолокации
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
         } else {
             displayUserLocation();
         }
-
-        mapView.getMap().addInputListener(new InputListener() {
-            @Override
-            public void onMapTap(@NonNull com.yandex.mapkit.map.Map map, @NonNull Point point) {
-                handleMapTap(point);
-            }
-
-            @Override
-            public void onMapLongTap(@NonNull com.yandex.mapkit.map.Map map, @NonNull Point point) {
-                handleMapTap(point);
-            }
-        });
 
         getRouteButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -142,32 +135,35 @@ public class MainActivity extends AppCompatActivity {
         SuggestOptions suggestOptions = new SuggestOptions();
         suggestOptions.setSuggestTypes(SuggestType.GEO.value);
 
-        // Создайте BoundingBox вокруг текущей позиции пользователя (или заданной области)
-        BoundingBox boundingBox = new BoundingBox(
-                new Point(54.0, 27.5),  // Северо-Западный угол (пример)
-                new Point(53.8, 27.6)   // Южно-Восточный угол (пример)
-        );
+        if (userLocation != null) {
+            double latitude = userLocation.getLatitude();
+            double longitude = userLocation.getLongitude();
+            BoundingBox boundingBox = new BoundingBox(
+                    new Point(latitude + 0.1, longitude + 0.1),  // Северо-Западный угол
+                    new Point(latitude - 0.1, longitude - 0.1)   // Южно-Восточный угол
+            );
 
-        suggestSession = searchManager.createSuggestSession();
-        suggestSession.suggest(query, boundingBox, suggestOptions, new SuggestSession.SuggestListener() {
-            @Override
-            public void onResponse(@NonNull SuggestResponse suggestResponse) {
-                suggestions.clear();
-                for (SuggestItem item : suggestResponse.getItems()) {
-                    suggestions.add(item.getDisplayText());
+            suggestSession = searchManager.createSuggestSession();
+            suggestSession.suggest(query, boundingBox, suggestOptions, new SuggestSession.SuggestListener() {
+                @Override
+                public void onResponse(@NonNull SuggestResponse suggestResponse) {
+                    suggestions.clear();
+                    for (SuggestItem item : suggestResponse.getItems()) {
+                        suggestions.add(item.getDisplayText());
+                    }
+                    suggestionAdapter.notifyDataSetChanged();
+                    suggestionsRecyclerView.setVisibility(View.VISIBLE);
                 }
-                suggestionAdapter.notifyDataSetChanged();
-                suggestionsRecyclerView.setVisibility(View.VISIBLE);
-            }
 
-            @Override
-            public void onError(@NonNull Error error) {
-                Toast.makeText(MainActivity.this, "Ошибка получения подсказок", Toast.LENGTH_SHORT).show();
-            }
-        });
+                @Override
+                public void onError(@NonNull Error error) {
+                    Toast.makeText(MainActivity.this, "Ошибка получения подсказок", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            Toast.makeText(MainActivity.this, "Не удалось получить текущее местоположение", Toast.LENGTH_SHORT).show();
+        }
     }
-
-
 
     private void searchAddress(String address, boolean isStart) {
         SearchOptions searchOptions = new SearchOptions();
@@ -175,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
 
         searchManager.submit(
                 address,
-                Geometry.fromPoint(new Point(0, 0)),
+                Geometry.fromPoint(new Point(53.9, 27.56667)), // Минск
                 searchOptions,
                 new Session.SearchListener() {
                     @Override
@@ -221,21 +217,17 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
-    // Обработка нажатия на элемент подсказок
     private void onSuggestionClick(String suggestion) {
-        startAddressEditText.setText(suggestion);
+        if (isStartFieldActive) {
+            startAddressEditText.setText(suggestion);
+            startAddressEditText.clearFocus(); // Снимаем фокус с поля
+        } else {
+            endAddressEditText.setText(suggestion);
+            endAddressEditText.clearFocus(); // Снимаем фокус с поля
+        }
         suggestionsRecyclerView.setVisibility(View.GONE);
     }
 
-    private void handleMapTap(Point point) {
-        if (routePoints.size() == 2) {
-            mapObjects.clear();
-            routePoints.clear();
-        }
-
-        routePoints.add(point);
-        mapObjects.addPlacemark(point);
-    }
 
     private void requestRoute() {
         if (routePoints.size() < 2) {
@@ -247,31 +239,27 @@ public class MainActivity extends AppCompatActivity {
         VehicleOptions vehicleOptions = new VehicleOptions();
 
         List<RequestPoint> requestPoints = new ArrayList<>();
-        RequestPoint startPoint = new RequestPoint(routePoints.get(0), RequestPointType.WAYPOINT, "", "");
-        RequestPoint endPoint = new RequestPoint(routePoints.get(1), RequestPointType.WAYPOINT, "", "");
-        requestPoints.add(startPoint);
-        requestPoints.add(endPoint);
+        requestPoints.add(new RequestPoint(routePoints.get(0), RequestPointType.WAYPOINT, "", ""));
+        requestPoints.add(new RequestPoint(routePoints.get(1), RequestPointType.WAYPOINT, "", ""));
 
-        drivingRouter.requestRoutes(requestPoints, drivingOptions, vehicleOptions, new DrivingSession.DrivingRouteListener() {
-            @Override
-            public void onDrivingRoutes(@NonNull List<DrivingRoute> drivingRoutes) {
-                if (drivingRoutes.isEmpty()) {
-                    Toast.makeText(MainActivity.this, "Маршрут не найден", Toast.LENGTH_SHORT).show();
-                    return;
+        DrivingSession drivingSession = drivingRouter.requestRoutes(
+                requestPoints,
+                drivingOptions,
+                vehicleOptions,
+                new DrivingSession.DrivingRouteListener() {
+                    @Override
+                    public void onDrivingRoutes(@NonNull List<DrivingRoute> routes) {
+                        if (!routes.isEmpty()) {
+                            mapObjects.addPolyline(routes.get(0).getGeometry());
+                        }
+                    }
+
+                    @Override
+                    public void onDrivingRoutesError(@NonNull Error error) {
+                        Toast.makeText(MainActivity.this, "Ошибка построения маршрута", Toast.LENGTH_SHORT).show();
+                    }
                 }
-
-                mapObjects.clear();
-
-                for (DrivingRoute route : drivingRoutes) {
-                    mapObjects.addPolyline(route.getGeometry());
-                }
-            }
-
-            @Override
-            public void onDrivingRoutesError(@NonNull Error error) {
-                Toast.makeText(MainActivity.this, "Ошибка построения маршрута: " + error.toString(), Toast.LENGTH_SHORT).show();
-            }
-        });
+        );
     }
 
     private void displayUserLocation() {
@@ -281,37 +269,29 @@ public class MainActivity extends AppCompatActivity {
 
             if (location != null) {
                 userLocation = new Point(location.getLatitude(), location.getLongitude());
-            } else {
-                userLocation = new Point(53.9, 27.56667); // Минск по умолчанию
+                mapView.getMap().move(new CameraPosition(userLocation, 14.0f, 0.0f, 0.0f));
+                if (userPlacemark == null) {
+                    userPlacemark = mapObjects.addPlacemark(userLocation);
+                } else {
+                    userPlacemark.setGeometry(userLocation);
+                }
             }
-
-            userPlacemark = mapObjects.addPlacemark(userLocation);
-            mapView.getMap().move(new CameraPosition(userLocation, 12, 0, 0));
+        } else {
+            Toast.makeText(this, "Нет разрешения на использование геолокации", Toast.LENGTH_SHORT).show();
         }
     }
-
-    @Override
-    protected void onStart() {
-        mapView.onStart();
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        mapView.onStop();
-        super.onStop();
-    }
-
-
+    // Реализация текстового слушателя для обработки ввода
     private class AddressTextWatcher implements TextWatcher {
         @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            // Не требуется для нашей задачи
+        }
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
             String query = s.toString();
-            if (query.length() >= 3) {
-                getSuggestions(query);
+            if (!query.isEmpty()) {
+                getSuggestions(query); // Вызываем метод получения подсказок
             } else {
                 suggestions.clear();
                 suggestionAdapter.notifyDataSetChanged();
@@ -319,7 +299,24 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+
         @Override
-        public void afterTextChanged(Editable s) {}
+        public void afterTextChanged(Editable s) {
+            // Не требуется для нашей задачи
+        }
     }
+    @Override
+    protected void onStart() {
+        super.onStart();
+        MapKitFactory.getInstance().onStart();
+        mapView.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        mapView.onStop();
+        MapKitFactory.getInstance().onStop();
+        super.onStop();
+    }
+
 }

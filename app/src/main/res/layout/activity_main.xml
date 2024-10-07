@@ -23,13 +23,18 @@
             android:id="@+id/startAddressEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Введите начальный адрес" />
+            android:hint="Введите начальный адрес"
+            android:imeOptions="actionNext"
+            android:inputType="text" />
 
         <EditText
             android:id="@+id/endAddressEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Введите конечный адрес" />
+            android:hint="Введите конечный адрес"
+            android:imeOptions="actionDone"
+            android:inputType="text" />
+
 
         <Button
             android:id="@+id/searchButton"

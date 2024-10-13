@@ -90,17 +90,36 @@ public class Registration extends AppCompatActivity {
             return;
         }
 
-        userRepository.addUser(name, email, password).thenAccept(user -> {
-            if (user != null) {
-                Toast.makeText(this, "Регистрация прошла успешно!", Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(Registration.this, MainActivity.class);
-                startActivity(intent);
-                finish();
-            } else {
-                Toast.makeText(this, "Ошибка регистрации", Toast.LENGTH_SHORT).show();
-            }
-        });
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        // Пользователь успешно зарегистрирован
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            user.sendEmailVerification()
+                                    .addOnCompleteListener(verificationTask -> {
+                                        if (verificationTask.isSuccessful()) {
+                                        } else {
+                                        }
+                                    });
+
+                            userRepository.addUser(name, email, password).thenAccept(userRepo -> {
+                                if (userRepo != null) {
+                                    Toast.makeText(Registration.this, "Регистрация прошла успешно!", Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(Registration.this, MainActivity.class);
+                                    startActivity(intent);
+                                    finish();
+                                } else {
+                                    Toast.makeText(Registration.this, "Ошибка регистрации", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    } else {
+                        Toast.makeText(Registration.this, "Ошибка регистрации: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

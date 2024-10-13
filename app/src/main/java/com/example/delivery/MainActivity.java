@@ -165,9 +165,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (itemId == R.id.nav_profile) {
             Toast.makeText(this, "Сосал? Не работает", Toast.LENGTH_SHORT).show();
         } else if (itemId == R.id.nav_courier) {
-//            Intent intent = new Intent(MainActivity.this, RegisterCourier.class);
-//            startActivity(intent);
-//            finish();
+            Intent intent = new Intent(MainActivity.this, RegisterCourier.class);
+            startActivity(intent);
+            finish();
         }
 
         drawerLayout.closeDrawer(GravityCompat.START);

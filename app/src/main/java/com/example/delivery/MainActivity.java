@@ -1,12 +1,15 @@
 package com.example.delivery;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,9 +19,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.navigation.NavigationView;
 import com.yandex.mapkit.GeoObject;
 import com.yandex.mapkit.MapKitFactory;
 import com.yandex.mapkit.RequestPoint;
@@ -49,12 +56,13 @@ import com.yandex.mapkit.search.SuggestResponse;
 import com.yandex.mapkit.search.SuggestSession;
 import com.yandex.mapkit.search.SuggestOptions;
 import com.yandex.mapkit.search.SuggestType;
-import com.yandex.runtime.Error;
 
+
+import com.yandex.runtime.Error;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
     private static final int REQUEST_LOCATION_PERMISSION = 1;
     private MapView mapView;
     private DrivingRouter drivingRouter;
@@ -66,16 +74,19 @@ public class MainActivity extends AppCompatActivity {
     private Button searchButton, getRouteButton;
     private SearchManager searchManager;
     private SuggestSession suggestSession;
-    private boolean isStartFieldActive = true; // По умолчанию активное поле - стартовый адрес
-
+    private boolean isStartFieldActive = true;
+    private BottomSheetBehavior<View> bottomSheetBehavior;
+    private final Handler handler = new Handler();
+    private Runnable suggestionRunnable;
 
     private RecyclerView suggestionsRecyclerView;
     private AddressSuggestionAdapter suggestionAdapter;
     private List<String> suggestions = new ArrayList<>();
 
+    private DrawerLayout drawerLayout;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Используйте правильный API ключ
         MapKitFactory.setApiKey("37174936-b5e1-4db7-86b0-9a3a32e1ff5d");
         MapKitFactory.initialize(this);
         super.onCreate(savedInstanceState);
@@ -96,40 +107,73 @@ public class MainActivity extends AppCompatActivity {
         suggestionsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         suggestionsRecyclerView.setAdapter(suggestionAdapter);
 
-        searchButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String startAddress = startAddressEditText.getText().toString();
-                String endAddress = endAddressEditText.getText().toString();
-                if (!startAddress.isEmpty() && !endAddress.isEmpty()) {
-                    searchAddress(startAddress, true);
-                    searchAddress(endAddress, false);
-                    suggestionsRecyclerView.setVisibility(View.GONE);
-                } else {
-                    Toast.makeText(MainActivity.this, "Введите оба адреса", Toast.LENGTH_SHORT).show();
-                }
+        View bottomSheet = findViewById(R.id.bottomSheet);
+        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        bottomSheetBehavior.setPeekHeight(300);
+
+        startAddressEditText.setOnClickListener(v -> bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED));
+        endAddressEditText.setOnClickListener(v -> bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED));
+
+        mapView.setOnClickListener(v -> {
+            if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
         });
+
+        searchButton.setOnClickListener(v -> {
+            String startAddress = startAddressEditText.getText().toString();
+            String endAddress = endAddressEditText.getText().toString();
+            if (!startAddress.isEmpty() && !endAddress.isEmpty()) {
+                searchAddress(startAddress, true);
+                searchAddress(endAddress, false);
+                suggestionsRecyclerView.setVisibility(View.GONE);
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            } else {
+                Toast.makeText(MainActivity.this, "Введите оба адреса", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         startAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = hasFocus);
         endAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = !hasFocus);
 
         startAddressEditText.addTextChangedListener(new AddressTextWatcher());
         endAddressEditText.addTextChangedListener(new AddressTextWatcher());
 
-        // Проверка разрешений на доступ к геолокации
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
         } else {
             displayUserLocation();
         }
 
-        getRouteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                requestRoute();
-            }
-        });
+        getRouteButton.setOnClickListener(v -> requestRoute());
+
+        drawerLayout = findViewById(R.id.drawer_layout);
+        NavigationView navigationView = findViewById(R.id.navigation_view);
+        navigationView.setNavigationItemSelectedListener(this::onNavigationItemSelected);
+
+        // Кнопка для открытия выдвижного меню
+        findViewById(R.id.menuIcon).setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
+
+
     }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        int itemId = item.getItemId();
+
+        if (itemId == R.id.nav_profile) {
+            Toast.makeText(this, "Сосал? Не работает", Toast.LENGTH_SHORT).show();
+        } else if (itemId == R.id.nav_courier) {
+//            Intent intent = new Intent(MainActivity.this, RegisterCourier.class);
+//            startActivity(intent);
+//            finish();
+        }
+
+        drawerLayout.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
 
     private void getSuggestions(String query) {
         SuggestOptions suggestOptions = new SuggestOptions();
@@ -284,14 +328,15 @@ public class MainActivity extends AppCompatActivity {
     private class AddressTextWatcher implements TextWatcher {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            // Не требуется для нашей задачи
         }
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
             String query = s.toString();
+            handler.removeCallbacks(suggestionRunnable);
             if (!query.isEmpty()) {
-                getSuggestions(query); // Вызываем метод получения подсказок
+                suggestionRunnable = () -> getSuggestions(query);
+                handler.postDelayed(suggestionRunnable, 500);
             } else {
                 suggestions.clear();
                 suggestionAdapter.notifyDataSetChanged();

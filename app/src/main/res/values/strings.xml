@@ -3,4 +3,8 @@
     <string name="default_web_client_id">210424547401-1bu1m3cknb0hm0493a5g5icigp6p4r1j.apps.googleusercontent.com</string>
 
     <string name="button_mygps">Моё местоположение</string>
+    <string name="courier_type_pedestrian">Пеший</string>
+    <string name="courier_type_car">Легковая</string>
+    <string name="courier_type_truck">Грузовой</string>
+
 </resources>

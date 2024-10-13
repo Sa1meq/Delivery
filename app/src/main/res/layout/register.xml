@@ -13,5 +13,5 @@
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:srcCompat="@drawable/sign_up___default__1_"
-        tools:layout_editor_absoluteY="366dp" />
+        tools:layout_editor_absoluteY="77dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

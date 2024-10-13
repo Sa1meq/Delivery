@@ -1,59 +1,96 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:id="@+id/drawer_layout">
 
-    <!-- Область карты -->
-    <com.yandex.mapkit.mapview.MapView
-        android:id="@+id/mapView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-    <!-- Панель управления с вводом адресов -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/startAddressEditText"
+        <ImageView
+            android:id="@+id/menuIcon"
+            android:layout_marginTop="15dp"
+            android:layout_marginStart="15dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/menu"
+            android:layout_gravity="start"
+            android:contentDescription="Меню" />
+
+        <com.yandex.mapkit.mapview.MapView
+            android:id="@+id/mapView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+
+        <androidx.coordinatorlayout.widget.CoordinatorLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:id="@+id/bottomSheet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:minHeight="100dp"
+                android:maxHeight="300dp"
+                android:background="@android:color/white"
+                app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+                <EditText
+                    android:id="@+id/startAddressEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Введите начальный адрес"
+                    android:imeOptions="actionNext"
+                    android:inputType="text" />
+
+                <EditText
+                    android:id="@+id/endAddressEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Введите конечный адрес"
+                    android:imeOptions="actionDone"
+                    android:inputType="text" />
+
+                <Button
+                    android:id="@+id/searchButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Поиск адреса" />
+
+                <Button
+                    android:id="@+id/getRouteButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Получить маршрут" />
+            </LinearLayout>
+        </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/suggestionsRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Введите начальный адрес"
-            android:imeOptions="actionNext"
-            android:inputType="text" />
+            android:visibility="gone"
+            android:overScrollMode="never"
+            android:scrollbars="none"
+            android:padding="0dp"
+            android:background="@android:color/transparent"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
-        <EditText
-            android:id="@+id/endAddressEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Введите конечный адрес"
-            android:imeOptions="actionDone"
-            android:inputType="text" />
-
-
-        <Button
-            android:id="@+id/searchButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Поиск адреса" />
-
-        <Button
-            android:id="@+id/getRouteButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Получить маршрут" />
     </LinearLayout>
 
-    <!-- RecyclerView для отображения подсказок -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/suggestionsRecyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-</LinearLayout>
+    <!-- Выдвижное меню -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navigation_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        app:menu="@menu/drawer_menu"
+        android:background="@android:color/white"/>
+
+</androidx.drawerlayout.widget.DrawerLayout>

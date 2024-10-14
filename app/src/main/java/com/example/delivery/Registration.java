@@ -93,7 +93,6 @@ public class Registration extends AppCompatActivity {
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        // Пользователь успешно зарегистрирован
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
                             user.sendEmailVerification()

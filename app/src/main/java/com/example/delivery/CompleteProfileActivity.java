@@ -24,7 +24,7 @@ public class CompleteProfileActivity extends AppCompatActivity {
         setContentView(R.layout.activity_complete_profile);
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        userRepository = new UserRepository(db);
+        userRepository = new UserRepository(FirebaseFirestore.getInstance());
 
         nameEditText = findViewById(R.id.nicknameEditText);
         nicknameEditText = findViewById(R.id.nicknameEditText);

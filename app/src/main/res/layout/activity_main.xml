@@ -27,20 +27,6 @@
             android:layout_weight="1" />
 
 
-        <androidx.coordinatorlayout.widget.CoordinatorLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <LinearLayout
-                android:id="@+id/bottomSheet"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:minHeight="100dp"
-                android:maxHeight="300dp"
-                android:background="@android:color/white"
-                app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
-
                 <EditText
                     android:id="@+id/startAddressEditText"
                     android:layout_width="match_parent"
@@ -68,8 +54,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Получить маршрут" />
-            </LinearLayout>
-        </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/suggestionsRecyclerView"

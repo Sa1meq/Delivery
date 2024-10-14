@@ -40,6 +40,8 @@ import com.yandex.mapkit.directions.driving.VehicleOptions;
 import com.yandex.mapkit.geometry.BoundingBox;
 import com.yandex.mapkit.geometry.Geometry;
 import com.yandex.mapkit.geometry.Point;
+import com.yandex.mapkit.location.LocationListener;
+import com.yandex.mapkit.location.LocationStatus;
 import com.yandex.mapkit.map.CameraPosition;
 import com.yandex.mapkit.map.MapObjectCollection;
 import com.yandex.mapkit.map.PlacemarkMapObject;
@@ -62,7 +64,7 @@ import com.yandex.runtime.Error;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, LocationListener {
     private static final int REQUEST_LOCATION_PERMISSION = 1;
     private MapView mapView;
     private DrivingRouter drivingRouter;
@@ -107,19 +109,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         suggestionsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         suggestionsRecyclerView.setAdapter(suggestionAdapter);
 
-        View bottomSheet = findViewById(R.id.bottomSheet);
-        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-        bottomSheetBehavior.setPeekHeight(300);
 
-        startAddressEditText.setOnClickListener(v -> bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED));
-        endAddressEditText.setOnClickListener(v -> bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED));
 
-        mapView.setOnClickListener(v -> {
-            if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-            }
-        });
+        suggestionsRecyclerView.setVisibility(View.GONE); // Initialize as hidden
 
         searchButton.setOnClickListener(v -> {
             String startAddress = startAddressEditText.getText().toString();
@@ -128,11 +120,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 searchAddress(startAddress, true);
                 searchAddress(endAddress, false);
                 suggestionsRecyclerView.setVisibility(View.GONE);
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             } else {
                 Toast.makeText(MainActivity.this, "Введите оба адреса", Toast.LENGTH_SHORT).show();
             }
         });
+
+
 
         startAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = hasFocus);
         endAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = !hasFocus);
@@ -146,17 +139,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             displayUserLocation();
         }
 
+
+
         getRouteButton.setOnClickListener(v -> requestRoute());
 
         drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.navigation_view);
         navigationView.setNavigationItemSelectedListener(this::onNavigationItemSelected);
-
-        // Кнопка для открытия выдвижного меню
         findViewById(R.id.menuIcon).setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
 
 
     }
+
+
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -198,6 +193,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     suggestionAdapter.notifyDataSetChanged();
                     suggestionsRecyclerView.setVisibility(View.VISIBLE);
                 }
+                private void onSuggestionClick(String suggestion) {
+                    if (isStartFieldActive) {
+                        startAddressEditText.setText(suggestion);
+                        startAddressEditText.clearFocus(); // Remove focus from the field
+                    } else {
+                        endAddressEditText.setText(suggestion);
+                        endAddressEditText.clearFocus(); // Remove focus from the field
+                    }
+                    suggestionsRecyclerView.setVisibility(View.GONE);
+                }
+
 
                 @Override
                 public void onError(@NonNull Error error) {
@@ -324,6 +330,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             Toast.makeText(this, "Нет разрешения на использование геолокации", Toast.LENGTH_SHORT).show();
         }
     }
+
+    @Override
+    public void onLocationUpdated(@NonNull com.yandex.mapkit.location.Location location) {
+
+    }
+
+    @Override
+    public void onLocationStatusUpdated(@NonNull LocationStatus locationStatus) {
+
+    }
+
     // Реализация текстового слушателя для обработки ввода
     private class AddressTextWatcher implements TextWatcher {
         @Override

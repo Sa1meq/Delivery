@@ -19,11 +19,10 @@ public class CourierRepository {
         this.courierCollection = db.collection("couriers");
     }
 
-    public CompletableFuture<Courier> addCourier(String firstName, String surName, String phone, String typeOfCourier, String rating, String countOfDayDeliveres) {
+    public CompletableFuture<Courier> addCourier(Courier courier) {
         CompletableFuture<Courier> future = new CompletableFuture<>();
         String courierId = courierCollection.document().getId();
-        Courier courier = new Courier(courierId, firstName, surName, phone, typeOfCourier, "0.00", "0");
-
+        courier.id = courierId;
         courierCollection.document(courierId).set(courier)
                 .addOnSuccessListener(aVoid -> future.complete(courier))
                 .addOnFailureListener(future::completeExceptionally);

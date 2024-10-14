@@ -49,17 +49,19 @@ public class UserRepository {
         usersCollection.whereEqualTo("email", email).get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful() && !task.getResult().isEmpty()) {
+                        // Declare user outside the loop
+                        User user = null;
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            User user = document.toObject(User.class);
-                            future.complete(user);
+                            user = document.toObject(User.class);
                         }
+                        // Complete future with the found user
+                        future.complete(user);
                     } else {
                         future.complete(null);
                     }
                 });
         return future;
     }
-
 
     public CompletableFuture<Boolean> deleteUserById(String id, FirebaseStorage firebaseStorage) {
         CompletableFuture<Boolean> future = new CompletableFuture<>();

@@ -1,6 +1,6 @@
 package com.example.delivery;
 
-import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -10,17 +10,13 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.delivery.model.Courier;
 import com.example.delivery.repository.CourierRepository;
-import com.example.delivery.repository.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.concurrent.CompletableFuture;
 
 public class RegisterCourier extends AppCompatActivity {
 
@@ -31,7 +27,6 @@ public class RegisterCourier extends AppCompatActivity {
     private Button registerButton;
 
     private CourierRepository courierRepository;
-    private UserRepository userRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +40,6 @@ public class RegisterCourier extends AppCompatActivity {
         registerButton = findViewById(R.id.registerButton);
 
         courierRepository = new CourierRepository(FirebaseFirestore.getInstance());
-        userRepository = new UserRepository(FirebaseFirestore.getInstance());
 
         registerButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -62,65 +56,18 @@ public class RegisterCourier extends AppCompatActivity {
         String typeOfCourier = getSelectedCourierType();
 
         if (validateInputs(firstName, surName, phone, typeOfCourier)) {
-            CompletableFuture<String> emailFuture = getCurrentUserEmail();
-
-            emailFuture.thenAccept(email -> {
-                if (email != null) {
-                    courierRepository.getCourierByPhone(phone).thenAccept(existingCourier -> {
-                        if (existingCourier != null) {
-                            runOnUiThread(() -> Toast.makeText(RegisterCourier.this, "Этот номер телефона уже используется", Toast.LENGTH_SHORT).show());
-                        } else {
-                            CompletableFuture<Courier> courierFuture = courierRepository.addCourier(firstName, surName, phone, typeOfCourier, "0.00", "0");
-
-                            courierFuture.thenAccept(courier -> runOnUiThread(() -> {
-                                if (courier != null) {
-                                    Toast.makeText(RegisterCourier.this, "Курьер успешно зарегистрирован!", Toast.LENGTH_SHORT).show();
-                                    finish();
-                                } else {
-                                    Toast.makeText(RegisterCourier.this, "Не удалось зарегистрировать курьера", Toast.LENGTH_SHORT).show();
-                                }
-                            })).exceptionally(e -> {
-                                runOnUiThread(() -> Toast.makeText(RegisterCourier.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-                                return null;
-                            });
-                        }
-                    }).exceptionally(e -> {
-                        runOnUiThread(() -> Toast.makeText(RegisterCourier.this, "Ошибка проверки телефона: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-                        return null;
-                    });
-                } else {
-                    runOnUiThread(() -> Toast.makeText(RegisterCourier.this, "Не удалось получить почту пользователя", Toast.LENGTH_SHORT).show());
-                }
-            });
-        }
-    }
-
-    private CompletableFuture<String> getCurrentUserEmail() {
-        CompletableFuture<String> emailFuture = new CompletableFuture<>();
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-
-        // Проверяем, авторизован ли пользователь
-        if (currentUser != null) {
-            String userId = currentUser.getUid();
-
-            userRepository.getUserById(userId).thenAccept(user -> {
-                if (user != null) {
-                    emailFuture.complete(user.email);
-                } else {
-                    emailFuture.complete(null);
-                }
+            Courier courier = new Courier("", firstName, surName, phone, typeOfCourier, "0.00", "0");
+            courierRepository.addCourier(courier).thenAccept(aVoid -> {
+                Toast.makeText(RegisterCourier.this, "Курьер успешно зарегистрирован!", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(RegisterCourier.this, MainActivity.class);
+                startActivity(intent);
+                finish();
             }).exceptionally(e -> {
-                emailFuture.completeExceptionally(e);
+                Toast.makeText(RegisterCourier.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 return null;
             });
-        } else {
-            runOnUiThread(() -> Toast.makeText(RegisterCourier.this, "Пользователь не авторизован. Пожалуйста, войдите в систему.", Toast.LENGTH_SHORT).show());
-            emailFuture.complete(null);
         }
-
-        return emailFuture;
     }
-
 
     private String getSelectedCourierType() {
         int selectedId = radioGroupCourierType.getCheckedRadioButtonId();

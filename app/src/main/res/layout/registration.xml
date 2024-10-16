@@ -1,79 +1,226 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/truckreg"
+    android:orientation="vertical"
+    tools:context=".Authorization">
 
-    <EditText
-        android:id="@+id/nicknameEditText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="Введите никнейм"
-        android:inputType="textPersonName"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="100dp"
-        android:layout_marginHorizontal="16dp"/>
 
-    <EditText
-        android:id="@+id/emailEditText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="Введите email"
-        android:inputType="textEmailAddress"
-        app:layout_constraintTop_toBottomOf="@id/nicknameEditText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginHorizontal="16dp"/>
+    <RelativeLayout
+        android:id="@+id/relativeLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0.93"
+        android:background="@color/my_secondary"></RelativeLayout>
 
-    <EditText
-        android:id="@+id/passwordEditText"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Введите пароль"
-        android:inputType="textPassword"
-        app:layout_constraintTop_toBottomOf="@id/emailEditText"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="28dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginHorizontal="16dp"/>
+        app:layout_constraintTop_toTopOf="parent">
 
-    <Button
-        android:id="@+id/registerButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Зарегистрироваться"
-        app:layout_constraintTop_toBottomOf="@id/passwordEditText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="24dp"
-        android:layout_marginHorizontal="16dp"/>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/location_icon"></ImageView>
 
-    <com.google.android.gms.common.SignInButton
-        android:id="@+id/googleSignInButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/registerButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginHorizontal="16dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-condensed-medium"
+            android:text="OnTheWay"
+            android:textColor="@color/white"
+            android:textSize="32sp"
+            android:textStyle="bold"></TextView>
 
-    <TextView
-        android:id="@+id/loginTextView"
-        android:layout_width="wrap_content"
+    </LinearLayout>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardView"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Уже зарегистрированы? Войти"
-        android:textColor="@android:color/holo_blue_dark"
-        android:textStyle="bold"
-        android:clickable="true"
-        android:focusable="true"
-        app:layout_constraintTop_toBottomOf="@id/googleSignInButton"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_alignParentBottom="true"
+        android:background="@color/white"
+        app:cardCornerRadius="32dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"/>
+        app:layout_constraintStart_toStartOf="parent">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="28dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Добро пожаловать!"
+                android:textColor="@color/my_primary"
+                android:textSize="32sp"
+                android:textStyle="bold"></TextView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:alpha="0.7"
+                android:text="Зарегистрируйте аккаунт, чтобы продолжить"></TextView>
+
+            <View
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"></View>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:alpha="0.7"
+                android:text="Логин"
+                android:textStyle="bold"></TextView>
+
+            <EditText
+                android:id="@+id/nicknameEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"></EditText>
+
+            <View
+                android:layout_width="wrap_content"
+                android:layout_height="15dp"></View>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:alpha="0.7"
+                android:text="Email"
+                android:textStyle="bold"></TextView>
+
+            <EditText
+                android:id="@+id/emailEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"></EditText>
+
+            <View
+                android:layout_width="wrap_content"
+                android:layout_height="15dp"></View>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:alpha="0.7"
+                android:text="Пароль"
+                android:textStyle="bold"></TextView>
+
+            <EditText
+                android:id="@+id/passwordEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableEnd="@drawable/visibility_icon"
+                android:inputType="textPassword"></EditText>
+
+            <View
+                android:layout_width="wrap_content"
+                android:layout_height="15dp"></View>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:alpha="0.7"
+                android:text="Повторите пароль"
+                android:textStyle="bold"></TextView>
+
+            <EditText
+                android:id="@+id/repeatEditTextPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableEnd="@drawable/visibility_icon"
+                android:inputType="textPassword"></EditText>
+
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/errorTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/red"
+                    android:visibility="gone"
+                    android:gravity="center">
+
+                </TextView>
+            </LinearLayout>
+
+            <View
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"></View>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/registerButton"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:text="Зарегистрироваться"
+                app:cornerRadius="36dp"></com.google.android.material.button.MaterialButton>
+
+
+            <View
+                android:layout_width="wrap_content"
+                android:layout_height="10dp"></View>
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:id="@+id/loginTextView"
+                android:alpha="0.7"
+                android:text="Есть аккаунт? Войти"></TextView>
+
+            <View
+                android:layout_width="wrap_content"
+                android:layout_height="10dp"></View>
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:alpha="0.9"
+                android:text="Войти с помощью"></TextView>
+
+            <View
+                android:layout_width="wrap_content"
+                android:layout_height="10dp"></View>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/googleSign"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_margin="12dp"
+                    android:background="@drawable/google">
+
+                </ImageView>
+
+            </LinearLayout>
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+

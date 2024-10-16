@@ -1,21 +1,18 @@
 package com.example.delivery;
 
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.delivery.model.Courier;
 import com.example.delivery.repository.CourierRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-public class CourierActivity extends AppCompatActivity {
+public class CourierProfile extends AppCompatActivity {
 
     private ImageView avatarImageView;
     private TextView nameTextView;
@@ -43,12 +40,9 @@ public class CourierActivity extends AppCompatActivity {
         logoutButton = findViewById(R.id.logoutButton);
 
         courierRepository = new CourierRepository(FirebaseFirestore.getInstance());
-
-        // Получаем текущего пользователя
         FirebaseAuth auth = FirebaseAuth.getInstance();
         String userId = auth.getCurrentUser().getUid();
 
-        // Загружаем данные курьера из Firestore
         loadCourierData(userId);
 
         // Обработчики кнопок
@@ -82,10 +76,10 @@ public class CourierActivity extends AppCompatActivity {
                 phoneTextView.setText(courier.getPhone());
                 ratingTextView.setText("Рейтинг: " + courier.getRating());
             } else {
-                Toast.makeText(CourierActivity.this, "Не удалось загрузить данные курьера", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CourierProfile.this, "Не удалось загрузить данные курьера", Toast.LENGTH_SHORT).show();
             }
         }).exceptionally(e -> {
-            Toast.makeText(CourierActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(CourierProfile.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             return null;
         });
     }

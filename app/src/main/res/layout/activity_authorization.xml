@@ -4,80 +4,183 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/truckreg"
+    android:orientation="vertical"
     tools:context=".Authorization">
 
-    <!-- Поле для ввода email -->
-    <EditText
-        android:id="@+id/emailEditText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="Введите email"
-        android:inputType="textEmailAddress"
-        android:padding="16dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="100dp"
-        app:layout_constraintHorizontal_bias="0.5"
-        android:layout_marginHorizontal="24dp" />
 
-    <!-- Поле для ввода пароля -->
-    <EditText
-        android:id="@+id/passwordEditText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="Введите пароль"
-        android:inputType="textPassword"
-        android:padding="16dp"
-        app:layout_constraintTop_toBottomOf="@id/emailEditText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        app:layout_constraintHorizontal_bias="0.5"
-        android:layout_marginHorizontal="24dp" />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/my_secondary"
+        android:alpha="0.93">
 
-    <!-- Текст для отображения ошибок -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="28dp"
+            android:gravity="center">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/location_icon">
+            </ImageView>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OnTheWay"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-condensed-medium"
+                android:textSize="32sp"
+                android:textColor="@color/white">
+            </TextView>
+
+        </LinearLayout>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:background="@color/white"
+            app:cardCornerRadius="32dp"
+            android:id="@+id/cardView">
+
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="28dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="С возвращением!"
+                    android:textColor="@color/my_primary"
+                    android:textSize="32sp"
+                    android:textStyle="bold"></TextView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Пожалуйста, войдите в аккаунт чтобы продолжить"
+                android:alpha="0.7"></TextView>
+
+                <View
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"></View>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Email или логин"
+                    android:alpha="0.7"
+                    android:textStyle="bold"></TextView>
+
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:id="@+id/emailEditText"></EditText>
+
+                <View
+                    android:layout_width="wrap_content"
+                    android:layout_height="15dp"></View>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Пароль"
+                    android:alpha="0.7"
+                    android:textStyle="bold"></TextView>
+
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:drawableEnd="@drawable/visibility_icon"
+                    android:id="@+id/passwordEditText"></EditText>
+
+
+<LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Запомнить меня"
+        android:alpha="0.7"
+        android:gravity="center"></CheckBox>
+
     <TextView
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="60dp"
+        android:text="Забыли пароль?"
         android:id="@+id/errorTextView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:textColor="@android:color/holo_red_dark"
-        android:text="Ошибка"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/passwordEditText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        android:gravity="center_horizontal" />
+        android:gravity="center">
+    </TextView>
 
-    <!-- Кнопка Входа -->
-    <Button
-        android:id="@+id/loginButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Войти"
-        app:layout_constraintTop_toBottomOf="@id/errorTextView"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="24dp"
-        android:paddingHorizontal="24dp"
-        android:onClick="onClickLogin"/>
 
-    <!-- Ссылка на регистрацию -->
-    <TextView
-        android:id="@+id/registerTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Нет аккаунта? Зарегистрироваться"
-        android:textColor="@android:color/holo_blue_dark"
-        android:textSize="16sp"
-        android:clickable="true"
-        android:focusable="true"
-        app:layout_constraintTop_toBottomOf="@id/loginButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        android:gravity="center_horizontal"
-        android:onClick="onClickGoToRegistration" />
+</LinearLayout>
+
+                <View
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"></View>
+
+                <com.google.android.material.button.MaterialButton
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:text="Войти"
+                    app:cornerRadius="36dp"></com.google.android.material.button.MaterialButton>
+
+
+                <View
+                    android:layout_width="wrap_content"
+                    android:layout_height="10dp"></View>
+
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Еще не зарегистрированы? Зарегистрироваться"
+                    android:layout_gravity="center"
+                    android:alpha="0.7"></TextView>
+
+                <View
+                    android:layout_width="wrap_content"
+                    android:layout_height="10dp"></View>
+
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Войти с помощью"
+                    android:layout_gravity="center"
+                    android:alpha="0.7"></TextView>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_margin="12dp"
+                        android:background="@drawable/google">
+
+                    </ImageView>
+
+                </LinearLayout>
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+        
+
+    </RelativeLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

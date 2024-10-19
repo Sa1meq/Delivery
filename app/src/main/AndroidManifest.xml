@@ -43,6 +43,10 @@
             android:name=".LoginCourier"
             android:exported="true">
         </activity>
+        <activity
+            android:name=".CourierProfile"
+            android:exported="true">
+        </activity>
         <meta-data
             android:name="com.yandex.maps.mobile.API_KEY"
             android:value="37174936-b5e1-4db7-86b0-9a3a32e1ff5d"/>

@@ -71,8 +71,8 @@ public class Registration extends AppCompatActivity {
             return;
         }
 
-        userRepository.addUser(name, email, password).thenAccept(userRepo -> {
-            if (userRepo != null) {
+        userRepository.addUser(name, email, password).thenAccept(userRepository -> {
+            if (userRepository != null) {
                 Intent intent = new Intent(Registration.this, MainActivity.class);
                 startActivity(intent);
                 finish();

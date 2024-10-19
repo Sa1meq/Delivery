@@ -3,12 +3,11 @@ package com.example.delivery;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -23,6 +22,8 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.navigation.NavigationView;
@@ -40,11 +41,14 @@ import com.yandex.mapkit.directions.driving.VehicleOptions;
 import com.yandex.mapkit.geometry.BoundingBox;
 import com.yandex.mapkit.geometry.Geometry;
 import com.yandex.mapkit.geometry.Point;
+import com.yandex.mapkit.location.FilteringMode;
 import com.yandex.mapkit.location.LocationListener;
 import com.yandex.mapkit.location.LocationStatus;
+import com.yandex.mapkit.location.Purpose;
 import com.yandex.mapkit.map.CameraPosition;
 import com.yandex.mapkit.map.MapObjectCollection;
 import com.yandex.mapkit.map.PlacemarkMapObject;
+import com.yandex.mapkit.map.TextStyle;
 import com.yandex.mapkit.mapview.MapView;
 import com.yandex.mapkit.search.SearchFactory;
 import com.yandex.mapkit.search.SearchManager;
@@ -58,14 +62,15 @@ import com.yandex.mapkit.search.SuggestResponse;
 import com.yandex.mapkit.search.SuggestSession;
 import com.yandex.mapkit.search.SuggestOptions;
 import com.yandex.mapkit.search.SuggestType;
-
-
 import com.yandex.runtime.Error;
+import com.yandex.runtime.image.ImageProvider;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, LocationListener {
-    private static final int REQUEST_LOCATION_PERMISSION = 1;
+
+    private static final int REQUEST_LOCATION_PERMISSION = 1; // Код запроса разрешения на местоположение
     private MapView mapView;
     private DrivingRouter drivingRouter;
     private Point userLocation;
@@ -84,8 +89,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private AddressSuggestionAdapter suggestionAdapter;
     private List<String> suggestions = new ArrayList<>();
     private com.yandex.mapkit.location.LocationManager locationManager;
-
     private DrawerLayout drawerLayout;
+    private boolean isFirstLocationUpdate = true;
+    private MapObjectCollection pinCollection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,10 +113,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         suggestionAdapter = new AddressSuggestionAdapter(suggestions, this::onSuggestionClick);
         suggestionsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         suggestionsRecyclerView.setAdapter(suggestionAdapter);
-
-
-
         suggestionsRecyclerView.setVisibility(View.GONE);
+
+        bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottom_sheet));
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
 
         getRouteButton.setOnClickListener(v -> {
             String startAddress = startAddressEditText.getText().toString();
@@ -127,7 +134,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
-
         startAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = hasFocus);
         endAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = !hasFocus);
 
@@ -140,19 +146,35 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             requestUserLocation();
         }
 
+        startAddressEditText.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            }
+        });
 
+        endAddressEditText.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            }
+        });
 
+        findViewById(R.id.sheet_drag_handle).setOnClickListener(v -> {
+            if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            } else {
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            }
+        });
 
+        pinCollection = mapView.getMap().getMapObjects().addCollection();
         drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.navigation_view);
         navigationView.setNavigationItemSelectedListener(this::onNavigationItemSelected);
         findViewById(R.id.menuIcon).setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
 
         locationManager = MapKitFactory.getInstance().createLocationManager();
-
+        Log.d("MainActivity", "LocationManager initialized: " + locationManager);
     }
-
-
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -170,6 +192,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
+    private void clearPlacemarks() {
+        pinCollection.clear();
+    }
+
+    private void addPlacemark(Point point) {
+
+        PlacemarkMapObject placemark = pinCollection.addPlacemark(point);
+        placemark.setIcon(ImageProvider.fromResource(this, R.drawable.ic_user_location));
+    }
 
     private void getSuggestions(String query) {
         SuggestOptions suggestOptions = new SuggestOptions();
@@ -194,7 +225,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     suggestionAdapter.notifyDataSetChanged();
                     suggestionsRecyclerView.setVisibility(View.VISIBLE);
                 }
-
 
                 @Override
                 public void onError(@NonNull Error error) {
@@ -237,8 +267,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                         } else {
                                             routePoints.add(point);
                                         }
+                                        addPlacemark(point);
                                     }
-                                    mapObjects.addPlacemark(point);
                                 } else {
                                     Toast.makeText(MainActivity.this, "Не удалось получить координаты", Toast.LENGTH_SHORT).show();
                                 }
@@ -270,8 +300,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         suggestionsRecyclerView.setVisibility(View.GONE);
     }
-
-
 
     private void requestRoute() {
         if (routePoints.size() < 2) {
@@ -306,9 +334,38 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         );
     }
 
-    private void requestUserLocation() {
+    private void startLocationUpdates() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            // Начать получать обновления локации
+            double distance = 0;
+            long time = 5000;
+            boolean needAddress = false;
+            FilteringMode filteringMode = FilteringMode.ON;
+            Purpose purpose = Purpose.GENERAL;
+
+            locationManager.subscribeForLocationUpdates(
+                    distance, time, 0, needAddress, filteringMode, purpose, this
+            );
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
+        }
+    }
+
+
+    private Runnable locationUpdateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            requestUserLocation();
+            handler.postDelayed(this, 5000);
+        }
+    };
+
+    private void requestUserLocation() {
+        if (locationManager == null) {
+            Log.e("MainActivity", "LocationManager is null!");
+            return; // Прерывание, если locationManager не инициализирован
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationManager.requestSingleUpdate(this);
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
@@ -316,27 +373,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     @Override
-    public void onLocationUpdated(@NonNull Location location) {
-        // Получаем информацию о новой локации пользователя
-        userLocation = new Point(location.getLatitude(), location.getLongitude());
+    public void onLocationUpdated(@NonNull com.yandex.mapkit.location.Location location) {
+        userLocation = new Point(location.getPosition().getLatitude(), location.getPosition().getLongitude());
+        Log.d("MainActivity", "User location: " + userLocation);
 
-        // Двигаем камеру карты к текущей позиции пользователя
-        mapView.getMap().move(new CameraPosition(userLocation, 14.0f, 0.0f, 0.0f));
+        if (isFirstLocationUpdate) {
+            mapView.getMap().move(new CameraPosition(userLocation, 14.0f, 0.0f, 0.0f));
+            isFirstLocationUpdate = false;
 
-        if (userPlacemark == null) {
-            // Добавляем маркер местоположения пользователя
-            userPlacemark = mapObjects.addPlacemark(userLocation);
+            userPlacemark = pinCollection.addPlacemark(userLocation);
+            userPlacemark.setIcon(ImageProvider.fromResource(this, R.drawable.ic_user_location)); // Укажите свой ресурс маркера
         } else {
-            // Обновляем местоположение маркера
-            userPlacemark.setGeometry(userLocation);
+            if (userPlacemark != null) {
+                userPlacemark.setGeometry(userLocation);
+            }
         }
     }
 
-
-
     @Override
     public void onLocationStatusUpdated(@NonNull LocationStatus locationStatus) {
-        // Обработка изменений в статусе локации
         if (locationStatus == LocationStatus.NOT_AVAILABLE) {
             Toast.makeText(this, "Локация недоступна", Toast.LENGTH_SHORT).show();
         }
@@ -354,7 +409,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    // Реализация текстового слушателя для обработки ввода
     private class AddressTextWatcher implements TextWatcher {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -374,24 +428,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         }
 
-
         @Override
         public void afterTextChanged(Editable s) {
-            // Не требуется для нашей задачи
         }
     }
+
     @Override
     protected void onStart() {
         super.onStart();
         MapKitFactory.getInstance().onStart();
         mapView.onStart();
+        startLocationUpdates();
     }
 
     @Override
     protected void onStop() {
+        handler.removeCallbacks(locationUpdateRunnable);
         mapView.onStop();
         MapKitFactory.getInstance().onStop();
         super.onStop();
     }
-
 }

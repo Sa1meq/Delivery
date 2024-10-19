@@ -56,10 +56,14 @@ public class RegisterCourier extends AppCompatActivity {
         String typeOfCourier = getSelectedCourierType();
 
         if (validateInputs(firstName, surName, phone, typeOfCourier)) {
-            Courier courier = new Courier("", firstName, surName, phone, typeOfCourier, "0.00", "0");
+            FirebaseAuth auth = FirebaseAuth.getInstance();
+            String userId = auth.getCurrentUser().getUid(); // Получаем UID
+
+            // Создаем курьера с использованием UID
+            Courier courier = new Courier(userId, firstName, surName, phone, typeOfCourier, "0.00", "0");
             courierRepository.addCourier(courier).thenAccept(aVoid -> {
                 Toast.makeText(RegisterCourier.this, "Курьер успешно зарегистрирован!", Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(RegisterCourier.this, MainActivity.class);
+                Intent intent = new Intent(RegisterCourier.this, CourierProfile.class);
                 startActivity(intent);
                 finish();
             }).exceptionally(e -> {

@@ -73,17 +73,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private List<Point> routePoints = new ArrayList<>();
     private PlacemarkMapObject userPlacemark;
     private EditText startAddressEditText, endAddressEditText;
-    private Button searchButton, getRouteButton;
+    private Button getRouteButton;
     private SearchManager searchManager;
     private SuggestSession suggestSession;
     private boolean isStartFieldActive = true;
     private BottomSheetBehavior<View> bottomSheetBehavior;
     private final Handler handler = new Handler();
     private Runnable suggestionRunnable;
-
     private RecyclerView suggestionsRecyclerView;
     private AddressSuggestionAdapter suggestionAdapter;
     private List<String> suggestions = new ArrayList<>();
+    private com.yandex.mapkit.location.LocationManager locationManager;
 
     private DrawerLayout drawerLayout;
 
@@ -101,7 +101,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         startAddressEditText = findViewById(R.id.startAddressEditText);
         endAddressEditText = findViewById(R.id.endAddressEditText);
-        searchButton = findViewById(R.id.searchButton);
         getRouteButton = findViewById(R.id.getRouteButton);
 
         suggestionsRecyclerView = findViewById(R.id.suggestionsRecyclerView);
@@ -111,20 +110,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 
 
-        suggestionsRecyclerView.setVisibility(View.GONE); // Initialize as hidden
+        suggestionsRecyclerView.setVisibility(View.GONE);
 
-        searchButton.setOnClickListener(v -> {
+        getRouteButton.setOnClickListener(v -> {
             String startAddress = startAddressEditText.getText().toString();
             String endAddress = endAddressEditText.getText().toString();
+
             if (!startAddress.isEmpty() && !endAddress.isEmpty()) {
-                searchAddress(startAddress, true);
-                searchAddress(endAddress, false);
-                suggestionsRecyclerView.setVisibility(View.GONE);
+                if (routePoints.size() == 2) {
+                    requestRoute();
+                } else {
+                    Toast.makeText(MainActivity.this, "Сначала выберите оба адреса", Toast.LENGTH_SHORT).show();
+                }
             } else {
                 Toast.makeText(MainActivity.this, "Введите оба адреса", Toast.LENGTH_SHORT).show();
             }
         });
-
 
 
         startAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = hasFocus);
@@ -136,18 +137,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
         } else {
-            displayUserLocation();
+            requestUserLocation();
         }
 
 
 
-        getRouteButton.setOnClickListener(v -> requestRoute());
 
         drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.navigation_view);
         navigationView.setNavigationItemSelectedListener(this::onNavigationItemSelected);
         findViewById(R.id.menuIcon).setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
 
+        locationManager = MapKitFactory.getInstance().createLocationManager();
 
     }
 
@@ -192,16 +193,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     }
                     suggestionAdapter.notifyDataSetChanged();
                     suggestionsRecyclerView.setVisibility(View.VISIBLE);
-                }
-                private void onSuggestionClick(String suggestion) {
-                    if (isStartFieldActive) {
-                        startAddressEditText.setText(suggestion);
-                        startAddressEditText.clearFocus(); // Remove focus from the field
-                    } else {
-                        endAddressEditText.setText(suggestion);
-                        endAddressEditText.clearFocus(); // Remove focus from the field
-                    }
-                    suggestionsRecyclerView.setVisibility(View.GONE);
                 }
 
 
@@ -270,13 +261,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void onSuggestionClick(String suggestion) {
         if (isStartFieldActive) {
             startAddressEditText.setText(suggestion);
-            startAddressEditText.clearFocus(); // Снимаем фокус с поля
+            startAddressEditText.clearFocus();
+            searchAddress(suggestion, true);
         } else {
             endAddressEditText.setText(suggestion);
-            endAddressEditText.clearFocus(); // Снимаем фокус с поля
+            endAddressEditText.clearFocus();
+            searchAddress(suggestion, false);
         }
         suggestionsRecyclerView.setVisibility(View.GONE);
     }
+
 
 
     private void requestRoute() {
@@ -312,33 +306,52 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         );
     }
 
-    private void displayUserLocation() {
+    private void requestUserLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-
-            if (location != null) {
-                userLocation = new Point(location.getLatitude(), location.getLongitude());
-                mapView.getMap().move(new CameraPosition(userLocation, 14.0f, 0.0f, 0.0f));
-                if (userPlacemark == null) {
-                    userPlacemark = mapObjects.addPlacemark(userLocation);
-                } else {
-                    userPlacemark.setGeometry(userLocation);
-                }
-            }
+            // Начать получать обновления локации
+            locationManager.requestSingleUpdate(this);
         } else {
-            Toast.makeText(this, "Нет разрешения на использование геолокации", Toast.LENGTH_SHORT).show();
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
         }
     }
 
     @Override
-    public void onLocationUpdated(@NonNull com.yandex.mapkit.location.Location location) {
+    public void onLocationUpdated(@NonNull Location location) {
+        // Получаем информацию о новой локации пользователя
+        userLocation = new Point(location.getLatitude(), location.getLongitude());
 
+        // Двигаем камеру карты к текущей позиции пользователя
+        mapView.getMap().move(new CameraPosition(userLocation, 14.0f, 0.0f, 0.0f));
+
+        if (userPlacemark == null) {
+            // Добавляем маркер местоположения пользователя
+            userPlacemark = mapObjects.addPlacemark(userLocation);
+        } else {
+            // Обновляем местоположение маркера
+            userPlacemark.setGeometry(userLocation);
+        }
     }
+
+
 
     @Override
     public void onLocationStatusUpdated(@NonNull LocationStatus locationStatus) {
+        // Обработка изменений в статусе локации
+        if (locationStatus == LocationStatus.NOT_AVAILABLE) {
+            Toast.makeText(this, "Локация недоступна", Toast.LENGTH_SHORT).show();
+        }
+    }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_LOCATION_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                requestUserLocation();
+            } else {
+                Toast.makeText(this, "Разрешение на локацию не предоставлено", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     // Реализация текстового слушателя для обработки ввода

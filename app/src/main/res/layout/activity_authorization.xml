@@ -8,7 +8,6 @@
     android:orientation="vertical"
     tools:context=".Authorization">
 
-
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -27,6 +26,7 @@
                 android:layout_height="wrap_content"
                 android:src="@drawable/location_icon">
             </ImageView>
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -47,13 +47,12 @@
             app:cardCornerRadius="32dp"
             android:id="@+id/cardView">
 
-
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="28dp">
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -62,11 +61,11 @@
                     android:textSize="32sp"
                     android:textStyle="bold"></TextView>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Пожалуйста, войдите в аккаунт чтобы продолжить"
-                android:alpha="0.7"></TextView>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Пожалуйста, войдите в аккаунт чтобы продолжить"
+                    android:alpha="0.7"></TextView>
 
                 <View
                     android:layout_width="wrap_content"
@@ -103,30 +102,41 @@
                     android:drawableEnd="@drawable/visibility_icon"
                     android:id="@+id/passwordEditText"></EditText>
 
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
 
-<LinearLayout
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content">
+                    <CheckBox
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Запомнить меня"
+                        android:alpha="0.7"
+                        android:gravity="center"></CheckBox>
 
-    <CheckBox
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Запомнить меня"
-        android:alpha="0.7"
-        android:gravity="center"></CheckBox>
+                    <TextView
+                        android:layout_width="150dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="60dp"
+                        android:text="Забыли пароль?"
+                        android:id="@+id/rememberPassword"
+                        android:gravity="center">
+                    </TextView>
 
-    <TextView
-        android:layout_width="150dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="60dp"
-        android:text="Забыли пароль?"
-        android:id="@+id/errorTextView"
-        android:gravity="center">
-    </TextView>
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
 
+                    <TextView
+                        android:id="@+id/errorTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/red"
+                        android:visibility="gone"
+                        android:gravity="center">
 
-</LinearLayout>
-
+                    </TextView>
+                </LinearLayout>
                 <View
                     android:layout_width="wrap_content"
                     android:layout_height="30dp"></View>
@@ -135,25 +145,24 @@
                     android:layout_width="match_parent"
                     android:layout_height="60dp"
                     android:text="Войти"
-                    app:cornerRadius="36dp"></com.google.android.material.button.MaterialButton>
-
+                    app:cornerRadius="36dp"
+                    android:onClick="onClickLogin"></com.google.android.material.button.MaterialButton>
 
                 <View
                     android:layout_width="wrap_content"
                     android:layout_height="10dp"></View>
-
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Еще не зарегистрированы? Зарегистрироваться"
                     android:layout_gravity="center"
-                    android:alpha="0.7"></TextView>
+                    android:alpha="0.7"
+                    android:onClick="onClickGoToRegistration"></TextView>
 
                 <View
                     android:layout_width="wrap_content"
                     android:layout_height="10dp"></View>
-
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -167,19 +176,19 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center">
+
                     <ImageView
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:layout_margin="12dp"
                         android:background="@drawable/google">
-
                     </ImageView>
 
                 </LinearLayout>
+
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>
-        
 
     </RelativeLayout>
 

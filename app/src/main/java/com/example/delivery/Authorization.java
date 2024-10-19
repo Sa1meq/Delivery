@@ -43,19 +43,26 @@ public class Authorization extends AppCompatActivity {
         userRepository.getUserByEmail(email)
                 .thenAccept(user -> {
                     if (user == null || !user.getPassword().equals(password)) {
-                        errorTextView.setVisibility(View.VISIBLE);
-                        runOnUiThread(() -> errorTextView.setText("Неправильный email или пароль"));
+                        runOnUiThread(() -> {
+                            errorTextView.setVisibility(View.VISIBLE);
+                            errorTextView.setText("Неправильный email или пароль");
+                        });
                         return;
                     }
 
                     Authentication.setUser(user);
 
-                    Intent intent = new Intent(Authorization.this, MainActivity.class);
-                    startActivity(intent);
-                    finish();
+                    runOnUiThread(() -> {
+                        Intent intent = new Intent(Authorization.this, MainActivity.class);
+                        startActivity(intent);
+                        finish();
+                    });
                 })
                 .exceptionally(e -> {
-                    runOnUiThread(() -> errorTextView.setText("Ошибка авторизации: " + e.getMessage()));
+                    runOnUiThread(() -> {
+                        errorTextView.setVisibility(View.VISIBLE);
+                        errorTextView.setText("Ошибка авторизации: " + e.getMessage());
+                    });
                     return null;
                 });
     }

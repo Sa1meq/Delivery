@@ -41,8 +41,7 @@
             android:layout_height="wrap_content"
             android:background="@android:color/white"
             android:orientation="vertical"
-            android:padding="16dp"
-            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+            android:padding="16dp">
 
             <View
                 android:id="@+id/sheet_drag_handle"

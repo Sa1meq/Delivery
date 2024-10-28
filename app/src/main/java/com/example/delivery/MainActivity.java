@@ -22,11 +22,14 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.delivery.model.RouteOrder;
+import com.example.delivery.repository.RouteOrderRepository;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 
 
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 import com.yandex.mapkit.GeoObject;
 import com.yandex.mapkit.MapKitFactory;
 import com.yandex.mapkit.RequestPoint;
@@ -48,7 +51,6 @@ import com.yandex.mapkit.location.Purpose;
 import com.yandex.mapkit.map.CameraPosition;
 import com.yandex.mapkit.map.MapObjectCollection;
 import com.yandex.mapkit.map.PlacemarkMapObject;
-import com.yandex.mapkit.map.TextStyle;
 import com.yandex.mapkit.mapview.MapView;
 import com.yandex.mapkit.search.SearchFactory;
 import com.yandex.mapkit.search.SearchManager;
@@ -67,10 +69,11 @@ import com.yandex.runtime.image.ImageProvider;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, LocationListener {
 
-    private static final int REQUEST_LOCATION_PERMISSION = 1; // Код запроса разрешения на местоположение
+    private static final int REQUEST_LOCATION_PERMISSION = 1;
     private MapView mapView;
     private DrivingRouter drivingRouter;
     private Point userLocation;
@@ -92,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private DrawerLayout drawerLayout;
     private boolean isFirstLocationUpdate = true;
     private MapObjectCollection pinCollection;
+    private RouteOrderRepository routeOrderRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,15 +103,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         MapKitFactory.initialize(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         mapView = findViewById(R.id.mapView);
         drivingRouter = DirectionsFactory.getInstance().createDrivingRouter(DrivingRouterType.COMBINED);
         mapObjects = mapView.getMap().getMapObjects().addCollection();
         searchManager = SearchFactory.getInstance().createSearchManager(SearchManagerType.COMBINED);
+        routeOrderRepository = new RouteOrderRepository();
 
         startAddressEditText = findViewById(R.id.startAddressEditText);
         endAddressEditText = findViewById(R.id.endAddressEditText);
         getRouteButton = findViewById(R.id.getRouteButton);
+
 
         suggestionsRecyclerView = findViewById(R.id.suggestionsRecyclerView);
         suggestionAdapter = new AddressSuggestionAdapter(suggestions, this::onSuggestionClick);
@@ -125,7 +130,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             if (!startAddress.isEmpty() && !endAddress.isEmpty()) {
                 if (routePoints.size() == 2) {
+                    // Запрос маршрута
                     requestRoute();
+
+                    RouteOrder routeOrder = new RouteOrder();
+                    routeOrder.orderId = UUID.randomUUID().toString(); // Генерация уникального ID
+                    routeOrder.userId = FirebaseAuth.getInstance().getCurrentUser().getUid(); // Получение ID текущего пользователя
+                    routeOrder.routePoints = routePoints; // Сохранение выбранных точек маршрута
+                    routeOrder.isAccepted = false; // Статус принятия заказа
+                    routeOrder.isCompleted = false; // Статус завершения заказа
+                    // Сохранение маршрута
+                    routeOrderRepository.saveRouteOrder(routeOrder)
+                            .thenAccept(aVoid -> {
+                                // Успешное сохранение
+                                Toast.makeText(MainActivity.this, "Маршрут успешно сохранён", Toast.LENGTH_SHORT).show();
+                            })
+                            .exceptionally(e -> {
+                                // Ошибка сохранения
+                                Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                return null;
+                            });
+
                 } else {
                     Toast.makeText(MainActivity.this, "Сначала выберите оба адреса", Toast.LENGTH_SHORT).show();
                 }
@@ -133,6 +158,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 Toast.makeText(MainActivity.this, "Введите оба адреса", Toast.LENGTH_SHORT).show();
             }
         });
+
+
 
         startAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = hasFocus);
         endAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = !hasFocus);
@@ -382,7 +409,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             isFirstLocationUpdate = false;
 
             userPlacemark = pinCollection.addPlacemark(userLocation);
-            userPlacemark.setIcon(ImageProvider.fromResource(this, R.drawable.ic_user_location)); // Укажите свой ресурс маркера
+            userPlacemark.setIcon(ImageProvider.fromResource(this, R.drawable.ic_user_location));
         } else {
             if (userPlacemark != null) {
                 userPlacemark.setGeometry(userLocation);

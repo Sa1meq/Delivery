@@ -13,6 +13,12 @@
         android:layout_height="match_parent"
         android:background="@color/my_secondary"
         android:alpha="0.93">
+        <View
+            android:id="@+id/dimView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#80000000"
+            android:visibility="gone" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -107,6 +113,7 @@
                     android:layout_height="wrap_content">
 
                     <CheckBox
+                        android:id="@+id/rememberMeCheckBox"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Запомнить меня"

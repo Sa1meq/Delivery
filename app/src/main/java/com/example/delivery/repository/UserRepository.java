@@ -1,6 +1,9 @@
 package com.example.delivery.repository;
 
 import com.example.delivery.model.User;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -12,20 +15,35 @@ import java.util.concurrent.CompletableFuture;
 public class UserRepository {
     private final CollectionReference usersCollection;
     private final FirebaseFirestore db;
+    private final FirebaseAuth auth;
 
-    public UserRepository(FirebaseFirestore db) {
+    public UserRepository(FirebaseFirestore db, FirebaseAuth auth) {
         this.db = db;
+        this.auth = auth;
         this.usersCollection = db.collection("users");
     }
 
     public CompletableFuture<User> addUser(String name, String email, String password) {
         CompletableFuture<User> future = new CompletableFuture<>();
-        String userId = usersCollection.document().getId();
-        User user = new User(userId, name, email, password);
 
-        usersCollection.document(userId).set(user)
-                .addOnSuccessListener(aVoid -> future.complete(user))
-                .addOnFailureListener(future::completeExceptionally);
+        auth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser firebaseUser = auth.getCurrentUser();
+                        if (firebaseUser != null) {
+                            String userId = firebaseUser.getUid(); // Получаем UID
+                            User user = new User(userId, name, email, password);
+
+                            usersCollection.document(userId).set(user)
+                                    .addOnSuccessListener(aVoid -> future.complete(user))
+                                    .addOnFailureListener(future::completeExceptionally);
+                        } else {
+                            future.completeExceptionally(new Exception("User registration failed."));
+                        }
+                    } else {
+                        future.completeExceptionally(task.getException());
+                    }
+                });
 
         return future;
     }
@@ -49,12 +67,10 @@ public class UserRepository {
         usersCollection.whereEqualTo("email", email).get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful() && !task.getResult().isEmpty()) {
-                        // Declare user outside the loop
                         User user = null;
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             user = document.toObject(User.class);
                         }
-                        // Complete future with the found user
                         future.complete(user);
                     } else {
                         future.complete(null);

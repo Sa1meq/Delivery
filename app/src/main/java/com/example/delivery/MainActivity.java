@@ -25,11 +25,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.delivery.model.RouteOrder;
 import com.example.delivery.repository.RouteOrderRepository;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
-
-
+import com.example.delivery.repository.UserRepository;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.yandex.mapkit.GeoObject;
 import com.yandex.mapkit.MapKitFactory;
 import com.yandex.mapkit.RequestPoint;
@@ -39,11 +38,15 @@ import com.yandex.mapkit.directions.driving.DrivingOptions;
 import com.yandex.mapkit.directions.driving.DrivingRoute;
 import com.yandex.mapkit.directions.driving.DrivingRouter;
 import com.yandex.mapkit.directions.driving.DrivingRouterType;
+import com.yandex.mapkit.directions.driving.DrivingSection;
 import com.yandex.mapkit.directions.driving.DrivingSession;
 import com.yandex.mapkit.directions.driving.VehicleOptions;
 import com.yandex.mapkit.geometry.BoundingBox;
 import com.yandex.mapkit.geometry.Geometry;
 import com.yandex.mapkit.geometry.Point;
+import com.yandex.mapkit.geometry.PolylinePosition;
+import com.yandex.mapkit.geometry.geo.PolylineIndex;
+import com.yandex.mapkit.geometry.geo.PolylineUtils;
 import com.yandex.mapkit.location.FilteringMode;
 import com.yandex.mapkit.location.LocationListener;
 import com.yandex.mapkit.location.LocationStatus;
@@ -52,6 +55,7 @@ import com.yandex.mapkit.map.CameraPosition;
 import com.yandex.mapkit.map.MapObjectCollection;
 import com.yandex.mapkit.map.PlacemarkMapObject;
 import com.yandex.mapkit.mapview.MapView;
+import com.yandex.mapkit.navigation.RoutePosition;
 import com.yandex.mapkit.search.SearchFactory;
 import com.yandex.mapkit.search.SearchManager;
 import com.yandex.mapkit.search.SearchManagerType;
@@ -85,7 +89,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private SearchManager searchManager;
     private SuggestSession suggestSession;
     private boolean isStartFieldActive = true;
-    private BottomSheetBehavior<View> bottomSheetBehavior;
     private final Handler handler = new Handler();
     private Runnable suggestionRunnable;
     private RecyclerView suggestionsRecyclerView;
@@ -96,6 +99,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private boolean isFirstLocationUpdate = true;
     private MapObjectCollection pinCollection;
     private RouteOrderRepository routeOrderRepository;
+    private UserRepository userRepository;
+    private boolean isRequestInProgress = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,11 +113,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         mapObjects = mapView.getMap().getMapObjects().addCollection();
         searchManager = SearchFactory.getInstance().createSearchManager(SearchManagerType.COMBINED);
         routeOrderRepository = new RouteOrderRepository();
+        userRepository = new UserRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance());
 
         startAddressEditText = findViewById(R.id.startAddressEditText);
         endAddressEditText = findViewById(R.id.endAddressEditText);
         getRouteButton = findViewById(R.id.getRouteButton);
-
 
         suggestionsRecyclerView = findViewById(R.id.suggestionsRecyclerView);
         suggestionAdapter = new AddressSuggestionAdapter(suggestions, this::onSuggestionClick);
@@ -120,22 +125,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         suggestionsRecyclerView.setAdapter(suggestionAdapter);
         suggestionsRecyclerView.setVisibility(View.GONE);
 
-        bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottom_sheet));
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-
-
         getRouteButton.setOnClickListener(v -> {
             String startAddress = startAddressEditText.getText().toString();
             String endAddress = endAddressEditText.getText().toString();
 
             if (!startAddress.isEmpty() && !endAddress.isEmpty()) {
                 if (routePoints.size() == 2) {
-                    // Запрос маршрута
                     requestRoute();
 
                     RouteOrder routeOrder = new RouteOrder();
-                    routeOrder.orderId = UUID.randomUUID().toString(); // Генерация уникального ID
-                    routeOrder.userId = FirebaseAuth.getInstance().getCurrentUser().getUid(); // Получение ID текущего пользователя
+                    routeOrder.orderId = UUID.randomUUID().toString();
+                    routeOrder.userId = FirebaseAuth.getInstance().getUid();
                     routeOrder.routePoints = routePoints; // Сохранение выбранных точек маршрута
                     routeOrder.isAccepted = false; // Статус принятия заказа
                     routeOrder.isCompleted = false; // Статус завершения заказа
@@ -159,8 +159,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
-
-
         startAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = hasFocus);
         endAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = !hasFocus);
 
@@ -172,26 +170,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else {
             requestUserLocation();
         }
-
-        startAddressEditText.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-            }
-        });
-
-        endAddressEditText.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus) {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-            }
-        });
-
-        findViewById(R.id.sheet_drag_handle).setOnClickListener(v -> {
-            if (bottomSheetBehavior.getState() == BottomSheetBehavior.STATE_EXPANDED) {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-            } else {
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-            }
-        });
 
         pinCollection = mapView.getMap().getMapObjects().addCollection();
         drawerLayout = findViewById(R.id.drawer_layout);
@@ -288,12 +266,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                         } else {
                                             routePoints.add(point);
                                         }
+                                        Log.d("RoutePoints", "Точка старта добавлена: " + point);
                                     } else {
                                         if (routePoints.size() > 1) {
                                             routePoints.set(1, point);
                                         } else {
                                             routePoints.add(point);
                                         }
+                                        Log.d("RoutePoints", "Точка конца добавлена: " + point);
                                         addPlacemark(point);
                                     }
                                 } else {
@@ -329,6 +309,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void requestRoute() {
+        if (isRequestInProgress) return; // Предотвращаем повторные запросы
+        isRequestInProgress = true;
+
+        // Проверяем, достаточно ли точек для запроса маршрута
         if (routePoints.size() < 2) {
             Toast.makeText(MainActivity.this, "Выберите минимум две точки", Toast.LENGTH_SHORT).show();
             return;
@@ -341,6 +325,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         requestPoints.add(new RequestPoint(routePoints.get(0), RequestPointType.WAYPOINT, "", ""));
         requestPoints.add(new RequestPoint(routePoints.get(1), RequestPointType.WAYPOINT, "", ""));
 
+        // Запрос маршрута
         DrivingSession drivingSession = drivingRouter.requestRoutes(
                 requestPoints,
                 drivingOptions,
@@ -350,6 +335,42 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     public void onDrivingRoutes(@NonNull List<DrivingRoute> routes) {
                         if (!routes.isEmpty()) {
                             mapObjects.addPolyline(routes.get(0).getGeometry());
+                            DrivingRoute route = routes.get(0);
+                            Log.d("Route", "Маршрут успешно построен: " + route.getGeometry());
+
+                            // Проверяем наличие текущего местоположения и точек маршрута
+                            if (userLocation != null && routePoints.size() >= 2) {
+                                float distanceToEndPoint = distanceBetweenPointsOnRoute(route, routePoints.get(0), routePoints.get(1));
+                                Log.d("Distance", "Расстояние между текущим местоположением и конечной точкой: " + distanceToEndPoint);
+
+                                float timeToEndPoint = timeTravelToPoint(route, routePoints.get(1));
+                                Log.d("TravelTime", "Время в пути до конечной точки: " + timeToEndPoint);
+
+                                RouteOrder routeOrder = new RouteOrder();
+                                routeOrder.orderId = UUID.randomUUID().toString();
+                                routeOrder.userId = FirebaseAuth.getInstance().getUid();
+                                routeOrder.routePoints = routePoints;
+                                routeOrder.isAccepted = false;
+                                routeOrder.isCompleted = false;
+                                routeOrder.totalDistance = distanceToEndPoint;
+                                routeOrder.travelTime = (long) timeToEndPoint;
+
+                                // Сохраняем маршрут в базе данных
+                                routeOrderRepository.saveRouteOrder(routeOrder)
+                                        .thenAccept(aVoid -> {
+                                            // Успешное сохранение
+                                            Toast.makeText(MainActivity.this, "Маршрут успешно сохранён", Toast.LENGTH_SHORT).show();
+                                        })
+                                        .exceptionally(e -> {
+                                            // Ошибка сохранения
+                                            Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            return null;
+                                        });
+                            } else {
+                                Log.e("Route", "Текущая позиция или точки маршрута отсутствуют");
+                            }
+                        } else {
+                            Toast.makeText(MainActivity.this, "Маршрут не найден", Toast.LENGTH_SHORT).show();
                         }
                     }
 
@@ -360,6 +381,43 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
         );
     }
+
+    private float distanceBetweenPointsOnRoute(DrivingRoute route, Point first, Point second) {
+        PolylineIndex polylineIndex = PolylineUtils.createPolylineIndex(route.getGeometry());
+        if (polylineIndex == null) {
+            Log.e("Distance", "PolylineIndex is null");
+            return 0;
+        }
+
+        PolylinePosition firstPosition = polylineIndex.closestPolylinePosition(first, PolylineIndex.Priority.CLOSEST_TO_RAW_POINT, 1.0);
+        PolylinePosition secondPosition = polylineIndex.closestPolylinePosition(second, PolylineIndex.Priority.CLOSEST_TO_RAW_POINT, 1.0);
+
+        Log.d("Distance", "First position: " + firstPosition + ", Second position: " + secondPosition);
+
+        if (firstPosition == null || secondPosition == null) {
+            Log.e("Distance", "One of the positions is null. First: " + firstPosition + ", Second: " + secondPosition);
+            return 0;
+        }
+
+        return (float) PolylineUtils.distanceBetweenPolylinePositions(route.getGeometry(), firstPosition, secondPosition);
+    }
+
+
+
+
+    private float timeTravelToPoint(DrivingRoute route, Point targetPoint) {
+        RoutePosition currentPosition = route.getRoutePosition();
+
+        if (currentPosition == null) {
+            Log.e("TravelTime", "Текущее положение маршрута является null");
+            return 0; // или выбросьте исключение
+        }
+
+        float distance = distanceBetweenPointsOnRoute(route, currentPosition.getPoint(), targetPoint);
+        RoutePosition targetPosition = currentPosition.advance(distance);
+        return (float) (targetPosition.timeToFinish() - currentPosition.timeToFinish());
+    }
+
 
     private void startLocationUpdates() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -389,7 +447,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void requestUserLocation() {
         if (locationManager == null) {
             Log.e("MainActivity", "LocationManager is null!");
-            return; // Прерывание, если locationManager не инициализирован
+            return;
         }
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -438,8 +496,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private class AddressTextWatcher implements TextWatcher {
         @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-        }
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -456,8 +513,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
 
         @Override
-        public void afterTextChanged(Editable s) {
-        }
+        public void afterTextChanged(Editable s) {}
     }
 
     @Override

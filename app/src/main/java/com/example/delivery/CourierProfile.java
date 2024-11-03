@@ -1,5 +1,6 @@
 package com.example.delivery;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -45,11 +46,12 @@ public class CourierProfile extends AppCompatActivity {
 
         loadCourierData(userId);
 
-        // Обработчики кнопок
-//        ordersButton.setOnClickListener(v -> {
-//            // Переход к заказам
-//            startActivity(new Intent(CourierActivity.this, OrdersActivity.class));
-//        });
+
+       ordersButton.setOnClickListener(v -> {
+          Intent intent = new Intent(CourierProfile.this, CourierOrdersList.class);
+          startActivity(intent);
+          finish();
+       });
 //
 //        mapsButton.setOnClickListener(v -> {
 //            // Переход к картам

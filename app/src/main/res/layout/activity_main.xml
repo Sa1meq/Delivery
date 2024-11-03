@@ -5,82 +5,80 @@
     android:layout_height="match_parent"
     android:id="@+id/drawer_layout">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
+        <!-- MapView для отображения карты -->
         <com.yandex.mapkit.mapview.MapView
             android:id="@+id/mapView"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior" />
-    </LinearLayout>
 
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <!-- Добавляем ImageView для меню -->
+        <!-- Добавляем ImageView для меню в верхний левый угол -->
         <ImageView
             android:id="@+id/menuIcon"
-            android:layout_marginTop="15dp"
-            android:layout_marginStart="15dp"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:src="@drawable/menu"
             android:contentDescription="Меню"
-            android:layout_gravity="start"
+            android:layout_gravity="top|start"
+            android:layout_marginTop="15dp"
+            android:layout_marginStart="15dp"
             android:clickable="true"
             android:focusable="true" />
 
+    </FrameLayout>
 
-        <!-- Добавьте BottomSheet -->
-        <LinearLayout
-            android:id="@+id/bottom_sheet"
+        <androidx.coordinatorlayout.widget.CoordinatorLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@android:color/white"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_height="wrap_content">
 
-            <View
-                android:id="@+id/sheet_drag_handle"
-                android:layout_width="match_parent"
-                android:layout_height="5dp"
-                android:background="@android:color/darker_gray" />
 
-            <EditText
-                android:id="@+id/startAddressEditText"
+            <!-- Добавляем EditText, Button и RecyclerView -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Введите начальный адрес"
-                android:imeOptions="actionNext"
-                android:inputType="text" />
+                android:background="@android:color/white"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_gravity="bottom">
 
-            <EditText
-                android:id="@+id/endAddressEditText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Введите конечный адрес"
-                android:imeOptions="actionDone"
-                android:inputType="text" />
+                <EditText
+                    android:id="@+id/startAddressEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Введите начальный адрес"
+                    android:imeOptions="actionNext"
+                    android:inputType="text" />
 
-            <Button
-                android:id="@+id/getRouteButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Получить маршрут" />
+                <EditText
+                    android:id="@+id/endAddressEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Введите конечный адрес"
+                    android:imeOptions="actionDone"
+                    android:inputType="text" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/suggestionsRecyclerView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:overScrollMode="never"
-                android:scrollbars="none"
-                android:background="@android:color/transparent" />
-        </LinearLayout>
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+                <Button
+                    android:id="@+id/getRouteButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Получить маршрут" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/suggestionsRecyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:overScrollMode="never"
+                    android:scrollbars="none"
+                    android:background="@android:color/transparent" />
+            </LinearLayout>
+
+        </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
 
     <!-- NavigationView внутри DrawerLayout -->
     <com.google.android.material.navigation.NavigationView

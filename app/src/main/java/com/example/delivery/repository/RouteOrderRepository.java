@@ -22,7 +22,6 @@ public class RouteOrderRepository {
         return future;
     }
 
-    // Получение заказа маршрута по ID
     public CompletableFuture<RouteOrder> getRouteOrderById(String orderId) {
         CompletableFuture<RouteOrder> future = new CompletableFuture<>();
         DocumentReference docRef = firestore.collection("routeOrders").document(orderId);
@@ -43,12 +42,12 @@ public class RouteOrderRepository {
         return future;
     }
 
-    // Получение всех не принятых маршрутов для курьера
+
     public CompletableFuture<List<RouteOrder>> getAllPendingRouteOrdersForCourier(String courierId) {
         CompletableFuture<List<RouteOrder>> future = new CompletableFuture<>();
         Query query = firestore.collection("routeOrders")
                 .whereEqualTo("isAccepted", false)
-                .whereEqualTo("courierId", courierId); // Получаем только заказы для данного курьера
+                .whereEqualTo("courierId", courierId);
 
         query.get().addOnSuccessListener(queryDocumentSnapshots -> {
             List<RouteOrder> routeOrders = queryDocumentSnapshots.toObjects(RouteOrder.class);

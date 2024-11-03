@@ -27,13 +27,15 @@
             android:exported="true"
             android:screenOrientation="portrait">
         </activity>
-        <activity android:name=".Authorization" />
-        <activity android:name=".Registration"
+        <activity android:name=".Authorization"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".Registration"
+            android:exported="true">
         </activity>
         <activity
             android:name=".RegisterCourier"
@@ -45,6 +47,10 @@
         </activity>
         <activity
             android:name=".CourierProfile"
+            android:exported="true">
+        </activity>
+        <activity
+            android:name=".CourierOrdersList"
             android:exported="true">
         </activity>
         <meta-data

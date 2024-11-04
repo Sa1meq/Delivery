@@ -46,61 +46,67 @@
         android:layout_marginTop="16dp"/>
 
 
-    <RadioGroup
+    <LinearLayout
         android:id="@+id/radioGroupCourierType"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
         app:layout_constraintTop_toBottomOf="@id/editTextPhone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="16dp">
 
         <RadioButton
             android:id="@+id/radioButtonPedestrian"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Pedestrian"
-            android:padding="16dp"/>
+            android:padding="8dp"/>
 
         <ImageView
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:src="@drawable/walkertype"
-            android:contentDescription="@string/courier_type_pedestrian"/>
+            android:contentDescription="@string/courier_type_pedestrian"
+            android:padding="8dp"/>
 
         <RadioButton
             android:id="@+id/radioButtonCar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Car"
-            android:padding="16dp"/>
+            android:padding="8dp"/>
 
         <ImageView
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:src="@drawable/cartype"
-        android:contentDescription="@string/courier_type_car"/>
+            android:contentDescription="@string/courier_type_car"
+            android:padding="8dp"/>
 
         <RadioButton
             android:id="@+id/radioButtonTruck"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Truck"
-            android:padding="16dp"/>
+            android:padding="8dp"/>
 
         <ImageView
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:src="@drawable/trucktype"
-            android:contentDescription="@string/courier_type_truck"/>
+            android:contentDescription="@string/courier_type_truck"
+            android:padding="8dp"/>
 
-    </RadioGroup>
+    </LinearLayout>
+
 
     <Button
         android:id="@+id/registerButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Register Courier"
+        android:text="Зарегистрироваться как курьер"
         app:layout_constraintTop_toBottomOf="@id/radioGroupCourierType"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -111,7 +117,7 @@
         android:id="@+id/textViewLogin"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Already registered? Log in here"
+        android:text="Уже работаете? Войдите"
         android:textColor="@android:color/holo_blue_light"
         android:padding="16dp"
         android:layout_marginTop="32dp"

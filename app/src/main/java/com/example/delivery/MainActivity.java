@@ -201,6 +201,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         pinCollection.clear();
     }
 
+    private void addStartPlacemark(Point point){
+        PlacemarkMapObject placemark = pinCollection.addPlacemark(point);
+        placemark.setIcon(ImageProvider.fromResource(this, R.drawable.ic_routestart));
+    }
+
+    private void addFinishPlacemark(Point point){
+        PlacemarkMapObject placemark = pinCollection.addPlacemark(point);
+        placemark.setIcon(ImageProvider.fromResource(this, R.drawable.ic_routefinish));
+    }
+
     private void addPlacemark(Point point) {
 
         PlacemarkMapObject placemark = pinCollection.addPlacemark(point);
@@ -215,8 +225,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             double latitude = userLocation.getLatitude();
             double longitude = userLocation.getLongitude();
             BoundingBox boundingBox = new BoundingBox(
-                    new Point(latitude + 0.1, longitude + 0.1),  // Северо-Западный угол
-                    new Point(latitude - 0.1, longitude - 0.1)   // Южно-Восточный угол
+                    new Point(latitude + 0.1, longitude + 0.1),
+                    new Point(latitude - 0.1, longitude - 0.1)
             );
 
             suggestSession = searchManager.createSuggestSession();
@@ -247,7 +257,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         searchManager.submit(
                 address,
-                Geometry.fromPoint(new Point(53.9, 27.56667)), // Минск
+                Geometry.fromPoint(new Point(53.9, 27.56667)),
                 searchOptions,
                 new Session.SearchListener() {
                     @Override
@@ -267,6 +277,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                             routePoints.add(point);
                                         }
                                         Log.d("RoutePoints", "Точка старта добавлена: " + point);
+                                        addStartPlacemark(point);
                                     } else {
                                         if (routePoints.size() > 1) {
                                             routePoints.set(1, point);
@@ -274,7 +285,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                             routePoints.add(point);
                                         }
                                         Log.d("RoutePoints", "Точка конца добавлена: " + point);
-                                        addPlacemark(point);
+                                        addFinishPlacemark(point);
                                     }
                                 } else {
                                     Toast.makeText(MainActivity.this, "Не удалось получить координаты", Toast.LENGTH_SHORT).show();
@@ -309,10 +320,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void requestRoute() {
-        if (isRequestInProgress) return; // Предотвращаем повторные запросы
+        if (isRequestInProgress) {
+            Log.d("RouteRequest", "Запрос маршрута уже выполняется.");
+            return;
+        }
         isRequestInProgress = true;
 
-        // Проверяем, достаточно ли точек для запроса маршрута
         if (routePoints.size() < 2) {
             Toast.makeText(MainActivity.this, "Выберите минимум две точки", Toast.LENGTH_SHORT).show();
             return;
@@ -325,7 +338,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         requestPoints.add(new RequestPoint(routePoints.get(0), RequestPointType.WAYPOINT, "", ""));
         requestPoints.add(new RequestPoint(routePoints.get(1), RequestPointType.WAYPOINT, "", ""));
 
-        // Запрос маршрута
         DrivingSession drivingSession = drivingRouter.requestRoutes(
                 requestPoints,
                 drivingOptions,
@@ -336,15 +348,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         if (!routes.isEmpty()) {
                             mapObjects.addPolyline(routes.get(0).getGeometry());
                             DrivingRoute route = routes.get(0);
-                            Log.d("Route", "Маршрут успешно построен: " + route.getGeometry());
 
-                            // Проверяем наличие текущего местоположения и точек маршрута
+
                             if (userLocation != null && routePoints.size() >= 2) {
                                 float distanceToEndPoint = distanceBetweenPointsOnRoute(route, routePoints.get(0), routePoints.get(1));
-                                Log.d("Distance", "Расстояние между текущим местоположением и конечной точкой: " + distanceToEndPoint);
+
 
                                 float timeToEndPoint = timeTravelToPoint(route, routePoints.get(1));
-                                Log.d("TravelTime", "Время в пути до конечной точки: " + timeToEndPoint);
+
 
                                 RouteOrder routeOrder = new RouteOrder();
                                 routeOrder.orderId = UUID.randomUUID().toString();
@@ -355,19 +366,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                 routeOrder.totalDistance = distanceToEndPoint;
                                 routeOrder.travelTime = (long) timeToEndPoint;
 
-                                // Сохраняем маршрут в базе данных
                                 routeOrderRepository.saveRouteOrder(routeOrder)
                                         .thenAccept(aVoid -> {
-                                            // Успешное сохранение
                                             Toast.makeText(MainActivity.this, "Маршрут успешно сохранён", Toast.LENGTH_SHORT).show();
                                         })
                                         .exceptionally(e -> {
-                                            // Ошибка сохранения
                                             Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                             return null;
                                         });
                             } else {
-                                Log.e("Route", "Текущая позиция или точки маршрута отсутствуют");
+
                             }
                         } else {
                             Toast.makeText(MainActivity.this, "Маршрут не найден", Toast.LENGTH_SHORT).show();
@@ -385,38 +393,40 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private float distanceBetweenPointsOnRoute(DrivingRoute route, Point first, Point second) {
         PolylineIndex polylineIndex = PolylineUtils.createPolylineIndex(route.getGeometry());
         if (polylineIndex == null) {
-            Log.e("Distance", "PolylineIndex is null");
+
             return 0;
         }
 
-        PolylinePosition firstPosition = polylineIndex.closestPolylinePosition(first, PolylineIndex.Priority.CLOSEST_TO_RAW_POINT, 1.0);
-        PolylinePosition secondPosition = polylineIndex.closestPolylinePosition(second, PolylineIndex.Priority.CLOSEST_TO_RAW_POINT, 1.0);
+        PolylinePosition firstPosition = polylineIndex.closestPolylinePosition(first, PolylineIndex.Priority.CLOSEST_TO_START, 1000.0);
+        PolylinePosition secondPosition = polylineIndex.closestPolylinePosition(second, PolylineIndex.Priority.CLOSEST_TO_RAW_POINT, 1000.0);
 
-        Log.d("Distance", "First position: " + firstPosition + ", Second position: " + secondPosition);
+
 
         if (firstPosition == null || secondPosition == null) {
-            Log.e("Distance", "One of the positions is null. First: " + firstPosition + ", Second: " + secondPosition);
+
             return 0;
         }
 
         return (float) PolylineUtils.distanceBetweenPolylinePositions(route.getGeometry(), firstPosition, secondPosition);
     }
 
-
-
-
     private float timeTravelToPoint(DrivingRoute route, Point targetPoint) {
         RoutePosition currentPosition = route.getRoutePosition();
-
         if (currentPosition == null) {
-            Log.e("TravelTime", "Текущее положение маршрута является null");
-            return 0; // или выбросьте исключение
+
+            return 0;
         }
 
         float distance = distanceBetweenPointsOnRoute(route, currentPosition.getPoint(), targetPoint);
-        RoutePosition targetPosition = currentPosition.advance(distance);
-        return (float) (targetPosition.timeToFinish() - currentPosition.timeToFinish());
+        if (distance > 0) {
+            RoutePosition targetPosition = currentPosition.advance(distance);
+            return (float) (currentPosition.timeToFinish() - targetPosition.timeToFinish());
+        } else {
+
+            return 0;
+        }
     }
+
 
 
     private void startLocationUpdates() {
@@ -446,7 +456,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void requestUserLocation() {
         if (locationManager == null) {
-            Log.e("MainActivity", "LocationManager is null!");
             return;
         }
 
@@ -460,10 +469,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override
     public void onLocationUpdated(@NonNull com.yandex.mapkit.location.Location location) {
         userLocation = new Point(location.getPosition().getLatitude(), location.getPosition().getLongitude());
-        Log.d("MainActivity", "User location: " + userLocation);
 
         if (isFirstLocationUpdate) {
-            mapView.getMap().move(new CameraPosition(userLocation, 14.0f, 0.0f, 0.0f));
+            mapView.getMap().move(new CameraPosition(userLocation, 20.0f, 0.0f, 0.0f));
             isFirstLocationUpdate = false;
 
             userPlacemark = pinCollection.addPlacemark(userLocation);

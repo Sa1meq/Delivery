@@ -1,5 +1,6 @@
 package com.example.delivery;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -47,7 +48,9 @@ public class LoginCourier extends AppCompatActivity {
             courierRepository.getCourierByPhone(phone).thenAccept(existingCourier -> {
                 if (existingCourier != null) {
                     runOnUiThread(() -> Toast.makeText(LoginCourier.this, "Login successful!", Toast.LENGTH_SHORT).show());
-                    // finish(); // Uncomment if you want to close the login activity
+                    Intent intent = new Intent(LoginCourier.this, CourierProfile.class);
+                    startActivity(intent);
+                    finish();
                 } else {
                     runOnUiThread(() -> Toast.makeText(LoginCourier.this, "Courier not found!", Toast.LENGTH_SHORT).show());
                 }

@@ -7,20 +7,21 @@ import java.util.List;
 
 public class RouteOrder {
     public String orderId;
-    public String userId; // ID пользователя, который сделал заказ
-    public String courierId; // ID курьера, который примет заказ
-    public List<Point> routePoints; // Изменяем на Point
-    public boolean isAccepted; // статус принятия заказа курьером
+    public String userId;
+    public String courierId;
+    public List<Point> routePoints;
+    public boolean isAccepted;
     public boolean isCompleted;
-    public double totalDistance; // Общая дистанция маршрута
+    public double totalDistance;
     public Long travelTime;
 
     public RouteOrder() {
     }
 
-    public RouteOrder(String orderId, String userId, List<Point> routePoints, double totalDistance, Long travelTime) {
+    public RouteOrder(String orderId, String userId, String courierId, List<Point> routePoints, double totalDistance, Long travelTime) {
         this.orderId = orderId;
         this.userId = userId;
+        this.courierId = courierId != null ? courierId : "unassigned";
         this.routePoints = routePoints;
         this.isAccepted = false;
         this.isCompleted = false;

@@ -1,6 +1,8 @@
 package com.example.delivery.repository;
 
 
+import android.util.Log;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -47,12 +49,14 @@ public class RouteOrderRepository {
         CompletableFuture<List<RouteOrder>> future = new CompletableFuture<>();
         Query query = firestore.collection("routeOrders")
                 .whereEqualTo("isAccepted", false)
-                .whereEqualTo("courierId", courierId);
+                .whereEqualTo("courierId", null);
 
         query.get().addOnSuccessListener(queryDocumentSnapshots -> {
             List<RouteOrder> routeOrders = queryDocumentSnapshots.toObjects(RouteOrder.class);
+            Log.d("Firestore", "Получено заказов: " + routeOrders.size());
             future.complete(routeOrders);
         }).addOnFailureListener(future::completeExceptionally);
         return future;
     }
+
 }

@@ -9,7 +9,7 @@ public class Courier {
     public String rating;
     public String countOfDayDeliveres;
 
-    public Courier(String firstName, String surName, String phone, String typeOfCourier, String rating, String countOfDayDeliveres) {
+    public Courier() {
     }
 
 

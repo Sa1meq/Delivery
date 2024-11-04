@@ -31,10 +31,12 @@ public class OrdersAdapter extends RecyclerView.Adapter<OrdersAdapter.OrderViewH
     public void onBindViewHolder(@NonNull OrderViewHolder holder, int position) {
         RouteOrder routeOrder = routeOrders.get(position);
         holder.orderIdTextView.setText(routeOrder.orderId);
-        holder.distanceTextView.setText("Distance: " + routeOrder.totalDistance + " km");
-        holder.timeTextView.setText("Time: " + routeOrder.travelTime / 60 + " min");
-        holder.costTextView.setText("Cost: $" + calculateCost(routeOrder));
+        double distanceInKm = routeOrder.totalDistance / 1000.0;
+        holder.distanceTextView.setText("Расстояние: " + String.format("%.1f", distanceInKm) + " км");
+        holder.timeTextView.setText("Время: " + routeOrder.travelTime / 60 + " минут");
+        holder.costTextView.setText("Цена: " + calculateCost(routeOrder));
     }
+
 
     @Override
     public int getItemCount() {

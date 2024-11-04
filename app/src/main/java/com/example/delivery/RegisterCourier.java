@@ -3,11 +3,9 @@ package com.example.delivery;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,9 +21,10 @@ public class RegisterCourier extends AppCompatActivity {
     private EditText firstNameEditText;
     private EditText surNameEditText;
     private EditText phoneEditText;
-    private RadioGroup radioGroupCourierType;
     private Button registerButton;
+    private TextView textViewLogin;
 
+    private String typeOfCourier = null;
     private CourierRepository courierRepository;
 
     @Override
@@ -36,16 +35,20 @@ public class RegisterCourier extends AppCompatActivity {
         firstNameEditText = findViewById(R.id.editTextFirstName);
         surNameEditText = findViewById(R.id.editTextSurName);
         phoneEditText = findViewById(R.id.editTextPhone);
-        radioGroupCourierType = findViewById(R.id.radioGroupCourierType);
         registerButton = findViewById(R.id.registerButton);
+        textViewLogin = findViewById(R.id.textViewLogin);
 
         courierRepository = new CourierRepository(FirebaseFirestore.getInstance());
 
-        registerButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                registerCourier();
-            }
+        findViewById(R.id.radioButtonPedestrian).setOnClickListener(view -> typeOfCourier = "Pedestrian");
+        findViewById(R.id.radioButtonCar).setOnClickListener(view -> typeOfCourier = "Car");
+        findViewById(R.id.radioButtonTruck).setOnClickListener(view -> typeOfCourier = "Truck");
+
+        registerButton.setOnClickListener(v -> registerCourier());
+
+        textViewLogin.setOnClickListener(v -> {
+            Intent intent = new Intent(RegisterCourier.this, LoginCourier.class);
+            startActivity(intent);
         });
     }
 
@@ -53,28 +56,28 @@ public class RegisterCourier extends AppCompatActivity {
         String firstName = firstNameEditText.getText().toString().trim();
         String surName = surNameEditText.getText().toString().trim();
         String phone = phoneEditText.getText().toString().trim();
-        String typeOfCourier = getSelectedCourierType();
 
         if (validateInputs(firstName, surName, phone, typeOfCourier)) {
             FirebaseAuth auth = FirebaseAuth.getInstance();
-            String userId = auth.getCurrentUser().getUid();
-            Courier courier = new Courier(userId, firstName, surName, phone, typeOfCourier, "0.00", "0");
-            courierRepository.addCourier(courier).thenAccept(aVoid -> {
-                Toast.makeText(RegisterCourier.this, "Курьер успешно зарегистрирован!", Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(RegisterCourier.this, CourierProfile.class);
-                startActivity(intent);
-                finish();
-            }).exceptionally(e -> {
-                Toast.makeText(RegisterCourier.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                return null;
-            });
-        }
-    }
+            FirebaseUser currentUser = auth.getCurrentUser();
 
-    private String getSelectedCourierType() {
-        int selectedId = radioGroupCourierType.getCheckedRadioButtonId();
-        RadioButton selectedRadioButton = findViewById(selectedId);
-        return selectedRadioButton != null ? selectedRadioButton.getText().toString() : null;
+            if (currentUser != null) {
+                String userId = currentUser.getUid();
+                Courier courier = new Courier(userId, firstName, surName, phone, typeOfCourier, "0.00", "0");
+
+                courierRepository.addCourier(courier, userId).thenAccept(aVoid -> {
+                    Toast.makeText(RegisterCourier.this, "Курьер успешно зарегистрирован!", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(RegisterCourier.this, CourierProfile.class);
+                    startActivity(intent);
+                    finish();
+                }).exceptionally(e -> {
+                    Toast.makeText(RegisterCourier.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    return null;
+                });
+            } else {
+                Toast.makeText(this, "Ошибка аутентификации", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private boolean validateInputs(String firstName, String surName, String phone, String typeOfCourier) {

@@ -1,13 +1,20 @@
 package com.example.delivery;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.delivery.model.RouteOrder;
 import com.example.delivery.repository.RouteOrderRepository;
 import com.google.firebase.auth.FirebaseAuth;
+
 import java.util.List;
+
 import com.example.delivery.adapter.OrdersAdapter;
 
 public class CourierOrdersList extends AppCompatActivity {
@@ -34,14 +41,43 @@ public class CourierOrdersList extends AppCompatActivity {
         routeOrderRepository.getAllPendingRouteOrdersForCourier(courierId)
                 .thenAccept(this::updateOrdersList)
                 .exceptionally(e -> {
-                    // Обработка ошибки
                     e.printStackTrace();
                     return null;
                 });
     }
 
     private void updateOrdersList(List<RouteOrder> routeOrders) {
-        ordersAdapter = new OrdersAdapter(routeOrders);
+        ordersAdapter = new OrdersAdapter(routeOrders, this::showAcceptOrderDialog, this);
         recyclerView.setAdapter(ordersAdapter);
     }
+
+    private void showAcceptOrderDialog(RouteOrder routeOrder) {
+        new AlertDialog.Builder(this)
+                .setTitle("Принять заказ")
+                .setMessage("Вы хотите принять этот заказ?")
+                .setPositiveButton("Да", (dialog, which) -> {
+                    acceptOrder(routeOrder);
+                })
+                .setNegativeButton("Нет", null)
+                .show();
+    }
+
+    private void acceptOrder(RouteOrder routeOrder) {
+        routeOrderRepository.updateCourierForOrder(routeOrder.orderId, courierId)
+                .thenAccept(aVoid -> runOnUiThread(() -> {
+                    Toast.makeText(this, "Заказ принят", Toast.LENGTH_SHORT).show();
+                    loadCourierOrders();
+                    openAcceptedOrderScreen(routeOrder.orderId); // Переход в новую активность после принятия
+                }))
+                .exceptionally(e -> {
+                    runOnUiThread(() -> Toast.makeText(this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                    return null;
+                });
+    }
+    private void openAcceptedOrderScreen(String orderId) {
+        Intent intent = new Intent(this, CourierAcceptedOrder.class);
+        intent.putExtra("orderId", orderId);
+        startActivity(intent);
+    }
+
 }

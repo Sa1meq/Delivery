@@ -77,7 +77,7 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, LocationListener {
 
-    private static final int REQUEST_LOCATION_PERMISSION = 1;
+    public static final int REQUEST_LOCATION_PERMISSION = 1;
     private MapView mapView;
     private DrivingRouter drivingRouter;
     private Point userLocation;
@@ -132,25 +132,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (!startAddress.isEmpty() && !endAddress.isEmpty()) {
                 if (routePoints.size() == 2) {
                     requestRoute();
-
-                    RouteOrder routeOrder = new RouteOrder();
-                    routeOrder.orderId = UUID.randomUUID().toString();
-                    routeOrder.userId = FirebaseAuth.getInstance().getUid();
-                    routeOrder.routePoints = routePoints; // Сохранение выбранных точек маршрута
-                    routeOrder.isAccepted = false; // Статус принятия заказа
-                    routeOrder.isCompleted = false; // Статус завершения заказа
-                    // Сохранение маршрута
-                    routeOrderRepository.saveRouteOrder(routeOrder)
-                            .thenAccept(aVoid -> {
-                                // Успешное сохранение
-                                Toast.makeText(MainActivity.this, "Маршрут успешно сохранён", Toast.LENGTH_SHORT).show();
-                            })
-                            .exceptionally(e -> {
-                                // Ошибка сохранения
-                                Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                return null;
-                            });
-
                 } else {
                     Toast.makeText(MainActivity.this, "Сначала выберите оба адреса", Toast.LENGTH_SHORT).show();
                 }
@@ -186,7 +167,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         int itemId = item.getItemId();
 
         if (itemId == R.id.nav_profile) {
-            Toast.makeText(this, "Сосал? Не работает", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(MainActivity.this, UserProfile.class);
+            startActivity(intent);
+            finish();
         } else if (itemId == R.id.nav_courier) {
             Intent intent = new Intent(MainActivity.this, RegisterCourier.class);
             startActivity(intent);
@@ -352,11 +335,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                             if (userLocation != null && routePoints.size() >= 2) {
                                 float distanceToEndPoint = distanceBetweenPointsOnRoute(route, routePoints.get(0), routePoints.get(1));
-
-
                                 float timeToEndPoint = timeTravelToPoint(route, routePoints.get(1));
-
-
                                 RouteOrder routeOrder = new RouteOrder();
                                 routeOrder.orderId = UUID.randomUUID().toString();
                                 routeOrder.userId = FirebaseAuth.getInstance().getUid();
@@ -365,7 +344,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                 routeOrder.isCompleted = false;
                                 routeOrder.totalDistance = distanceToEndPoint;
                                 routeOrder.travelTime = (long) timeToEndPoint;
-
                                 routeOrderRepository.saveRouteOrder(routeOrder)
                                         .thenAccept(aVoid -> {
                                             Toast.makeText(MainActivity.this, "Маршрут успешно сохранён", Toast.LENGTH_SHORT).show();
@@ -471,7 +449,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         userLocation = new Point(location.getPosition().getLatitude(), location.getPosition().getLongitude());
 
         if (isFirstLocationUpdate) {
-            mapView.getMap().move(new CameraPosition(userLocation, 20.0f, 0.0f, 0.0f));
+            mapView.getMap().move(new CameraPosition(userLocation, 15.0f, 0.0f, 0.0f));
             isFirstLocationUpdate = false;
 
             userPlacemark = pinCollection.addPlacemark(userLocation);

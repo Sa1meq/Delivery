@@ -1,0 +1,89 @@
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:padding="10dp">
+
+    <ImageView
+        android:id="@+id/backButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/baseline_arrow_back_24"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        />
+
+    <ImageView
+        android:id="@+id/avatarImage"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:src="@drawable/ic_avatar"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/backButton"
+        app:layout_constraintStart_toStartOf="parent"
+        />
+
+    <TextView
+        android:id="@+id/papa"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/black"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif"
+        android:text=""
+        android:textSize="16sp"
+        app:layout_constraintTop_toTopOf="@id/avatarImage"
+        app:layout_constraintStart_toEndOf="@id/avatarImage"
+        />
+
+
+    <LinearLayout
+        android:id="@+id/optionsContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@id/avatarImage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:paddingTop="15dp">
+
+        <TextView
+            android:id="@+id/orderHistoryButton"
+            style="@style/ProfileOptionStyle"
+            android:text="История заказов"
+            android:drawableStart="@drawable/ic_ordershistory"/>
+
+        <TextView
+            android:id="@+id/activeOrdersButton"
+            style="@style/ProfileOptionStyle"
+            android:text="Активные заказы"
+            android:drawableStart="@drawable/ic_activeorders"/>
+
+        <TextView
+            android:id="@+id/supportButton"
+            style="@style/ProfileOptionStyle"
+            android:text="Поддержка"
+            android:drawableStart="@drawable/ic_supp"/>
+
+        <TextView
+            android:id="@+id/rechargeBalanceButton"
+            style="@style/ProfileOptionStyle"
+            android:text="Пополнить баланс"
+            android:drawableStart="@drawable/ic_balance"/>
+
+        <TextView
+            android:id="@+id/becomeCourierButton"
+            style="@style/ProfileOptionStyle"
+            android:text="Стать курьером"
+            android:drawableStart="@drawable/ic_gocourier"
+            />
+
+        <TextView
+            android:id="@+id/aboutServiceButton"
+            style="@style/ProfileOptionStyle"
+            android:text="О сервисе"
+            android:drawableStart="@drawable/ic_info"/>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

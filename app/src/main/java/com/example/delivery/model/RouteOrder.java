@@ -2,10 +2,11 @@ package com.example.delivery.model;
 
 import com.yandex.mapkit.geometry.Point;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RouteOrder {
+public class RouteOrder implements Serializable {
     public String orderId;
     public String userId;
     public String courierId;

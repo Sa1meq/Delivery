@@ -26,19 +26,34 @@ public class RouteOrderRepository {
 
     public CompletableFuture<RouteOrder> getRouteOrderById(String orderId) {
         CompletableFuture<RouteOrder> future = new CompletableFuture<>();
-        DocumentReference docRef = firestore.collection("routeOrders").document(orderId);
-        docRef.get().addOnSuccessListener(documentSnapshot -> {
-            RouteOrder routeOrder = documentSnapshot.toObject(RouteOrder.class);
-            future.complete(routeOrder);
-        }).addOnFailureListener(future::completeExceptionally);
+        firestore.collection("routeOrders").document(orderId).get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        RouteOrder routeOrder = task.getResult().toObject(RouteOrder.class);
+                        future.complete(routeOrder);
+                    } else {
+                        future.complete(null);
+                    }
+                });
         return future;
     }
+
+
 
 
     public CompletableFuture<Void> updateCourierForOrder(String orderId, String courierId) {
         CompletableFuture<Void> future = new CompletableFuture<>();
         DocumentReference docRef = firestore.collection("routeOrders").document(orderId);
         docRef.update("courierId", courierId, "isAccepted", true)
+                .addOnSuccessListener(aVoid -> future.complete(null))
+                .addOnFailureListener(future::completeExceptionally);
+        return future;
+    }
+
+    public CompletableFuture<Void> completeOrder(String orderId) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        DocumentReference docRef = firestore.collection("routeOrders").document(orderId);
+        docRef.update("isCompleted", true, "isAccepted", true)
                 .addOnSuccessListener(aVoid -> future.complete(null))
                 .addOnFailureListener(future::completeExceptionally);
         return future;

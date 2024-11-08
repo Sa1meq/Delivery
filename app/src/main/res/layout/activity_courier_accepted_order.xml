@@ -32,27 +32,11 @@
             android:padding="16dp"
             android:layout_gravity="bottom">
 
-            <EditText
-                android:id="@+id/startAddressEditText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Введите начальный адрес"
-                android:imeOptions="actionNext"
-                android:inputType="text" />
-
-            <EditText
-                android:id="@+id/endAddressEditText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Введите конечный адрес"
-                android:imeOptions="actionDone"
-                android:inputType="text" />
-
             <Button
                 android:id="@+id/checkReady"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Получить маршрут" />
+                android:text="Подтвердить прибытие" />
 
 
         </LinearLayout>

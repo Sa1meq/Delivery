@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -21,7 +22,6 @@ import com.yandex.mapkit.RequestPointType;
 import com.yandex.mapkit.directions.DirectionsFactory;
 import com.yandex.mapkit.directions.driving.DrivingOptions;
 import com.yandex.mapkit.directions.driving.DrivingRoute;
-import com.yandex.mapkit.directions.driving.DrivingRouteMetadata;
 import com.yandex.mapkit.directions.driving.DrivingRouter;
 import com.yandex.mapkit.directions.driving.DrivingRouterType;
 import com.yandex.mapkit.directions.driving.DrivingSession;
@@ -55,6 +55,8 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
     private MapObjectCollection pinCollection;
     private final Handler handler = new Handler();
     private boolean isSecondRoute = false;
+    private Button checkReady;
+    private DrivingSession drivingSession;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,11 +65,21 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
         setContentView(R.layout.activity_courier_accepted_order);
         locationManager = MapKitFactory.getInstance().createLocationManager();
         mapView = findViewById(R.id.mapView);
+        checkReady = findViewById(R.id.checkReady);
         pinCollection = mapView.getMap().getMapObjects();
         String orderId = getIntent().getStringExtra("orderId");
         drivingRouter = DirectionsFactory.getInstance().createDrivingRouter(DrivingRouterType.COMBINED);
         getRouteOrderFromDatabase(orderId);
 
+        checkReady.setOnClickListener(v -> {
+            if (drivingSession != null) {
+                drivingSession.cancel();
+            }
+
+            clearRoute();
+            buildRouteFromFirstToSecondPoint();
+            startLocationUpdates();
+        });
     }
 
     private void getRouteOrderFromDatabase(String orderId) {
@@ -123,7 +135,7 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
         requestPoints.add(new RequestPoint(startPoint, RequestPointType.WAYPOINT, "", ""));
         requestPoints.add(new RequestPoint(endPoint, RequestPointType.WAYPOINT, "", ""));
 
-        DrivingSession drivingSession = drivingRouter.requestRoutes(
+        drivingSession = drivingRouter.requestRoutes(
                 requestPoints,
                 drivingOptions,
                 vehicleOptions,
@@ -136,12 +148,6 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
 
                             float progress = calculateRouteProgress(route, userLocation);
                             Log.d("RouteProgress", "Прогресс по маршруту: " + progress * 100 + "%");
-
-                            if (progress >= 0.95f) {
-                                finishRoute();
-                                buildRouteFromFirstToSecondPoint();
-                            }
-
                             if (userLocation != null) {
                                 Log.d("Route", "Маршрут от точки " + routePoints.get(0) + " к " + routePoints.get(1));
                             }
@@ -151,7 +157,6 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
                         isRequestInProgress = false;
                     }
 
-
                     @Override
                     public void onDrivingRoutesError(@NonNull Error error) {
                         Toast.makeText(CourierAcceptedOrder.this, "Ошибка построения маршрута", Toast.LENGTH_SHORT).show();
@@ -160,7 +165,6 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
                 }
         );
     }
-
 
     private double calculateDistance(Point point1, Point point2) {
         double lat1 = Math.toRadians(point1.getLatitude());
@@ -180,7 +184,6 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
 
         return R * c;
     }
-
 
     private float calculateRouteProgress(DrivingRoute route, Point userLocation) {
         List<Point> routePoints = route.getGeometry().getPoints();
@@ -210,8 +213,6 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
         return (float) (distanceCovered / totalDistance);
     }
 
-
-
     private void startLocationUpdates() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             double distance = 0;
@@ -227,14 +228,6 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
         }
     }
-
-    private Runnable locationUpdateRunnable = new Runnable() {
-        @Override
-        public void run() {
-            requestUserLocation();
-            handler.postDelayed(this, 5000);
-        }
-    };
 
     private void requestUserLocation() {
         if (locationManager == null) {
@@ -266,10 +259,8 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
             }
         }
 
-        // Построение маршрута от текущего местоположения пользователя к первой точке маршрута
         buildRouteFromUserLocationToFirstPoint();
     }
-
 
     @Override
     public void onLocationStatusUpdated(@NonNull LocationStatus locationStatus) {
@@ -290,7 +281,6 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
         }
     }
 
-
     private void clearRoute() {
         if (mapView != null && mapView.getMap() != null) {
             mapView.getMap().getMapObjects().clear();
@@ -304,7 +294,6 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
 
         clearRoute();
     }
-
 
     @Override
     protected void onStart() {

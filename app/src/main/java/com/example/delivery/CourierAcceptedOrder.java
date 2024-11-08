@@ -210,7 +210,7 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
             }
         }
 
-        return (float) (distanceCovered / totalDistance);
+        return Math.min((float) (distanceCovered / totalDistance), 1.0f);
     }
 
     private void startLocationUpdates() {
@@ -254,13 +254,17 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
                 userPlacemark.setIcon(ImageProvider.fromResource(this, R.drawable.ic_user_location));
             }
         } else {
-            if (userPlacemark != null) {
+            if (userPlacemark != null && userPlacemark.isValid()) {
                 userPlacemark.setGeometry(userLocation);
+            } else {
+                userPlacemark = pinCollection.addPlacemark(userLocation);
+                userPlacemark.setIcon(ImageProvider.fromResource(this, R.drawable.ic_user_location));
             }
         }
 
         buildRouteFromUserLocationToFirstPoint();
     }
+
 
     @Override
     public void onLocationStatusUpdated(@NonNull LocationStatus locationStatus) {
@@ -284,6 +288,7 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
     private void clearRoute() {
         if (mapView != null && mapView.getMap() != null) {
             mapView.getMap().getMapObjects().clear();
+            userPlacemark.isValid();
         }
     }
 

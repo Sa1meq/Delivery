@@ -60,6 +60,7 @@ public class RouteOrderRepository {
     }
 
 
+
     public CompletableFuture<List<RouteOrder>> getAllPendingRouteOrdersForCourier(String courierId) {
         CompletableFuture<List<RouteOrder>> future = new CompletableFuture<>();
         Query query = firestore.collection("routeOrders")

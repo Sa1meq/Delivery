@@ -3,6 +3,7 @@ package com.example.delivery;
 import static com.example.delivery.MainActivity.REQUEST_LOCATION_PERMISSION;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -57,6 +58,8 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
     private boolean isSecondRoute = false;
     private Button checkReady;
     private DrivingSession drivingSession;
+    private DrivingRoute currentRoute;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,9 +80,32 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
             }
 
             clearRoute();
-            buildRouteFromFirstToSecondPoint();
-            startLocationUpdates();
+
+            if (isSecondRoute) {
+                finishRoute();
+
+                routeOrderRepository.completeOrder(orderId)
+                        .thenRun(() -> {
+                            Toast.makeText(CourierAcceptedOrder.this, "Заказ завершен", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(CourierAcceptedOrder.this, CourierOrdersList.class);
+                            startActivity(intent);
+                            finish();
+                        })
+                        .exceptionally(e -> {
+                            Toast.makeText(CourierAcceptedOrder.this, "Ошибка завершения заказа: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            return null;
+                        });
+            } else {
+                if (calculateRouteProgress(currentRoute, userLocation) >= 0.9) {
+                    isSecondRoute = true;
+                    buildRouteFromFirstToSecondPoint();
+                    startLocationUpdates();
+                } else {
+                    Toast.makeText(CourierAcceptedOrder.this, "Маршрут не завершен на 90% или более", Toast.LENGTH_SHORT).show();
+                }
+            }
         });
+
     }
 
     private void getRouteOrderFromDatabase(String orderId) {
@@ -116,9 +142,10 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
             Toast.makeText(CourierAcceptedOrder.this, "Недостаточно точек для второго маршрута", Toast.LENGTH_SHORT).show();
             return;
         }
-
+        currentRoute = null;
         requestRouteFromUserLocationToPoint(routePoints.get(0), routePoints.get(1), false);
     }
+
 
     private void requestRouteFromUserLocationToPoint(Point startPoint, Point endPoint, boolean isStart) {
         if (isRequestInProgress) {
@@ -144,9 +171,8 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
                     public void onDrivingRoutes(@NonNull List<DrivingRoute> routes) {
                         if (!routes.isEmpty()) {
                             mapView.getMap().getMapObjects().addPolyline(routes.get(0).getGeometry());
-                            DrivingRoute route = routes.get(0);
-
-                            float progress = calculateRouteProgress(route, userLocation);
+                            currentRoute = routes.get(0);
+                            float progress = calculateRouteProgress(currentRoute, userLocation);
                             Log.d("RouteProgress", "Прогресс по маршруту: " + progress * 100 + "%");
                             if (userLocation != null) {
                                 Log.d("Route", "Маршрут от точки " + routePoints.get(0) + " к " + routePoints.get(1));
@@ -186,6 +212,8 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
     }
 
     private float calculateRouteProgress(DrivingRoute route, Point userLocation) {
+        if (route == null) return 0.0f;
+
         List<Point> routePoints = route.getGeometry().getPoints();
         double totalDistance = 0.0;
         double distanceCovered = 0.0;
@@ -212,6 +240,7 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
 
         return Math.min((float) (distanceCovered / totalDistance), 1.0f);
     }
+
 
     private void startLocationUpdates() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {

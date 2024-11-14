@@ -65,7 +65,7 @@ public class RouteOrderRepository {
         CompletableFuture<List<RouteOrder>> future = new CompletableFuture<>();
         Query query = firestore.collection("routeOrders")
                 .whereEqualTo("isAccepted", false)
-                .whereEqualTo("courierId", null);
+                .whereEqualTo("courierId", "unassigned");
 
         query.get().addOnSuccessListener(queryDocumentSnapshots -> {
             List<RouteOrder> routeOrders = queryDocumentSnapshots.toObjects(RouteOrder.class);
@@ -74,5 +74,7 @@ public class RouteOrderRepository {
         }).addOnFailureListener(future::completeExceptionally);
         return future;
     }
+
+
 
 }

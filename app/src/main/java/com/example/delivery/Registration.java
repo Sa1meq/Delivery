@@ -62,12 +62,12 @@ public class Registration extends AppCompatActivity {
         String email = editEmail.getText().toString();
         String password = editPassword.getText().toString();
         String repeat = repeatPassword.getText().toString();
+        String balance = "0";
 
         if (name.isEmpty() || email.isEmpty() || password.isEmpty() || repeat.isEmpty()) {
             showError("Заполните все поля");
             return;
         }
-
         if (!password.equals(repeat)) {
             showError("Пароли не совпадают");
             return;
@@ -79,7 +79,7 @@ public class Registration extends AppCompatActivity {
             return;
         }
 
-        userRepository.addUser(name, email, password).thenAccept(user -> {
+        userRepository.addUser(name, email, password, balance).thenAccept(user -> {
             if (user != null) {
                 Intent intent = new Intent(Registration.this, MainActivity.class);
                 startActivity(intent);

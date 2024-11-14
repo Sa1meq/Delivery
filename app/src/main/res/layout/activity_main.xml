@@ -5,18 +5,19 @@
     android:layout_height="match_parent"
     android:id="@+id/drawer_layout">
 
+    <!-- Основное содержимое с картой -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- MapView для отображения карты -->
+        <!-- Yandex Map -->
         <com.yandex.mapkit.mapview.MapView
             android:id="@+id/mapView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-        <!-- Добавляем ImageView для меню в верхний левый угол -->
+        <!-- Иконка меню -->
         <ImageView
             android:id="@+id/menuIcon"
             android:layout_width="50dp"
@@ -28,64 +29,135 @@
             android:layout_marginStart="15dp"
             android:clickable="true"
             android:focusable="true" />
-
     </FrameLayout>
 
-        <androidx.coordinatorlayout.widget.CoordinatorLayout
+    <!-- Всплывающее меню внизу -->
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:background="@color/white"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:layout_gravity="bottom">
 
+            <!-- Поля для ввода адресов -->
+            <EditText
+                android:id="@+id/startAddressEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Введите начальный адрес"
+                android:imeOptions="actionNext"
+                android:inputType="text" />
 
-            <!-- Добавляем EditText, Button и RecyclerView -->
+            <EditText
+                android:id="@+id/endAddressEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Введите конечный адрес"
+                android:imeOptions="actionDone"
+                android:inputType="text" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@android:color/white"
                 android:orientation="vertical"
-                android:padding="16dp"
-                android:layout_gravity="bottom">
+                android:gravity="center">
 
-                <EditText
-                    android:id="@+id/startAddressEditText"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Выберите тариф"
+                    android:textStyle="bold" />
+
+                <RadioGroup
+                    android:id="@+id/radioGroupCourierType"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Введите начальный адрес"
-                    android:imeOptions="actionNext"
-                    android:inputType="text" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
 
-                <EditText
-                    android:id="@+id/endAddressEditText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Введите конечный адрес"
-                    android:imeOptions="actionDone"
-                    android:inputType="text" />
+                    <RadioButton
+                        android:id="@+id/radioButtonPedestrian"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="Пеший"
+                        android:layout_weight="1"
+                        android:gravity="start|center_vertical" />
 
-                <Button
-                    android:id="@+id/getRouteButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Получить маршрут" />
+                    <RadioButton
+                        android:id="@+id/radioButtonCar"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="Авто"
+                        android:layout_weight="1"
+                        android:gravity="center" />
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/suggestionsRecyclerView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    android:overScrollMode="never"
-                    android:scrollbars="none"
-                    android:background="@android:color/transparent" />
+                    <RadioButton
+                        android:id="@+id/radioButtonTruck"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="Грузовой"
+                        android:layout_weight="1"
+                        android:gravity="end|center_vertical" />
+
+                </RadioGroup>
             </LinearLayout>
 
-        </androidx.coordinatorlayout.widget.CoordinatorLayout>
+            <EditText
+                android:id="@+id/estimatedTimeEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Примерное время доставки"
+                android:inputType="text"
+                android:focusable="false"
+                android:background="@android:color/transparent" />
+
+            <EditText
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:id="@+id/estimatedCostEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Примерная стоимость"
+                android:inputType="text"
+                android:focusable="false"
+                android:background="@android:color/transparent" />
+
+            <EditText
+                android:id="@+id/orderDescriptionEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Комментарий к заказу"
+                android:inputType="text" />
+
+            <Button
+                android:id="@+id/getRouteButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Оформить заказ" />
 
 
-    <!-- NavigationView внутри DrawerLayout -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/suggestionsRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:overScrollMode="never"
+                android:scrollbars="none"
+                android:background="@android:color/transparent" />
+        </LinearLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigation_view"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         app:menu="@menu/drawer_menu"
-        android:background="@android:color/white"/>
+        android:background="@android:color/white" />
+
 </androidx.drawerlayout.widget.DrawerLayout>

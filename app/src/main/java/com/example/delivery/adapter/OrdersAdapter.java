@@ -39,12 +39,13 @@ public class OrdersAdapter extends RecyclerView.Adapter<OrdersAdapter.OrderViewH
     public void onBindViewHolder(@NonNull OrderViewHolder holder, int position) {
         RouteOrder routeOrder = routeOrders.get(position);
         holder.orderIdTextView.setText(routeOrder.orderId);
+        holder.startAddressTextView.setText("Откуда: " + routeOrder.getStartAddress());
+        holder.endAddressTextView.setText("Куда: " + routeOrder.getEndAddress());
+        holder.descriptionTextView.setText("Примечание: " + routeOrder.getOrderDescription());
         double distanceInKm = routeOrder.totalDistance / 1000.0;
         holder.distanceTextView.setText("Расстояние: " + String.format("%.1f", distanceInKm) + " км");
         holder.timeTextView.setText("Время: " + routeOrder.travelTime / 60 + " минут");
         holder.costTextView.setText("Оплата: " + String.format("%.2f", calculateCost(distanceInKm)) + " руб");
-
-        // Обработчик клика
         holder.itemView.setOnClickListener(v -> onOrderClickListener.onOrderClick(routeOrder));
     }
 
@@ -58,6 +59,9 @@ public class OrdersAdapter extends RecyclerView.Adapter<OrdersAdapter.OrderViewH
         TextView distanceTextView;
         TextView timeTextView;
         TextView costTextView;
+        TextView startAddressTextView;
+        TextView endAddressTextView;
+        TextView descriptionTextView;
 
         public OrderViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -65,6 +69,9 @@ public class OrdersAdapter extends RecyclerView.Adapter<OrdersAdapter.OrderViewH
             distanceTextView = itemView.findViewById(R.id.order_distance);
             timeTextView = itemView.findViewById(R.id.order_time);
             costTextView = itemView.findViewById(R.id.order_cost);
+            startAddressTextView = itemView.findViewById(R.id.start_address);
+            endAddressTextView = itemView.findViewById(R.id.end_address);
+            descriptionTextView = itemView.findViewById(R.id.order_description);
         }
     }
 

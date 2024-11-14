@@ -25,7 +25,6 @@ public class UserProfile extends AppCompatActivity {
         userNameTextView = findViewById(R.id.papa);
         orderHistoryButton = findViewById(R.id.orderHistoryButton);
 
-        Log.d("UserProfile", "onCreate: userNameTextView = " + userNameTextView);
 
         FirebaseAuth auth = FirebaseAuth.getInstance();
         FirebaseFirestore db = FirebaseFirestore.getInstance();

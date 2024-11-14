@@ -1,7 +1,6 @@
 package com.example.delivery.repository;
 
 import com.example.delivery.model.User;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
@@ -22,18 +21,15 @@ public class UserRepository {
         this.auth = auth;
         this.usersCollection = db.collection("users");
     }
-
-    public CompletableFuture<User> addUser(String name, String email, String password) {
+    public CompletableFuture<User> addUser(String name, String email, String password, String balance) {
         CompletableFuture<User> future = new CompletableFuture<>();
-
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         FirebaseUser firebaseUser = auth.getCurrentUser();
                         if (firebaseUser != null) {
-                            String userId = firebaseUser.getUid(); // Получаем UID
-                            User user = new User(userId, name, email, password);
-
+                            String userId = firebaseUser.getUid();
+                            User user = new User(userId, name, email, password, "0");
                             usersCollection.document(userId).set(user)
                                     .addOnSuccessListener(aVoid -> future.complete(user))
                                     .addOnFailureListener(future::completeExceptionally);

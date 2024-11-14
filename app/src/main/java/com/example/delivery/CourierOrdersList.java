@@ -8,14 +8,19 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import java.util.ArrayList;
 
 import com.example.delivery.model.RouteOrder;
+import com.example.delivery.repository.CourierRepository;
 import com.example.delivery.repository.RouteOrderRepository;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import com.example.delivery.adapter.OrdersAdapter;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class CourierOrdersList extends AppCompatActivity {
 
@@ -39,12 +44,43 @@ public class CourierOrdersList extends AppCompatActivity {
 
     private void loadCourierOrders() {
         routeOrderRepository.getAllPendingRouteOrdersForCourier(courierId)
-                .thenAccept(this::updateOrdersList)
+                .thenAccept(this::filterAndUpdateOrdersList)
                 .exceptionally(e -> {
                     e.printStackTrace();
                     return null;
                 });
     }
+
+    private void filterAndUpdateOrdersList(List<RouteOrder> routeOrders) {
+        String courierUid = FirebaseAuth.getInstance().getUid();
+        CourierRepository courierRepository = new CourierRepository(FirebaseFirestore.getInstance());
+
+        // Получаем тип курьера из Firestore
+        courierRepository.getCourierTypeByUid(courierUid)
+                .thenAccept(courierType -> {
+                    if (courierType == null) {
+                        runOnUiThread(() -> Toast.makeText(this, "Тип курьера не найден", Toast.LENGTH_SHORT).show());
+                        return;
+                    }
+
+                    List<RouteOrder> filteredOrders = new ArrayList<>();
+                    // Фильтруем заказы по типу курьера, сравнивая с тем, что в БД
+                    for (RouteOrder routeOrder : routeOrders) {
+                        if (routeOrder.getCourierType().equals(courierType)) {
+                            filteredOrders.add(routeOrder);
+                        }
+                    }
+                    // Обновляем список заказов после фильтрации
+                    updateOrdersList(filteredOrders);
+                })
+                .exceptionally(e -> {
+                    runOnUiThread(() -> Toast.makeText(this, "Ошибка при получении типа курьера", Toast.LENGTH_SHORT).show());
+                    return null;
+                });
+    }
+
+
+
 
     private void updateOrdersList(List<RouteOrder> routeOrders) {
         ordersAdapter = new OrdersAdapter(routeOrders, this::showAcceptOrderDialog, this);
@@ -67,7 +103,7 @@ public class CourierOrdersList extends AppCompatActivity {
                 .thenAccept(aVoid -> runOnUiThread(() -> {
                     Toast.makeText(this, "Заказ принят", Toast.LENGTH_SHORT).show();
                     loadCourierOrders();
-                    openAcceptedOrderScreen(routeOrder.orderId); // Переход в новую активность после принятия
+                    openAcceptedOrderScreen(routeOrder.orderId);
                 }))
                 .exceptionally(e -> {
                     runOnUiThread(() -> Toast.makeText(this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show());
@@ -79,5 +115,4 @@ public class CourierOrdersList extends AppCompatActivity {
         intent.putExtra("orderId", orderId);
         startActivity(intent);
     }
-
 }

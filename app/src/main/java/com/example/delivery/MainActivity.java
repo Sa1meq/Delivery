@@ -12,6 +12,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -84,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private MapObjectCollection mapObjects;
     private List<Point> routePoints = new ArrayList<>();
     private PlacemarkMapObject userPlacemark;
-    private EditText startAddressEditText, endAddressEditText;
+    private EditText startAddressEditText, endAddressEditText, estimatedTimeEditText, estimatedCostEditText, orderDescriptionEditText;
     private Button getRouteButton;
     private SearchManager searchManager;
     private SuggestSession suggestSession;
@@ -101,6 +103,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private RouteOrderRepository routeOrderRepository;
     private UserRepository userRepository;
     private boolean isRequestInProgress = false;
+    private RadioButton radioButtonPedestrian, radioButtonCar, radioButtonTruck;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +121,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         startAddressEditText = findViewById(R.id.startAddressEditText);
         endAddressEditText = findViewById(R.id.endAddressEditText);
         getRouteButton = findViewById(R.id.getRouteButton);
+        radioButtonPedestrian = findViewById(R.id.radioButtonPedestrian);
+        radioButtonCar = findViewById(R.id.radioButtonCar);
+        radioButtonTruck = findViewById(R.id.radioButtonTruck);
+
+        estimatedTimeEditText = findViewById(R.id.estimatedTimeEditText);
+        estimatedCostEditText = findViewById(R.id.estimatedCostEditText);
+        orderDescriptionEditText = findViewById(R.id.orderDescriptionEditText);
+
 
         suggestionsRecyclerView = findViewById(R.id.suggestionsRecyclerView);
         suggestionAdapter = new AddressSuggestionAdapter(suggestions, this::onSuggestionClick);
@@ -304,13 +315,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void requestRoute() {
         if (isRequestInProgress) {
-            Log.d("RouteRequest", "Запрос маршрута уже выполняется.");
             return;
         }
         isRequestInProgress = true;
 
         if (routePoints.size() < 2) {
             Toast.makeText(MainActivity.this, "Выберите минимум две точки", Toast.LENGTH_SHORT).show();
+            isRequestInProgress = false;
             return;
         }
 
@@ -328,32 +339,44 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 new DrivingSession.DrivingRouteListener() {
                     @Override
                     public void onDrivingRoutes(@NonNull List<DrivingRoute> routes) {
+                        isRequestInProgress = false;
                         if (!routes.isEmpty()) {
-                            mapObjects.addPolyline(routes.get(0).getGeometry());
                             DrivingRoute route = routes.get(0);
+                            mapObjects.addPolyline(route.getGeometry());
 
-
-                            if (userLocation != null && routePoints.size() >= 2) {
+                            if (userLocation != null) {
                                 float distanceToEndPoint = distanceBetweenPointsOnRoute(route, routePoints.get(0), routePoints.get(1));
                                 float timeToEndPoint = timeTravelToPoint(route, routePoints.get(1));
-                                RouteOrder routeOrder = new RouteOrder();
-                                routeOrder.orderId = UUID.randomUUID().toString();
-                                routeOrder.userId = FirebaseAuth.getInstance().getUid();
-                                routeOrder.routePoints = routePoints;
-                                routeOrder.isAccepted = false;
-                                routeOrder.isCompleted = false;
-                                routeOrder.totalDistance = distanceToEndPoint;
-                                routeOrder.travelTime = (long) timeToEndPoint;
+                                float timeInSeconds = timeTravelToPoint(route, routePoints.get(1));
+                                long timeInMinutes = (long) (timeInSeconds / 60);
+                                estimatedTimeEditText.setText(String.valueOf(timeInMinutes));
+                                String startAddress = startAddressEditText.getText().toString();
+                                String endAddress = endAddressEditText.getText().toString();
+                                double estimatedCost = parseEstimatedCost();
+                                Long estimatedDeliveryTime = parseEstimatedDeliveryTime();
+                                String orderDescription = orderDescriptionEditText.getText().toString();
+                                String courierType = getSelectedCourierType();
+                                RouteOrder routeOrder = new RouteOrder(
+                                        UUID.randomUUID().toString(),
+                                        FirebaseAuth.getInstance().getUid(),
+                                        null,
+                                        routePoints,
+                                        distanceToEndPoint,
+                                        (long) timeToEndPoint,
+                                        startAddress,
+                                        endAddress,
+                                        courierType,
+                                        estimatedCost,
+                                        estimatedDeliveryTime,
+                                        orderDescription
+                                );
+
                                 routeOrderRepository.saveRouteOrder(routeOrder)
-                                        .thenAccept(aVoid -> {
-                                            Toast.makeText(MainActivity.this, "Маршрут успешно сохранён", Toast.LENGTH_SHORT).show();
-                                        })
+                                        .thenAccept(aVoid -> Toast.makeText(MainActivity.this, "Маршрут успешно сохранён", Toast.LENGTH_SHORT).show())
                                         .exceptionally(e -> {
                                             Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                             return null;
                                         });
-                            } else {
-
                             }
                         } else {
                             Toast.makeText(MainActivity.this, "Маршрут не найден", Toast.LENGTH_SHORT).show();
@@ -362,11 +385,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                     @Override
                     public void onDrivingRoutesError(@NonNull Error error) {
+                        isRequestInProgress = false;
                         Toast.makeText(MainActivity.this, "Ошибка построения маршрута", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
     }
+
 
     private float distanceBetweenPointsOnRoute(DrivingRoute route, Point first, Point second) {
         PolylineIndex polylineIndex = PolylineUtils.createPolylineIndex(route.getGeometry());
@@ -377,8 +402,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         PolylinePosition firstPosition = polylineIndex.closestPolylinePosition(first, PolylineIndex.Priority.CLOSEST_TO_START, 1000.0);
         PolylinePosition secondPosition = polylineIndex.closestPolylinePosition(second, PolylineIndex.Priority.CLOSEST_TO_RAW_POINT, 1000.0);
-
-
 
         if (firstPosition == null || secondPosition == null) {
 
@@ -404,6 +427,39 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             return 0;
         }
     }
+
+    private String getSelectedCourierType() {
+        RadioGroup radioGroup = findViewById(R.id.radioGroupCourierType);
+        int selectedId = radioGroup.getCheckedRadioButtonId();
+        if (selectedId == R.id.radioButtonPedestrian) {
+            return "Пеший";
+        } else if (selectedId == R.id.radioButtonCar) {
+            return "Авто";
+        } else if (selectedId == R.id.radioButtonTruck) {
+            return "Грузовой";
+        }
+        return "Не указан";
+    }
+
+
+    private double parseEstimatedCost() {
+        String costText = estimatedCostEditText.getText().toString();
+        try {
+            return Double.parseDouble(costText);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    private Long parseEstimatedDeliveryTime() {
+        String timeText = estimatedTimeEditText.getText().toString();
+        try {
+            return Long.parseLong(timeText);
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
+    }
+
 
 
 
@@ -480,12 +536,23 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+
     private class AddressTextWatcher implements TextWatcher {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
+            String startAddress = startAddressEditText.getText().toString();
+            String endAddress = endAddressEditText.getText().toString();
+
+            if (!startAddress.isEmpty() && !endAddress.isEmpty()) {
+                if (routePoints.size() == 2) {
+                    requestRoute();
+                } else {
+                    Toast.makeText(MainActivity.this, "Сначала выберите оба адреса", Toast.LENGTH_SHORT).show();
+                }
+            }
             String query = s.toString();
             handler.removeCallbacks(suggestionRunnable);
             if (!query.isEmpty()) {
@@ -497,10 +564,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 suggestionsRecyclerView.setVisibility(View.GONE);
             }
         }
-
         @Override
         public void afterTextChanged(Editable s) {}
     }
+
 
     @Override
     protected void onStart() {

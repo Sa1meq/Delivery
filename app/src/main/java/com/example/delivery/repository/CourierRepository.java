@@ -62,6 +62,23 @@ public class CourierRepository {
         return future;
     }
 
+    public CompletableFuture<String> getCourierTypeByUid(String courierUid) {
+        CompletableFuture<String> future = new CompletableFuture<>();
+        courierCollection.document(courierUid).get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        Courier courier = task.getResult().toObject(Courier.class);
+                        if (courier != null) {
+                            future.complete(courier.getTypeOfCourier());
+                        } else {
+                            future.completeExceptionally(new Exception("Courier not found"));
+                        }
+                    } else {
+                        future.completeExceptionally(new Exception("Failed to get courier type"));
+                    }
+                });
+        return future;
+    }
 
 
     public CompletableFuture<Boolean> deleteCourierById(String id, FirebaseStorage firebaseStorage) {

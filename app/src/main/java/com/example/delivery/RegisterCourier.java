@@ -37,12 +37,10 @@ public class RegisterCourier extends AppCompatActivity {
         phoneEditText = findViewById(R.id.editTextPhone);
         registerButton = findViewById(R.id.registerButton);
         textViewLogin = findViewById(R.id.textViewLogin);
-
         courierRepository = new CourierRepository(FirebaseFirestore.getInstance());
-
-        findViewById(R.id.radioButtonPedestrian).setOnClickListener(view -> typeOfCourier = "Pedestrian");
-        findViewById(R.id.radioButtonCar).setOnClickListener(view -> typeOfCourier = "Car");
-        findViewById(R.id.radioButtonTruck).setOnClickListener(view -> typeOfCourier = "Truck");
+        findViewById(R.id.radioButtonPedestrian).setOnClickListener(view -> typeOfCourier = "Пеший");
+        findViewById(R.id.radioButtonCar).setOnClickListener(view -> typeOfCourier = "Авто");
+        findViewById(R.id.radioButtonTruck).setOnClickListener(view -> typeOfCourier = "Грузовой");
 
         registerButton.setOnClickListener(v -> registerCourier());
 
@@ -63,7 +61,7 @@ public class RegisterCourier extends AppCompatActivity {
 
             if (currentUser != null) {
                 String userId = currentUser.getUid();
-                Courier courier = new Courier(userId, firstName, surName, phone, typeOfCourier, "0.00", "0");
+                Courier courier = new Courier(userId, firstName, surName, phone, typeOfCourier, "0.00", "0", "0");
 
                 courierRepository.addCourier(courier, userId).thenAccept(aVoid -> {
                     Toast.makeText(RegisterCourier.this, "Курьер успешно зарегистрирован!", Toast.LENGTH_SHORT).show();

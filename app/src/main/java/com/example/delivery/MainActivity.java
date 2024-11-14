@@ -107,7 +107,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        MapKitFactory.setApiKey("37174936-b5e1-4db7-86b0-9a3a32e1ff5d");
         MapKitFactory.initialize(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -314,17 +313,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void requestRoute() {
-        if (isRequestInProgress) {
-            return;
-        }
-        isRequestInProgress = true;
-
-        if (routePoints.size() < 2) {
-            Toast.makeText(MainActivity.this, "Выберите минимум две точки", Toast.LENGTH_SHORT).show();
-            isRequestInProgress = false;
-            return;
-        }
-
         DrivingOptions drivingOptions = new DrivingOptions();
         VehicleOptions vehicleOptions = new VehicleOptions();
 
@@ -548,7 +536,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             if (!startAddress.isEmpty() && !endAddress.isEmpty()) {
                 if (routePoints.size() == 2) {
-                    requestRoute();
+//                    requestRoute();
                 } else {
                     Toast.makeText(MainActivity.this, "Сначала выберите оба адреса", Toast.LENGTH_SHORT).show();
                 }

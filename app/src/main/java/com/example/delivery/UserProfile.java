@@ -1,11 +1,10 @@
 package com.example.delivery;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
+import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.example.delivery.repository.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -13,8 +12,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class UserProfile extends AppCompatActivity {
     private TextView userNameTextView;
-    private TextView profileTitleTextView;
-    private TextView orderHistoryButton, activeOrdersButton, supportButton, rechargeBalanceButton, becomeCourierButton, aboutServiceButton;
+    private TextView orderHistoryButton, activeOrdersButton;
     private UserRepository userRepository;
 
     @Override
@@ -25,11 +23,9 @@ public class UserProfile extends AppCompatActivity {
         userNameTextView = findViewById(R.id.papa);
         orderHistoryButton = findViewById(R.id.orderHistoryButton);
 
-
         FirebaseAuth auth = FirebaseAuth.getInstance();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         userRepository = new UserRepository(db, auth);
-
 
         FirebaseUser firebaseUser = auth.getCurrentUser();
         if (firebaseUser != null) {
@@ -48,5 +44,25 @@ public class UserProfile extends AppCompatActivity {
         } else {
             userNameTextView.setText("Пользователь не авторизован");
         }
+
+        orderHistoryButton.setOnClickListener(v -> {
+            Intent intent = new Intent(UserProfile.this, UserOrdersHistory.class);
+            startActivity(intent);
+        });
+
+        ImageView backButton = findViewById(R.id.backButton);
+        backButton.setOnClickListener(v -> {
+            Intent intent = new Intent(UserProfile.this, MainActivity.class);
+            startActivity(intent);
+            finish();
+        });
+        activeOrdersButton = findViewById(R.id.activeOrdersButton);
+
+        activeOrdersButton.setOnClickListener(v -> {
+            Intent intent = new Intent(UserProfile.this, UserActiveOrders.class);
+            startActivity(intent);
+            finish();
+        });
+
     }
 }

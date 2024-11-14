@@ -41,20 +41,6 @@ public class Authorization extends AppCompatActivity {
         errorTextView = findViewById(R.id.errorTextView);
         rememberMeCheckBox = findViewById(R.id.rememberMeCheckBox);
 
-        // Инициализация SharedPreferences
-        sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-
-        // Проверка, если сохраненные данные существуют, сразу переходите на MainActivity
-        if (sharedPreferences.getBoolean("rememberMe", false)) {
-            String savedEmail = sharedPreferences.getString(KEY_EMAIL, "");
-            String savedPassword = sharedPreferences.getString(KEY_PASSWORD, "");
-
-            if (!savedEmail.isEmpty() && !savedPassword.isEmpty()) {
-                // Здесь вы можете добавить код для проверки пользователя в базе данных
-                authenticateUser(savedEmail, savedPassword);
-            }
-        }
-
         passwordEditText.setOnTouchListener((v, event) -> {
             final int DRAWABLE_END = 2;
 
@@ -69,7 +55,7 @@ public class Authorization extends AppCompatActivity {
 
         rememberMeCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                saveUserCredentials();
+//                saveUserCredentials();
             } else {
                 clearUserCredentials();
             }
@@ -100,18 +86,18 @@ public class Authorization extends AppCompatActivity {
                 });
     }
 
-    private void saveUserCredentials() {
-        String email = emailEditText.getText().toString().trim();
-        String password = passwordEditText.getText().toString().trim();
-
-        if (!email.isEmpty() && !password.isEmpty()) {
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putString(KEY_EMAIL, email);
-            editor.putString(KEY_PASSWORD, password);
-            editor.putBoolean("rememberMe", true); // Сохранение состояния чекбокса
-            editor.apply();
-        }
-    }
+//    private void saveUserCredentials() {
+//        String email = emailEditText.getText().toString().trim();
+//        String password = passwordEditText.getText().toString().trim();
+//
+//        if (!email.isEmpty() && !password.isEmpty()) {
+//            SharedPreferences.Editor editor = sharedPreferences.edit();
+//            editor.putString(KEY_EMAIL, email);
+//            editor.putString(KEY_PASSWORD, password);
+//            editor.putBoolean("rememberMe", true); // Сохранение состояния чекбокса
+//            editor.apply();
+//        }
+//    }
 
     private void clearUserCredentials() {
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -158,7 +144,7 @@ public class Authorization extends AppCompatActivity {
                     }
 
                     Authentication.setUser(user);
-                    saveUserCredentials(); // Сохранить данные при успешной авторизации
+//                    saveUserCredentials(); // Сохранить данные при успешной авторизации
 
                     runOnUiThread(() -> {
                         Intent intent = new Intent(Authorization.this, MainActivity.class);

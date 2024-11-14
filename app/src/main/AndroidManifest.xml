@@ -14,6 +14,7 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
+        android:name=".MyApp"
         android:icon="@drawable/ic_icon"
         android:label="@string/app_name"
         android:roundIcon="@drawable/ic_icon"
@@ -42,11 +43,19 @@
             android:exported="true">
         </activity>
         <activity
+            android:name=".UserActiveOrders"
+            android:exported="true">
+        </activity>
+        <activity
             android:name=".RegisterCourier"
             android:exported="true">
         </activity>
         <activity
             android:name=".LoginCourier"
+            android:exported="true">
+        </activity>
+        <activity
+            android:name=".UserOrdersHistory"
             android:exported="true">
         </activity>
         <activity

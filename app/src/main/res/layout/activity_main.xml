@@ -125,6 +125,7 @@
                 android:hint="Примерная стоимость"
                 android:inputType="text"
                 android:focusable="false"
+                android:visibility="gone"
                 android:background="@android:color/transparent" />
 
             <EditText

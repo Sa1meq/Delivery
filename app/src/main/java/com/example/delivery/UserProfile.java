@@ -12,7 +12,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class UserProfile extends AppCompatActivity {
     private TextView userNameTextView;
-    private TextView orderHistoryButton, activeOrdersButton;
+    private TextView orderHistoryButton, activeOrdersButton, becomeCourierButton, placeOrder;
     private UserRepository userRepository;
 
     @Override
@@ -22,6 +22,9 @@ public class UserProfile extends AppCompatActivity {
 
         userNameTextView = findViewById(R.id.papa);
         orderHistoryButton = findViewById(R.id.orderHistoryButton);
+        activeOrdersButton = findViewById(R.id.activeOrdersButton);
+        becomeCourierButton = findViewById(R.id.becomeCourierButton);
+        placeOrder = findViewById(R.id.placeOrder);
 
         FirebaseAuth auth = FirebaseAuth.getInstance();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -50,18 +53,21 @@ public class UserProfile extends AppCompatActivity {
             startActivity(intent);
         });
 
-        ImageView backButton = findViewById(R.id.backButton);
-        backButton.setOnClickListener(v -> {
+        placeOrder.setOnClickListener(v -> {
             Intent intent = new Intent(UserProfile.this, MainActivity.class);
             startActivity(intent);
             finish();
         });
-        activeOrdersButton = findViewById(R.id.activeOrdersButton);
 
         activeOrdersButton.setOnClickListener(v -> {
             Intent intent = new Intent(UserProfile.this, UserActiveOrders.class);
             startActivity(intent);
             finish();
+        });
+
+        becomeCourierButton.setOnClickListener(v -> {
+            Intent intent = new Intent(UserProfile.this, RegisterCourier.class);
+            startActivity(intent);
         });
 
     }

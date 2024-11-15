@@ -26,7 +26,6 @@ public class UserActiveOrders extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_active_orders);
-
         ordersRecyclerView = findViewById(R.id.ordersRecyclerView);
         ordersRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -50,7 +49,6 @@ public class UserActiveOrders extends AppCompatActivity {
             activeOrderList.addAll(orders);
             orderAdapter.notifyDataSetChanged();
         }).exceptionally(e -> {
-            // Обработать ошибку
             return null;
         });
     }

@@ -17,6 +17,7 @@ import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -80,6 +81,7 @@ import java.util.UUID;
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, LocationListener {
 
     public static final int REQUEST_LOCATION_PERMISSION = 1;
+    private static final int ADDRESS_PICKER_REQUEST = 1;
     private MapView mapView;
     private DrivingRouter drivingRouter;
     private Point userLocation;
@@ -162,6 +164,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             requestUserLocation();
         }
 
+
+
+
         pinCollection = mapView.getMap().getMapObjects().addCollection();
         drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.navigation_view);
@@ -170,6 +175,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         locationManager = MapKitFactory.getInstance().createLocationManager();
         Log.d("MainActivity", "LocationManager initialized: " + locationManager);
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == ADDRESS_PICKER_REQUEST && resultCode == RESULT_OK) {
+            if (data != null) {
+                String startAddress = data.getStringExtra("startAddress");
+                String endAddress = data.getStringExtra("endAddress");
+
+                startAddressEditText.setText(startAddress);
+                endAddressEditText.setText(endAddress);
+            }
+        }
     }
 
     @Override

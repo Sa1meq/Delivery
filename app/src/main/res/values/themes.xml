@@ -11,6 +11,13 @@
 
         <item name="android:statusBarColor">@color/my_primary</item>
     </style>
+    <style name="Theme.App.Transparent" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
 
     <style name="Theme.Delivery" parent="Base.Theme.Delivery" />
 

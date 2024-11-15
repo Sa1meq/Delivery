@@ -29,6 +29,8 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"></activity>
+        <activity android:name=".AddressPickerActivity"
+            android:theme="@style/Theme.App.Transparent" />
         <activity
             android:name=".Authorization"
             android:exported="true">

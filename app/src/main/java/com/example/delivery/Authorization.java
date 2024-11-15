@@ -151,7 +151,7 @@ public class Authorization extends AppCompatActivity {
                         if (user.isAdmin()) {
                             intent = new Intent(Authorization.this, AdminPanel.class);
                         } else {
-                            intent = new Intent(Authorization.this, MainActivity.class);
+                            intent = new Intent(Authorization.this, UserProfile.class);
                         }
                         startActivity(intent);
                         finish();
@@ -187,7 +187,7 @@ public class Authorization extends AppCompatActivity {
                     if (user.isAdmin()) {
                         intent = new Intent(Authorization.this, AdminPanel.class);
                     } else {
-                        intent = new Intent(Authorization.this, MainActivity.class);
+                        intent = new Intent(Authorization.this, UserProfile.class);
                     }
                     startActivity(intent);
                     finish();

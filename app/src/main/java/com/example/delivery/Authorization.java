@@ -27,6 +27,7 @@ public class Authorization extends AppCompatActivity {
     private static final String PREFS_NAME = "UserPrefs";
     private static final String KEY_EMAIL = "email";
     private static final String KEY_PASSWORD = "password";
+    private static final String KEY_REMEMBER_ME = "rememberMe";
     private CheckBox rememberMeCheckBox;
 
     @Override
@@ -40,6 +41,11 @@ public class Authorization extends AppCompatActivity {
         passwordEditText = findViewById(R.id.passwordEditText);
         errorTextView = findViewById(R.id.errorTextView);
         rememberMeCheckBox = findViewById(R.id.rememberMeCheckBox);
+
+        sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+
+        // Автозаполнение полей, если ранее данные были сохранены
+        loadUserCredentials();
 
         passwordEditText.setOnTouchListener((v, event) -> {
             final int DRAWABLE_END = 2;
@@ -55,55 +61,46 @@ public class Authorization extends AppCompatActivity {
 
         rememberMeCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-//                saveUserCredentials();
+                saveUserCredentials(); // Сохранение данных пользователя
             } else {
-                clearUserCredentials();
+                clearUserCredentials(); // Очистка данных
             }
         });
     }
 
-    private void authenticateUser(String email, String password) {
-        // Здесь можно добавить код для проверки пользователя в базе данных
-        userRepository.getUserByEmail(email)
-                .thenAccept(user -> {
-                    if (user == null || !user.getPassword().equals(password)) {
-                        Log.d("Authorization", "Неправильный email или пароль при автоматическом входе.");
-                        return;
-                    }
+    private void loadUserCredentials() {
+        String savedEmail = sharedPreferences.getString(KEY_EMAIL, "");
+        String savedPassword = sharedPreferences.getString(KEY_PASSWORD, "");
+        boolean rememberMe = sharedPreferences.getBoolean(KEY_REMEMBER_ME, false);
 
-                    // Если пользователь найден и пароль совпадает
-                    Authentication.setUser(user);
-                    Log.d("Authorization", "Пользователь автоматически авторизован: " + user.getEmail());
+        if (rememberMe) {
+            emailEditText.setText(savedEmail);
+            passwordEditText.setText(savedPassword);
+            rememberMeCheckBox.setChecked(true);
 
-                    // Переход на MainActivity
-                    Intent intent = new Intent(Authorization.this, MainActivity.class);
-                    startActivity(intent);
-                    finish();
-                })
-                .exceptionally(e -> {
-                    Log.e("Authorization", "Ошибка при автоматическом входе: " + e.getMessage());
-                    return null;
-                });
+            // Попытка автоматической авторизации
+            authenticateUser(savedEmail, savedPassword);
+        }
     }
 
-//    private void saveUserCredentials() {
-//        String email = emailEditText.getText().toString().trim();
-//        String password = passwordEditText.getText().toString().trim();
-//
-//        if (!email.isEmpty() && !password.isEmpty()) {
-//            SharedPreferences.Editor editor = sharedPreferences.edit();
-//            editor.putString(KEY_EMAIL, email);
-//            editor.putString(KEY_PASSWORD, password);
-//            editor.putBoolean("rememberMe", true); // Сохранение состояния чекбокса
-//            editor.apply();
-//        }
-//    }
+    private void saveUserCredentials() {
+        String email = emailEditText.getText().toString().trim();
+        String password = passwordEditText.getText().toString().trim();
+
+        if (!email.isEmpty() && !password.isEmpty()) {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(KEY_EMAIL, email);
+            editor.putString(KEY_PASSWORD, password);
+            editor.putBoolean(KEY_REMEMBER_ME, true);
+            editor.apply();
+        }
+    }
 
     private void clearUserCredentials() {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.remove(KEY_EMAIL);
         editor.remove(KEY_PASSWORD);
-        editor.remove("rememberMe"); // Удаление состояния чекбокса
+        editor.putBoolean(KEY_REMEMBER_ME, false);
         editor.apply();
     }
 
@@ -144,10 +141,18 @@ public class Authorization extends AppCompatActivity {
                     }
 
                     Authentication.setUser(user);
-//                    saveUserCredentials(); // Сохранить данные при успешной авторизации
+
+                    if (rememberMeCheckBox.isChecked()) {
+                        saveUserCredentials();
+                    }
 
                     runOnUiThread(() -> {
-                        Intent intent = new Intent(Authorization.this, MainActivity.class);
+                        Intent intent;
+                        if (user.isAdmin()) {
+                            intent = new Intent(Authorization.this, AdminPanel.class);
+                        } else {
+                            intent = new Intent(Authorization.this, MainActivity.class);
+                        }
                         startActivity(intent);
                         finish();
                     });
@@ -165,5 +170,31 @@ public class Authorization extends AppCompatActivity {
         Intent intent = new Intent(Authorization.this, Registration.class);
         startActivity(intent);
         finish();
+    }
+
+    private void authenticateUser(String email, String password) {
+        userRepository.getUserByEmail(email)
+                .thenAccept(user -> {
+                    if (user == null || !user.getPassword().equals(password)) {
+                        Log.d("Authorization", "Неправильный email или пароль при автоматическом входе.");
+                        return;
+                    }
+
+                    Authentication.setUser(user);
+                    Log.d("Authorization", "Пользователь авторизован: " + user.getEmail());
+
+                    Intent intent;
+                    if (user.isAdmin()) {
+                        intent = new Intent(Authorization.this, AdminPanel.class);
+                    } else {
+                        intent = new Intent(Authorization.this, MainActivity.class);
+                    }
+                    startActivity(intent);
+                    finish();
+                })
+                .exceptionally(e -> {
+                    Log.e("Authorization", "Ошибка при автоматическом входе: " + e.getMessage());
+                    return null;
+                });
     }
 }

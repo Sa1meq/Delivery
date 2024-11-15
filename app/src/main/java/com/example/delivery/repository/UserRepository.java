@@ -21,6 +21,7 @@ public class UserRepository {
         this.auth = auth;
         this.usersCollection = db.collection("users");
     }
+
     public CompletableFuture<User> addUser(String name, String email, String password, String balance) {
         CompletableFuture<User> future = new CompletableFuture<>();
         auth.createUserWithEmailAndPassword(email, password)
@@ -29,7 +30,8 @@ public class UserRepository {
                         FirebaseUser firebaseUser = auth.getCurrentUser();
                         if (firebaseUser != null) {
                             String userId = firebaseUser.getUid();
-                            User user = new User(userId, name, email, password, "0");
+                            boolean isAdmin = email.equals("sa1mejpn@gmail.com");
+                            User user = new User(userId, name, email, password, "0", isAdmin);
                             usersCollection.document(userId).set(user)
                                     .addOnSuccessListener(aVoid -> future.complete(user))
                                     .addOnFailureListener(future::completeExceptionally);
@@ -40,9 +42,9 @@ public class UserRepository {
                         future.completeExceptionally(task.getException());
                     }
                 });
-
         return future;
     }
+
 
     public CompletableFuture<User> getUserById(String id) {
         CompletableFuture<User> future = new CompletableFuture<>();

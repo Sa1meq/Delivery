@@ -54,6 +54,12 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
 
+    runtimeOnly("com.cloudinary:cloudinary-android-core:3.0.2")
+    implementation("com.cloudinary:cloudinary-android-preprocess:3.0.2")
+    implementation("com.cloudinary:cloudinary-android:3.0.2")
+    implementation("com.cloudinary:cloudinary-android-ui:3.0.2")
+    implementation ("com.github.bumptech.glide:glide:4.16.0")
+
 
     implementation ("com.yandex.android:maps.mobile:4.8.0-full")
 

@@ -11,17 +11,20 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.delivery.auth.Authentication;
 import com.example.delivery.repository.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.auth.FirebaseUser;
 
 public class Authorization extends AppCompatActivity {
 
-    public UserRepository userRepository;
-    public EditText emailEditText, passwordEditText;
-    public TextView errorTextView;
+    private UserRepository userRepository;
+    private EditText emailEditText, passwordEditText;
+    private TextView errorTextView;
     private boolean isPasswordVisible = false;
     private SharedPreferences sharedPreferences;
     private static final String PREFS_NAME = "UserPrefs";
@@ -35,18 +38,22 @@ public class Authorization extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_authorization);
 
+        // Инициализация SharedPreferences
+        sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+
+        // Инициализация репозитория пользователей
         userRepository = new UserRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance());
 
+        // Привязка UI элементов
         emailEditText = findViewById(R.id.emailEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
         errorTextView = findViewById(R.id.errorTextView);
         rememberMeCheckBox = findViewById(R.id.rememberMeCheckBox);
 
-        sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-
         // Автозаполнение полей, если ранее данные были сохранены
         loadUserCredentials();
 
+        // Обработчик нажатия для отображения/скрытия пароля
         passwordEditText.setOnTouchListener((v, event) -> {
             final int DRAWABLE_END = 2;
 
@@ -59,6 +66,7 @@ public class Authorization extends AppCompatActivity {
             return false;
         });
 
+        // Обработчик для чекбокса "Запомнить меня"
         rememberMeCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 saveUserCredentials(); // Сохранение данных пользователя
@@ -73,16 +81,23 @@ public class Authorization extends AppCompatActivity {
         String savedPassword = sharedPreferences.getString(KEY_PASSWORD, "");
         boolean rememberMe = sharedPreferences.getBoolean(KEY_REMEMBER_ME, false);
 
-        if (rememberMe) {
+        if (rememberMe && !savedEmail.isEmpty() && !savedPassword.isEmpty()) {
             emailEditText.setText(savedEmail);
             passwordEditText.setText(savedPassword);
             rememberMeCheckBox.setChecked(true);
 
             // Попытка автоматической авторизации
             authenticateUser(savedEmail, savedPassword);
+        } else {
+            // Очистить поля, если чекбокс не установлен или данных нет
+            emailEditText.setText("");
+            passwordEditText.setText("");
+            rememberMeCheckBox.setChecked(false);
         }
     }
 
+
+    // Сохранение данных пользователя в SharedPreferences
     private void saveUserCredentials() {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
@@ -96,6 +111,7 @@ public class Authorization extends AppCompatActivity {
         }
     }
 
+    // Очистка данных пользователя из SharedPreferences
     private void clearUserCredentials() {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.remove(KEY_EMAIL);
@@ -104,6 +120,7 @@ public class Authorization extends AppCompatActivity {
         editor.apply();
     }
 
+    // Переключение видимости пароля
     private void togglePasswordVisibility() {
         Typeface currentTypeface = passwordEditText.getTypeface();
         int selection = passwordEditText.getSelectionEnd();
@@ -120,6 +137,7 @@ public class Authorization extends AppCompatActivity {
         passwordEditText.setSelection(selection);
     }
 
+    // Обработка клика по кнопке "Войти"
     public void onClickLogin(View view) {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
@@ -130,71 +148,49 @@ public class Authorization extends AppCompatActivity {
             return;
         }
 
-        userRepository.getUserByEmail(email)
-                .thenAccept(user -> {
-                    if (user == null || !user.getPassword().equals(password)) {
-                        runOnUiThread(() -> {
-                            errorTextView.setVisibility(View.VISIBLE);
-                            errorTextView.setText("Неправильный email или пароль");
-                        });
-                        return;
-                    }
+        // Добавление логирования для диагностики
+        Log.d("Authorization", "Попытка аутентификации с email: " + email);
 
-                    Authentication.setUser(user);
-
-                    if (rememberMeCheckBox.isChecked()) {
-                        saveUserCredentials();
-                    }
-
-                    runOnUiThread(() -> {
-                        Intent intent;
-                        if (user.isAdmin()) {
-                            intent = new Intent(Authorization.this, AdminPanel.class);
-                        } else {
-                            intent = new Intent(Authorization.this, UserProfile.class);
+        FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        Log.d("Authorization", "Авторизация успешна!");
+                        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                        if (user != null) {
+                            // Запуск следующей активности на основе данных пользователя
+                            Intent intent = new Intent(Authorization.this, UserProfile.class);
+                            startActivity(intent);
+                            finish();
                         }
-                        startActivity(intent);
-                        finish();
-                    });
-                })
-                .exceptionally(e -> {
-                    runOnUiThread(() -> {
+                    } else {
+                        Log.e("Authorization", "Ошибка авторизации: " + task.getException().getMessage());
                         errorTextView.setVisibility(View.VISIBLE);
-                        errorTextView.setText("Ошибка авторизации: " + e.getMessage());
-                    });
-                    return null;
+                        errorTextView.setText("Неправильный email или пароль");
+                    }
                 });
     }
 
+    // Переход на экран регистрации
     public void onClickGoToRegistration(View view) {
         Intent intent = new Intent(Authorization.this, Registration.class);
         startActivity(intent);
         finish();
     }
 
+    // Попытка автоматической авторизации
     private void authenticateUser(String email, String password) {
-        userRepository.getUserByEmail(email)
-                .thenAccept(user -> {
-                    if (user == null || !user.getPassword().equals(password)) {
-                        Log.d("Authorization", "Неправильный email или пароль при автоматическом входе.");
-                        return;
-                    }
+        FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        Log.d("Authorization", "Авторизация успешна (автозаполнение)!");
 
-                    Authentication.setUser(user);
-                    Log.d("Authorization", "Пользователь авторизован: " + user.getEmail());
-
-                    Intent intent;
-                    if (user.isAdmin()) {
-                        intent = new Intent(Authorization.this, AdminPanel.class);
+                        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                        Intent intent = new Intent(Authorization.this, UserProfile.class);
+                        startActivity(intent);
+                        finish();
                     } else {
-                        intent = new Intent(Authorization.this, UserProfile.class);
+                        Log.e("Authorization", "Ошибка при автозаполнении: " + task.getException().getMessage());
                     }
-                    startActivity(intent);
-                    finish();
-                })
-                .exceptionally(e -> {
-                    Log.e("Authorization", "Ошибка при автоматическом входе: " + e.getMessage());
-                    return null;
                 });
     }
 }

@@ -46,6 +46,7 @@
         <activity
             android:name=".CourierOrdersHistory"
             android:exported="true"></activity>
+
         <activity
             android:name=".UserActiveOrders"
             android:exported="true"></activity>

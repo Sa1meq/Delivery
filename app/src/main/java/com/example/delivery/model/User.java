@@ -7,17 +7,27 @@ public class User {
     public String password;
     public String balance;
     public boolean isAdmin;
+    public String avatarUrl;
 
-    public User(String id, String name, String email, String password, String balance, boolean isAdmin) {
+    public User(String id, String name, String email, String password, String balance, boolean isAdmin, String avatarUrl) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.password = password;
         this.balance = balance;
         this.isAdmin = isAdmin;
+        this.avatarUrl = avatarUrl;
     }
 
     public User() {
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public boolean isAdmin() {

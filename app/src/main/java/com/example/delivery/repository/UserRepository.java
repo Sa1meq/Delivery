@@ -12,7 +12,7 @@ import com.google.firebase.storage.StorageReference;
 import java.util.concurrent.CompletableFuture;
 
 public class UserRepository {
-    private final CollectionReference usersCollection;
+    public final CollectionReference usersCollection;
     private final FirebaseFirestore db;
     private final FirebaseAuth auth;
 
@@ -31,7 +31,7 @@ public class UserRepository {
                         if (firebaseUser != null) {
                             String userId = firebaseUser.getUid();
                             boolean isAdmin = email.equals("sa1mejpn@gmail.com");
-                            User user = new User(userId, name, email, password, "0", isAdmin);
+                            User user = new User(userId, name, email, password, "0", isAdmin, "");
                             usersCollection.document(userId).set(user)
                                     .addOnSuccessListener(aVoid -> future.complete(user))
                                     .addOnFailureListener(future::completeExceptionally);
@@ -92,4 +92,12 @@ public class UserRepository {
                 });
         return future;
     }
+    public CompletableFuture<Boolean> updateUser(String id, User user) {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        usersCollection.document(id).set(user)
+                .addOnSuccessListener(aVoid -> future.complete(true))
+                .addOnFailureListener(future::completeExceptionally);
+        return future;
+    }
+
 }

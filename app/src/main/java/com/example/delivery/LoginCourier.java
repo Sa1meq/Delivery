@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,12 +15,11 @@ import com.example.delivery.model.Courier;
 import com.example.delivery.repository.CourierRepository;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.concurrent.CompletableFuture;
-
 public class LoginCourier extends AppCompatActivity {
 
     private EditText phoneEditText;
     private Button loginButton;
+    private TextView textViewRegister;
 
     private CourierRepository courierRepository;
 
@@ -27,8 +27,10 @@ public class LoginCourier extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login_courier);
+
         phoneEditText = findViewById(R.id.editTextPhone);
         loginButton = findViewById(R.id.loginButton);
+        textViewRegister = findViewById(R.id.textViewRegister);
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         courierRepository = new CourierRepository(db);
@@ -37,6 +39,15 @@ public class LoginCourier extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 loginCourier();
+            }
+        });
+
+        // Переход на экран регистрации
+        textViewRegister.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(LoginCourier.this, RegisterCourier.class);
+                startActivity(intent);
             }
         });
     }
@@ -63,7 +74,7 @@ public class LoginCourier extends AppCompatActivity {
 
     private boolean validateInputs(String phone) {
         if (TextUtils.isEmpty(phone)) {
-            Toast.makeText(this, "Phone requiered", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Phone required", Toast.LENGTH_SHORT).show();
             return false;
         }
         return true;

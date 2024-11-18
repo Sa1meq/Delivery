@@ -3,6 +3,7 @@ package com.example.delivery.repository;
 import com.example.delivery.model.Courier;
 import com.example.delivery.model.User;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
@@ -79,6 +80,17 @@ public class CourierRepository {
                 });
         return future;
     }
+
+    public CompletableFuture<Void> updateCourierRating(String courierId, float newRating) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        DocumentReference docRef = courierCollection.document(courierId);
+
+        docRef.update("rating", newRating)
+                .addOnSuccessListener(aVoid -> future.complete(null))
+                .addOnFailureListener(future::completeExceptionally);
+        return future;
+    }
+
 
 
     public CompletableFuture<Boolean> deleteCourierById(String id, FirebaseStorage firebaseStorage) {

@@ -1,6 +1,9 @@
 package com.example.delivery;
 
+import static com.google.android.material.internal.ViewUtils.hideKeyboard;
+
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -10,6 +13,7 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
@@ -18,6 +22,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -76,6 +81,7 @@ import com.yandex.runtime.image.ImageProvider;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, LocationListener {
@@ -88,6 +94,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private MapObjectCollection mapObjects;
     private List<Point> routePoints = new ArrayList<>();
     private PlacemarkMapObject userPlacemark;
+    private PlacemarkMapObject startPlacemark;
+    private PlacemarkMapObject endPlacemark;
     private EditText startAddressEditText, endAddressEditText, estimatedTimeEditText, estimatedCostEditText, orderDescriptionEditText;
     private Button getRouteButton;
     private SearchManager searchManager;
@@ -105,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private RouteOrderRepository routeOrderRepository;
     private UserRepository userRepository;
     private boolean isRequestInProgress = false;
+    private TextWatcher textWatcher;
     private RadioButton radioButtonPedestrian, radioButtonCar, radioButtonTruck;
 
     @Override
@@ -120,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         userRepository = new UserRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance());
 
         startAddressEditText = findViewById(R.id.startAddressEditText);
-        endAddressEditText = findViewById(R.id.endAddressEditText);
+        endAddressEditText = findViewById(R.id.endAddressEditText); // Инициализация EditText
         getRouteButton = findViewById(R.id.getRouteButton);
         radioButtonPedestrian = findViewById(R.id.radioButtonPedestrian);
         radioButtonCar = findViewById(R.id.radioButtonCar);
@@ -136,6 +145,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         suggestionsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         suggestionsRecyclerView.setAdapter(suggestionAdapter);
         suggestionsRecyclerView.setVisibility(View.GONE);
+
+
+        textWatcher = new AddressTextWatcher();
+        startAddressEditText.addTextChangedListener(textWatcher);
+        endAddressEditText.addTextChangedListener(textWatcher); // Использование EditText
 
         getRouteButton.setOnClickListener(v -> {
             String startAddress = startAddressEditText.getText().toString();
@@ -155,17 +169,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         startAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = hasFocus);
         endAddressEditText.setOnFocusChangeListener((v, hasFocus) -> isStartFieldActive = !hasFocus);
 
-        startAddressEditText.addTextChangedListener(new AddressTextWatcher());
-        endAddressEditText.addTextChangedListener(new AddressTextWatcher());
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION_PERMISSION);
         } else {
             requestUserLocation();
         }
-
-
-
 
         pinCollection = mapView.getMap().getMapObjects().addCollection();
         drawerLayout = findViewById(R.id.drawer_layout);
@@ -174,7 +182,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         findViewById(R.id.menuIcon).setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
 
         locationManager = MapKitFactory.getInstance().createLocationManager();
-        Log.d("MainActivity", "LocationManager initialized: " + locationManager);
     }
 
 
@@ -211,25 +218,23 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         return true;
     }
 
-    private void clearPlacemarks() {
-        pinCollection.clear();
+
+    private void addStartPlacemark(Point point) {
+        if (startPlacemark != null) {
+            pinCollection.remove(startPlacemark);
+        }
+        startPlacemark = pinCollection.addPlacemark(point);
+        startPlacemark.setIcon(ImageProvider.fromResource(this, R.drawable.ic_routestart));
     }
 
-    private void addStartPlacemark(Point point){
-        PlacemarkMapObject placemark = pinCollection.addPlacemark(point);
-        placemark.setIcon(ImageProvider.fromResource(this, R.drawable.ic_routestart));
+    private void addFinishPlacemark(Point point) {
+        if (endPlacemark != null) {
+            pinCollection.remove(endPlacemark);
+        }
+        endPlacemark = pinCollection.addPlacemark(point);
+        endPlacemark.setIcon(ImageProvider.fromResource(this, R.drawable.ic_routefinish));
     }
 
-    private void addFinishPlacemark(Point point){
-        PlacemarkMapObject placemark = pinCollection.addPlacemark(point);
-        placemark.setIcon(ImageProvider.fromResource(this, R.drawable.ic_routefinish));
-    }
-
-    private void addPlacemark(Point point) {
-
-        PlacemarkMapObject placemark = pinCollection.addPlacemark(point);
-        placemark.setIcon(ImageProvider.fromResource(this, R.drawable.ic_user_location));
-    }
 
     private void getSuggestions(String query) {
         SuggestOptions suggestOptions = new SuggestOptions();
@@ -239,7 +244,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             double latitude = userLocation.getLatitude();
             double longitude = userLocation.getLongitude();
             BoundingBox boundingBox = new BoundingBox(
-                    new Point(latitude + 0.1, longitude + 0.1),
+                    new Point(latitude + 0.1, longitude + 0.1), // Меньше смещение, чтобы границы оставались в пределах карты
                     new Point(latitude - 0.1, longitude - 0.1)
             );
 
@@ -268,7 +273,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void searchAddress(String address, boolean isStart) {
         SearchOptions searchOptions = new SearchOptions();
         searchOptions.setSearchTypes(SearchType.GEO.value);
-
         searchManager.submit(
                 address,
                 Geometry.fromPoint(new Point(53.9, 27.56667)),
@@ -278,11 +282,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     public void onSearchResponse(@NonNull Response searchResponse) {
                         if (!searchResponse.getCollection().getChildren().isEmpty()) {
                             GeoObject geoObject = searchResponse.getCollection().getChildren().get(0).getObj();
-
                             if (geoObject != null && !geoObject.getGeometry().isEmpty()) {
                                 Geometry geometry = geoObject.getGeometry().get(0);
                                 Point point = geometry.getPoint();
-
                                 if (point != null) {
                                     if (isStart) {
                                         if (routePoints.size() > 0) {
@@ -290,7 +292,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                         } else {
                                             routePoints.add(point);
                                         }
-                                        Log.d("RoutePoints", "Точка старта добавлена: " + point);
+
                                         addStartPlacemark(point);
                                     } else {
                                         if (routePoints.size() > 1) {
@@ -298,7 +300,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                         } else {
                                             routePoints.add(point);
                                         }
-                                        Log.d("RoutePoints", "Точка конца добавлена: " + point);
                                         addFinishPlacemark(point);
                                     }
                                 } else {
@@ -321,6 +322,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void onSuggestionClick(String suggestion) {
+        startAddressEditText.removeTextChangedListener(textWatcher);
+        endAddressEditText.removeTextChangedListener(textWatcher);
         if (isStartFieldActive) {
             startAddressEditText.setText(suggestion);
             startAddressEditText.clearFocus();
@@ -330,17 +333,30 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             endAddressEditText.clearFocus();
             searchAddress(suggestion, false);
         }
+
+        hideKeyboard();
         suggestionsRecyclerView.setVisibility(View.GONE);
+
+        startAddressEditText.addTextChangedListener(textWatcher);
+        endAddressEditText.addTextChangedListener(textWatcher);
     }
+
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        View view = getCurrentFocus();
+        if (view != null) {
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+
+
 
     private void requestRoute() {
         DrivingOptions drivingOptions = new DrivingOptions();
         VehicleOptions vehicleOptions = new VehicleOptions();
-
         List<RequestPoint> requestPoints = new ArrayList<>();
         requestPoints.add(new RequestPoint(routePoints.get(0), RequestPointType.WAYPOINT, "", ""));
         requestPoints.add(new RequestPoint(routePoints.get(1), RequestPointType.WAYPOINT, "", ""));
-
         DrivingSession drivingSession = drivingRouter.requestRoutes(
                 requestPoints,
                 drivingOptions,
@@ -352,40 +368,82 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         if (!routes.isEmpty()) {
                             DrivingRoute route = routes.get(0);
                             mapObjects.addPolyline(route.getGeometry());
-
                             if (userLocation != null) {
                                 float distanceToEndPoint = distanceBetweenPointsOnRoute(route, routePoints.get(0), routePoints.get(1));
                                 float timeToEndPoint = timeTravelToPoint(route, routePoints.get(1));
-                                float timeInSeconds = timeTravelToPoint(route, routePoints.get(1));
-                                long timeInMinutes = (long) (timeInSeconds / 60);
+                                long timeInMinutes = (long) (timeToEndPoint / 60);
+
                                 estimatedTimeEditText.setText(String.valueOf(timeInMinutes));
+
                                 String startAddress = startAddressEditText.getText().toString();
                                 String endAddress = endAddressEditText.getText().toString();
-                                double estimatedCost = parseEstimatedCost();
-                                Long estimatedDeliveryTime = parseEstimatedDeliveryTime();
-                                String orderDescription = orderDescriptionEditText.getText().toString();
                                 String courierType = getSelectedCourierType();
-                                RouteOrder routeOrder = new RouteOrder(
-                                        UUID.randomUUID().toString(),
-                                        FirebaseAuth.getInstance().getUid(),
-                                        null,
-                                        routePoints,
-                                        distanceToEndPoint,
-                                        (long) timeToEndPoint,
-                                        startAddress,
-                                        endAddress,
-                                        courierType,
-                                        estimatedCost,
-                                        estimatedDeliveryTime,
-                                        orderDescription
-                                );
 
-                                routeOrderRepository.saveRouteOrder(routeOrder)
-                                        .thenAccept(aVoid -> Toast.makeText(MainActivity.this, "Маршрут успешно сохранён", Toast.LENGTH_SHORT).show())
-                                        .exceptionally(e -> {
-                                            Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                            return null;
-                                        });
+                                double orderCost = calculateOrderCost(courierType, distanceToEndPoint / 1000);
+
+                                String formattedCost = String.format(Locale.getDefault(), "%.2f", orderCost).replace(',', '.');
+                                estimatedCostEditText.setText(formattedCost);
+
+                                UserRepository userRepository = new UserRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance());
+                                String userId = FirebaseAuth.getInstance().getUid();
+
+                                userRepository.getUserById(userId).thenAccept(user -> {
+                                    if (user != null) {
+                                        String balanceString = user.getBalance().replace(',', '.');
+                                        try {
+                                            double currentBalance = Double.parseDouble(balanceString);
+
+                                            if (currentBalance >= orderCost) {
+                                                double newBalance = currentBalance - orderCost;
+                                                user.setBalance(String.format(Locale.getDefault(), "%.2f", newBalance).replace(',', '.'));
+
+                                                userRepository.updateUser(userId, user)
+                                                        .thenAccept(updated -> {
+                                                            if (updated) {
+                                                                String orderDescription = orderDescriptionEditText.getText().toString();
+
+                                                                RouteOrder routeOrder = new RouteOrder(
+                                                                        UUID.randomUUID().toString(),
+                                                                        userId,
+                                                                        null,
+                                                                        routePoints,
+                                                                        distanceToEndPoint,
+                                                                        (long) timeToEndPoint,
+                                                                        startAddress,
+                                                                        endAddress,
+                                                                        courierType,
+                                                                        Double.parseDouble(formattedCost),
+                                                                        parseEstimatedDeliveryTime(),
+                                                                        orderDescription
+                                                                );
+
+                                                                routeOrderRepository.saveRouteOrder(routeOrder)
+                                                                        .thenAccept(aVoid -> Toast.makeText(MainActivity.this, "Заказ успешно оформлен", Toast.LENGTH_SHORT).show())
+                                                                        .exceptionally(e -> {
+                                                                            Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                                            return null;
+                                                                        });
+                                                            } else {
+                                                                Toast.makeText(MainActivity.this, "Ошибка обновления баланса", Toast.LENGTH_SHORT).show();
+                                                            }
+                                                        })
+                                                        .exceptionally(e -> {
+                                                            Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                            return null;
+                                                        });
+                                            } else {
+                                                Toast.makeText(MainActivity.this, "Недостаточно средств на балансе", Toast.LENGTH_SHORT).show();
+                                            }
+                                        } catch (NumberFormatException e) {
+                                            Toast.makeText(MainActivity.this, "Ошибка: некорректный формат баланса", Toast.LENGTH_SHORT).show();
+                                        }
+                                    } else {
+                                        Toast.makeText(MainActivity.this, "Пользователь не найден", Toast.LENGTH_SHORT).show();
+                                    }
+                                }).exceptionally(e -> {
+                                    Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    return null;
+                                });
                             }
                         } else {
                             Toast.makeText(MainActivity.this, "Маршрут не найден", Toast.LENGTH_SHORT).show();
@@ -405,34 +463,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private float distanceBetweenPointsOnRoute(DrivingRoute route, Point first, Point second) {
         PolylineIndex polylineIndex = PolylineUtils.createPolylineIndex(route.getGeometry());
         if (polylineIndex == null) {
-
             return 0;
         }
-
         PolylinePosition firstPosition = polylineIndex.closestPolylinePosition(first, PolylineIndex.Priority.CLOSEST_TO_START, 1000.0);
         PolylinePosition secondPosition = polylineIndex.closestPolylinePosition(second, PolylineIndex.Priority.CLOSEST_TO_RAW_POINT, 1000.0);
 
         if (firstPosition == null || secondPosition == null) {
-
             return 0;
         }
-
         return (float) PolylineUtils.distanceBetweenPolylinePositions(route.getGeometry(), firstPosition, secondPosition);
     }
 
     private float timeTravelToPoint(DrivingRoute route, Point targetPoint) {
         RoutePosition currentPosition = route.getRoutePosition();
         if (currentPosition == null) {
-
             return 0;
         }
-
         float distance = distanceBetweenPointsOnRoute(route, currentPosition.getPoint(), targetPoint);
         if (distance > 0) {
             RoutePosition targetPosition = currentPosition.advance(distance);
             return (float) (currentPosition.timeToFinish() - targetPosition.timeToFinish());
         } else {
-
             return 0;
         }
     }
@@ -468,10 +519,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             return 0L;
         }
     }
-
-
-
-
     private void startLocationUpdates() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             double distance = 0;
@@ -479,7 +526,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             boolean needAddress = false;
             FilteringMode filteringMode = FilteringMode.ON;
             Purpose purpose = Purpose.GENERAL;
-
             locationManager.subscribeForLocationUpdates(
                     distance, time, 0, needAddress, filteringMode, purpose, this
             );
@@ -512,7 +558,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override
     public void onLocationUpdated(@NonNull com.yandex.mapkit.location.Location location) {
         userLocation = new Point(location.getPosition().getLatitude(), location.getPosition().getLongitude());
-
         if (isFirstLocationUpdate) {
             mapView.getMap().move(new CameraPosition(userLocation, 15.0f, 0.0f, 0.0f));
             isFirstLocationUpdate = false;
@@ -529,7 +574,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override
     public void onLocationStatusUpdated(@NonNull LocationStatus locationStatus) {
         if (locationStatus == LocationStatus.NOT_AVAILABLE) {
-            Toast.makeText(this, "Локация недоступна", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -552,16 +596,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
-            String startAddress = startAddressEditText.getText().toString();
-            String endAddress = endAddressEditText.getText().toString();
-
-            if (!startAddress.isEmpty() && !endAddress.isEmpty()) {
-                if (routePoints.size() == 2) {
-//                    requestRoute();
-                } else {
-                    Toast.makeText(MainActivity.this, "Сначала выберите оба адреса", Toast.LENGTH_SHORT).show();
-                }
-            }
             String query = s.toString();
             handler.removeCallbacks(suggestionRunnable);
             if (!query.isEmpty()) {
@@ -575,6 +609,32 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         @Override
         public void afterTextChanged(Editable s) {}
+    }
+
+    private double calculateOrderCost(String courierType, double distanceInKm) {
+        double baseCost = 0.0;
+        double costPerKm;
+
+        switch (courierType) {
+            case "Пеший":
+                costPerKm = 0.9;
+                baseCost += 0;
+                break;
+            case "Авто":
+                costPerKm = 1.5;
+                baseCost += 2;
+                break;
+            case "Грузовой":
+                costPerKm = 2.0;
+                baseCost += 4;
+                break;
+            default:
+                costPerKm = 0.0;
+        }
+
+        double courierCost = baseCost + (costPerKm * distanceInKm);
+
+        return courierCost * 1.3;
     }
 
 

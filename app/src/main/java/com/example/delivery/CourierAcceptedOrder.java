@@ -78,12 +78,9 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
             if (drivingSession != null) {
                 drivingSession.cancel();
             }
-
             clearRoute();
-
             if (isSecondRoute) {
                 finishRoute();
-
                 routeOrderRepository.completeOrder(orderId)
                         .thenRun(() -> {
                             Toast.makeText(CourierAcceptedOrder.this, "Заказ завершен", Toast.LENGTH_SHORT).show();
@@ -100,11 +97,25 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
                     isSecondRoute = true;
                     buildRouteFromFirstToSecondPoint();
                     startLocationUpdates();
+                    routeOrderRepository.getRouteOrderById(orderId)
+                            .thenAccept(routeOrder -> {
+                                if (routeOrder != null) {
+                                    routeOrder.isSecond = true;
+                                    routeOrderRepository.saveRouteOrder(routeOrder)
+                                            .exceptionally(e -> {
+                                                return null;
+                                            });
+                                }
+                            })
+                            .exceptionally(e -> {
+                                return null;
+                            });
                 } else {
                     Toast.makeText(CourierAcceptedOrder.this, "Маршрут не завершен на 90% или более", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+
 
     }
 

@@ -10,8 +10,11 @@
             public String userId;
             public String courierId;
             public List<Point> routePoints;
+            public boolean isActive;
             public boolean isAccepted;
+            public boolean isSecond;
             public boolean isCompleted;
+            public boolean isRated;
             public double totalDistance;
             public Long travelTime;
             public String startAddress;
@@ -30,8 +33,11 @@
                 this.userId = userId;
                 this.courierId = courierId != null ? courierId : "unassigned";
                 this.routePoints = routePoints;
+                this.isActive = true;
                 this.isAccepted = false;
                 this.isCompleted = false;
+                this.isSecond = false;
+                this.isRated = false;
                 this.totalDistance = totalDistance;
                 this.travelTime = travelTime;
                 this.startAddress = startAddress;
@@ -40,6 +46,30 @@
                 this.estimatedCost = estimatedCost;
                 this.estimatedDeliveryTime = estimatedDeliveryTime;
                 this.orderDescription = orderDescription;
+            }
+
+            public boolean isRated() {
+                return isRated;
+            }
+
+            public void setRated(boolean rated) {
+                isRated = rated;
+            }
+
+            public boolean isActive() {
+                return isActive;
+            }
+
+            public void setActive(boolean active) {
+                isActive = active;
+            }
+
+            public boolean isSecond() {
+                return isSecond;
+            }
+
+            public void setSecond(boolean second) {
+                isSecond = second;
             }
 
             public String getUserId() {

@@ -20,7 +20,7 @@ public class CourierProfile extends AppCompatActivity {
     private TextView phoneTextView;
     private TextView ratingTextView;
     private Button ordersButton;
-    private Button mapsButton;
+    private Button statsButton;
     private Button historyButton;
     private Button logoutButton;
 
@@ -36,7 +36,7 @@ public class CourierProfile extends AppCompatActivity {
         phoneTextView = findViewById(R.id.phoneTextView);
         ratingTextView = findViewById(R.id.ratingTextView);
         ordersButton = findViewById(R.id.ordersButton);
-        mapsButton = findViewById(R.id.mapsButton);
+        statsButton = findViewById(R.id.mapsButton);
         historyButton = findViewById(R.id.historyButton);
         logoutButton = findViewById(R.id.logoutButton);
 
@@ -52,11 +52,6 @@ public class CourierProfile extends AppCompatActivity {
           startActivity(intent);
           finish();
        });
-//
-//        mapsButton.setOnClickListener(v -> {
-//            // Переход к картам
-//            startActivity(new Intent(CourierActivity.this, MapsActivity.class));
-//        });
 //
 //        historyButton.setOnClickListener(v -> {
 //            // Переход к истории заказов

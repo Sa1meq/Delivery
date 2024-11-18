@@ -2,6 +2,7 @@ package com.example.delivery;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -28,6 +29,7 @@ public class CourierOrdersList extends AppCompatActivity {
     private OrdersAdapter ordersAdapter;
     private RouteOrderRepository routeOrderRepository;
     private String courierId;
+    private ImageView backImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,8 +40,14 @@ public class CourierOrdersList extends AppCompatActivity {
 
         routeOrderRepository = new RouteOrderRepository();
         courierId = FirebaseAuth.getInstance().getUid();
+        backImageView = findViewById(R.id.backImageView);
 
         loadCourierOrders();
+        backImageView.setOnClickListener(v -> {
+            Intent intent = new Intent(CourierOrdersList.this, CourierProfile.class);
+            startActivity(intent);
+            finish();
+        });
     }
 
     private void loadCourierOrders() {
@@ -55,7 +63,7 @@ public class CourierOrdersList extends AppCompatActivity {
         String courierUid = FirebaseAuth.getInstance().getUid();
         CourierRepository courierRepository = new CourierRepository(FirebaseFirestore.getInstance());
 
-        // Получаем тип курьера из Firestore
+
         courierRepository.getCourierTypeByUid(courierUid)
                 .thenAccept(courierType -> {
                     if (courierType == null) {
@@ -64,13 +72,11 @@ public class CourierOrdersList extends AppCompatActivity {
                     }
 
                     List<RouteOrder> filteredOrders = new ArrayList<>();
-                    // Фильтруем заказы по типу курьера, сравнивая с тем, что в БД
                     for (RouteOrder routeOrder : routeOrders) {
                         if (routeOrder.getCourierType().equals(courierType)) {
                             filteredOrders.add(routeOrder);
                         }
                     }
-                    // Обновляем список заказов после фильтрации
                     updateOrdersList(filteredOrders);
                 })
                 .exceptionally(e -> {

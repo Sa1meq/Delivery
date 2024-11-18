@@ -13,6 +13,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.delivery.CourierAcceptedOrder;
 import com.example.delivery.R;
 import com.example.delivery.model.RouteOrder;
+import com.example.delivery.repository.CourierRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.List;
 
@@ -38,6 +41,7 @@ public class OrdersAdapter extends RecyclerView.Adapter<OrdersAdapter.OrderViewH
     @Override
     public void onBindViewHolder(@NonNull OrderViewHolder holder, int position) {
         RouteOrder routeOrder = routeOrders.get(position);
+
         holder.orderIdTextView.setText(routeOrder.orderId);
         holder.startAddressTextView.setText("Откуда: " + routeOrder.getStartAddress());
         holder.endAddressTextView.setText("Куда: " + routeOrder.getEndAddress());
@@ -45,9 +49,21 @@ public class OrdersAdapter extends RecyclerView.Adapter<OrdersAdapter.OrderViewH
         double distanceInKm = routeOrder.totalDistance / 1000.0;
         holder.distanceTextView.setText("Расстояние: " + String.format("%.1f", distanceInKm) + " км");
         holder.timeTextView.setText("Время: " + routeOrder.travelTime / 60 + " минут");
-        holder.costTextView.setText("Оплата: " + String.format("%.2f", calculateCost(distanceInKm)) + " руб");
+
+        String courierId = FirebaseAuth.getInstance().getUid();
+        new CourierRepository(FirebaseFirestore.getInstance())
+                .getCourierTypeByUid(courierId)
+                .thenAccept(courierType -> {
+                    double cost = calculateCost(courierType, distanceInKm);
+                    holder.costTextView.setText("Оплата: " + String.format("%.2f", cost) + " BYN");
+                })
+                .exceptionally(e -> {
+                    holder.costTextView.setText("Оплата: недоступно");
+                    return null;
+                });
         holder.itemView.setOnClickListener(v -> onOrderClickListener.onOrderClick(routeOrder));
     }
+
 
     @Override
     public int getItemCount() {
@@ -75,9 +91,27 @@ public class OrdersAdapter extends RecyclerView.Adapter<OrdersAdapter.OrderViewH
         }
     }
 
-    private double calculateCost(double distanceInKm) {
-        return distanceInKm * 1.5;
+    private double calculateCost(String courierType, double distanceInKm) {
+        double baseCost = 0.0;
+        double costPerKm;
+
+        if ("Пеший".equals(courierType)) {
+            costPerKm = 1.3;
+        } else if ("Авто".equals(courierType)) {
+            costPerKm = 1.5;
+            baseCost += 3.0;
+        } else if ("Грузовой".equals(courierType)) {
+            costPerKm = 2;
+            baseCost += 5.0;
+        } else {
+            costPerKm = 1.0;
+        }
+        double cost = baseCost + (costPerKm * distanceInKm);
+        return cost;
     }
+
+
+
 
     public interface OnOrderClickListener {
         void onOrderClick(RouteOrder routeOrder);

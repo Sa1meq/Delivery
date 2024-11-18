@@ -2,9 +2,13 @@ package com.example.delivery;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,15 +42,55 @@ public class RegisterCourier extends AppCompatActivity {
         registerButton = findViewById(R.id.registerButton);
         textViewLogin = findViewById(R.id.textViewLogin);
         courierRepository = new CourierRepository(FirebaseFirestore.getInstance());
-        findViewById(R.id.radioButtonPedestrian).setOnClickListener(view -> typeOfCourier = "Пеший");
-        findViewById(R.id.radioButtonCar).setOnClickListener(view -> typeOfCourier = "Авто");
-        findViewById(R.id.radioButtonTruck).setOnClickListener(view -> typeOfCourier = "Грузовой");
+
+        ImageView closeButton = findViewById(R.id.closeButton);
+        closeButton.setOnClickListener(v -> {
+            Intent intent = new Intent(RegisterCourier.this, UserProfile.class);
+            startActivity(intent);
+            finish();
+        });
+
+        phoneEditText.setText("+375");
+        phoneEditText.setSelection(4);
+
+        findViewById(R.id.cardPedestrian).setOnClickListener(view -> {
+            typeOfCourier = "Пеший";
+            setSelectedCard(view);
+        });
+        findViewById(R.id.cardCar).setOnClickListener(view -> {
+            typeOfCourier = "Авто";
+            setSelectedCard(view);
+        });
+        findViewById(R.id.cardTruck).setOnClickListener(view -> {
+            typeOfCourier = "Грузовой";
+            setSelectedCard(view);
+        });
 
         registerButton.setOnClickListener(v -> registerCourier());
 
         textViewLogin.setOnClickListener(v -> {
             Intent intent = new Intent(RegisterCourier.this, LoginCourier.class);
             startActivity(intent);
+        });
+
+        phoneEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int start, int count, int after) {
+                // Этот метод не используется
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int start, int before, int after) {
+                String currentText = phoneEditText.getText().toString();
+                if (!currentText.startsWith("+375")) {
+                    phoneEditText.setText("+375");
+                    phoneEditText.setSelection(4);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+            }
         });
     }
 
@@ -96,5 +140,13 @@ public class RegisterCourier extends AppCompatActivity {
             return false;
         }
         return true;
+    }
+
+    private void setSelectedCard(View selectedCard) {
+        findViewById(R.id.cardPedestrian).setBackgroundColor(getResources().getColor(R.color.default_card_background));
+        findViewById(R.id.cardCar).setBackgroundColor(getResources().getColor(R.color.default_card_background));
+        findViewById(R.id.cardTruck).setBackgroundColor(getResources().getColor(R.color.default_card_background));
+
+        selectedCard.setBackgroundColor(getResources().getColor(R.color.selected_card_background));
     }
 }

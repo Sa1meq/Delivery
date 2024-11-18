@@ -38,22 +38,18 @@ public class Authorization extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_authorization);
 
-        // Инициализация SharedPreferences
         sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
-        // Инициализация репозитория пользователей
         userRepository = new UserRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance());
 
-        // Привязка UI элементов
         emailEditText = findViewById(R.id.emailEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
         errorTextView = findViewById(R.id.errorTextView);
         rememberMeCheckBox = findViewById(R.id.rememberMeCheckBox);
 
-        // Автозаполнение полей, если ранее данные были сохранены
+
         loadUserCredentials();
 
-        // Обработчик нажатия для отображения/скрытия пароля
         passwordEditText.setOnTouchListener((v, event) -> {
             final int DRAWABLE_END = 2;
 
@@ -157,7 +153,6 @@ public class Authorization extends AppCompatActivity {
                         Log.d("Authorization", "Авторизация успешна!");
                         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                         if (user != null) {
-                            // Запуск следующей активности на основе данных пользователя
                             Intent intent = new Intent(Authorization.this, UserProfile.class);
                             startActivity(intent);
                             finish();

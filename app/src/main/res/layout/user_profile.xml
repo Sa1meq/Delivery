@@ -45,65 +45,76 @@
         android:id="@+id/optionsContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-    android:orientation="vertical"
-    app:layout_constraintTop_toBottomOf="@id/balanceText"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintBottom_toTopOf="@id/exitButton"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@id/balanceText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/exitButton"
         android:paddingTop="15dp">
 
-    <TextView
-        android:id="@+id/orderHistoryButton"
-        style="@style/ProfileOptionStyle"
-        android:text="История заказов"
-        android:drawableStart="@drawable/ic_ordershistory"/>
+        <TextView
+            android:id="@+id/orderHistoryButton"
+            style="@style/ProfileOptionStyle"
+            android:text="История заказов"
+            android:drawableStart="@drawable/ic_ordershistory"/>
+
+        <TextView
+            android:id="@+id/activeOrdersButton"
+            style="@style/ProfileOptionStyle"
+            android:text="Активные заказы"
+            android:drawableStart="@drawable/ic_activeorders"/>
+
+        <TextView
+            android:id="@+id/placeOrders"
+            style="@style/ProfileOptionStyle"
+            android:text="Сделать заказ"
+            android:drawableStart="@drawable/ic_place_order"/>
+
+        <TextView
+            android:id="@+id/supportButton"
+            style="@style/ProfileOptionStyle"
+            android:text="Поддержка"
+            android:drawableStart="@drawable/ic_supp"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/rechargeBalanceButton"
+            style="@style/ProfileOptionStyle"
+            android:text="Пополнить баланс"
+            android:drawableStart="@drawable/ic_balance"/>
+
+        <TextView
+            android:id="@+id/becomeCourierButton"
+            style="@style/ProfileOptionStyle"
+            android:text="Стать курьером"
+            android:drawableStart="@drawable/ic_gocourier"
+            />
+
+        <TextView
+            android:id="@+id/aboutServiceButton"
+            style="@style/ProfileOptionStyle"
+            android:text="О сервисе"
+            android:drawableStart="@drawable/ic_info"/>
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/activeOrdersButton"
+        android:id="@+id/exitButton"
         style="@style/ProfileOptionStyle"
-        android:text="Активные заказы"
-        android:drawableStart="@drawable/ic_activeorders"/>
+        android:text="Выход"
+        android:drawableStart="@drawable/ic_exit"
+        android:gravity="bottom"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="10dp"/>
 
-    <TextView
-        android:id="@+id/placeOrders"
-        style="@style/ProfileOptionStyle"
-        android:text="Сделать заказ"
-        android:drawableStart="@drawable/ic_place_order"/>
+    <ImageView
+        android:id="@+id/notificationIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_notification"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"/>
 
-    <TextView
-        android:id="@+id/supportButton"
-        style="@style/ProfileOptionStyle"
-        android:text="Поддержка"
-        android:drawableStart="@drawable/ic_supp"/>
-
-    <TextView
-        android:id="@+id/rechargeBalanceButton"
-        style="@style/ProfileOptionStyle"
-        android:text="Пополнить баланс"
-        android:drawableStart="@drawable/ic_balance"/>
-
-    <TextView
-        android:id="@+id/becomeCourierButton"
-        style="@style/ProfileOptionStyle"
-        android:text="Стать Минским курьером"
-        android:drawableStart="@drawable/ic_gocourier"
-        />
-
-    <TextView
-        android:id="@+id/aboutServiceButton"
-        style="@style/ProfileOptionStyle"
-        android:text="О сервисе"
-        android:drawableStart="@drawable/ic_info"/>
-</LinearLayout>
-
-<TextView
-android:id="@+id/exitButton"
-style="@style/ProfileOptionStyle"
-android:text="Выход"
-android:drawableStart="@drawable/ic_exit"
-android:gravity="bottom"
-app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    android:layout_marginBottom="10dp"/>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

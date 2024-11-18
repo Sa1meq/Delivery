@@ -1,14 +1,15 @@
 package com.example.delivery;
 
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputFilter;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,10 +24,10 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class UserProfile extends AppCompatActivity {
     private TextView userNameTextView;
-    private TextView orderHistoryButton, activeOrdersButton, exitButton, placeOrder, becomeCourierButton, rechargeBalanceButton, balanceText;
+    private TextView orderHistoryButton, activeOrdersButton, exitButton, placeOrder, becomeCourierButton, rechargeBalanceButton, balanceText, aboutServiceButton;
     private UserRepository userRepository;
     private static final int PICK_IMAGE_REQUEST = 1;
-    private ImageView avatarImage;
+    private ImageView avatarImage, notificationIcon;
     private AlertDialog loadingDialog;
     private SharedPreferences sharedPreferences;
     private static final String PREFS_NAME = "UserPrefs";
@@ -45,9 +46,11 @@ public class UserProfile extends AppCompatActivity {
         placeOrder = findViewById(R.id.placeOrders);
         becomeCourierButton = findViewById(R.id.becomeCourierButton);
         avatarImage = findViewById(R.id.avatarImage);
+        notificationIcon = findViewById(R.id.notificationIcon);
         rechargeBalanceButton = findViewById(R.id.rechargeBalanceButton);
         balanceText = findViewById(R.id.balanceText);
         exitButton = findViewById(R.id.exitButton);
+        aboutServiceButton = findViewById(R.id.aboutServiceButton);
 
         sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
@@ -63,12 +66,10 @@ public class UserProfile extends AppCompatActivity {
             userRepository.getUserById(userId).thenAccept(user -> {
                 if (user != null) {
                     userNameTextView.setText(user.getName());
-
-                    // Установка баланса с форматированием
                     try {
                         double balance = Double.parseDouble(user.getBalance());
                         String formattedBalance = String.format("%.2f", balance);
-                        runOnUiThread(() -> balanceText.setText(formattedBalance + " BYN"));
+                        runOnUiThread(() -> balanceText.setText("Ваш баланс: " + formattedBalance +  " BYN"));
                     } catch (NumberFormatException e) {
                         runOnUiThread(() -> balanceText.setText("Ошибка баланса"));
                     }
@@ -130,6 +131,9 @@ public class UserProfile extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
+        notificationIcon.setOnClickListener(v -> {
+            showRatingDialog();
+        });
         exitButton.setOnClickListener(v -> {
             if (firebaseUser != null) {
                 clearUserCredentials();
@@ -143,7 +147,9 @@ public class UserProfile extends AppCompatActivity {
                 Toast.makeText(UserProfile.this, "Ошибка выхода. Попробуйте снова.", Toast.LENGTH_SHORT).show();
             }
         });
-
+        aboutServiceButton.setOnClickListener(v -> {
+            showAboutDialog();
+        });
     }
 
     @Override
@@ -190,7 +196,6 @@ public class UserProfile extends AppCompatActivity {
                                 .circleCrop()
                                 .placeholder(R.drawable.ic_avatar)
                                 .into(avatarImage);
-
                         Toast.makeText(UserProfile.this, "Изображение успешно обновлено", Toast.LENGTH_SHORT).show();
                     });
                 }).exceptionally(throwable -> {
@@ -208,7 +213,6 @@ public class UserProfile extends AppCompatActivity {
         if (loadingDialog == null) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setCancelable(false);
-
             View view = getLayoutInflater().inflate(R.layout.dialog_loading, null);
             builder.setView(view);
 
@@ -272,7 +276,7 @@ public class UserProfile extends AppCompatActivity {
                     if (success) {
                         runOnUiThread(() -> {
                             String formattedBalance = String.format("%.2f", newBalance);
-                            balanceText.setText(formattedBalance + " BYN");
+                            balanceText.setText("Ваш баланс: " + formattedBalance +  "BYN");
                             Toast.makeText(this, "Баланс успешно пополнен", Toast.LENGTH_SHORT).show();
                         });
                     } else {
@@ -296,5 +300,60 @@ public class UserProfile extends AppCompatActivity {
         editor.putBoolean(KEY_REMEMBER_ME, false);
         editor.apply();
     }
+    private void showAboutDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_about_service, null);
+        builder.setView(dialogView);
+
+        ImageView appIcon = dialogView.findViewById(R.id.appIconImageView);
+        TextView appName = dialogView.findViewById(R.id.appNameTextView);
+        TextView appInfo = dialogView.findViewById(R.id.appInfoTextView);
+        ImageView closeButton = dialogView.findViewById(R.id.closeButton);
+
+        appIcon.setImageResource(R.drawable.ic_icon);
+        appName.setText(getString(R.string.app_name));
+        appInfo.setText("Добро пожаловать в официальное приложение \"OnTheWay\"! " +
+                "С его помощью вы сможете сократить трату времени на перевозку товаров и предоставить это нам. " +
+                "Приложение разработано для упрощения вашей жизни. " +
+                "Автор: Sa1meq " +
+                "Благодарим за использование нашего сервиса!");
+
+        AlertDialog dialog = builder.create();
+
+        closeButton.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+    private void showRatingDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_rate_courier, null);
+        builder.setView(dialogView);
+
+        RatingBar ratingBar = dialogView.findViewById(R.id.ratingBar);
+        Button submitRatingButton = dialogView.findViewById(R.id.submitRatingButton);
+        TextView workerNameTextView = dialogView.findViewById(R.id.workerNameTextView);
+
+        workerNameTextView.setText("Имя курьера");
+
+        builder.setTitle("Оцените курьера");
+
+        submitRatingButton.setOnClickListener(v -> {
+            float rating = ratingBar.getRating();
+            if (rating >= 1 && rating <= 5) {
+                Toast.makeText(this, "Рейтинг отправлен: " + rating, Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Рейтинг должен быть от 1 до 5", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Отмена", null);
+
+        builder.show();
+    }
+
+
 
 }

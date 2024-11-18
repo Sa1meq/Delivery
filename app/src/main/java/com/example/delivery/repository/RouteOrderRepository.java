@@ -53,7 +53,7 @@ public class RouteOrderRepository {
     public CompletableFuture<Void> completeOrder(String orderId) {
         CompletableFuture<Void> future = new CompletableFuture<>();
         DocumentReference docRef = firestore.collection("routeOrders").document(orderId);
-        docRef.update("isCompleted", true, "isAccepted", true)
+        docRef.update("isCompleted", true, "isAccepted", false, "isActive", false)
                 .addOnSuccessListener(aVoid -> future.complete(null))
                 .addOnFailureListener(future::completeExceptionally);
         return future;
@@ -92,13 +92,13 @@ public class RouteOrderRepository {
         CompletableFuture<List<RouteOrder>> future = new CompletableFuture<>();
         Query query = firestore.collection("routeOrders")
                 .whereEqualTo("userId", userId)
-                .whereEqualTo("isAccepted", true);
+                .whereEqualTo("isActive", true)
+                .whereEqualTo("isCompleted", false);
         query.get().addOnSuccessListener(queryDocumentSnapshots -> {
             List<RouteOrder> orders = queryDocumentSnapshots.toObjects(RouteOrder.class);
             future.complete(orders);
         }).addOnFailureListener(future::completeExceptionally);
         return future;
     }
-
 
 }

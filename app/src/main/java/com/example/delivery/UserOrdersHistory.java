@@ -32,7 +32,6 @@ public class UserOrdersHistory extends AppCompatActivity {
         orderAdapter = new OrderAdapter(orderList);
         ordersRecyclerView.setAdapter(orderAdapter);
 
-        // Обработка нажатия на кнопку назад
         ImageView backImageView = findViewById(R.id.backImageView);
         backImageView.setOnClickListener(v -> {
             Intent intent = new Intent(UserOrdersHistory.this, UserProfile.class);

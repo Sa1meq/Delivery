@@ -62,7 +62,6 @@ public class Authorization extends AppCompatActivity {
             return false;
         });
 
-        // Обработчик для чекбокса "Запомнить меня"
         rememberMeCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 saveUserCredentials(); // Сохранение данных пользователя
@@ -81,11 +80,8 @@ public class Authorization extends AppCompatActivity {
             emailEditText.setText(savedEmail);
             passwordEditText.setText(savedPassword);
             rememberMeCheckBox.setChecked(true);
-
-            // Попытка автоматической авторизации
             authenticateUser(savedEmail, savedPassword);
         } else {
-            // Очистить поля, если чекбокс не установлен или данных нет
             emailEditText.setText("");
             passwordEditText.setText("");
             rememberMeCheckBox.setChecked(false);
@@ -93,7 +89,6 @@ public class Authorization extends AppCompatActivity {
     }
 
 
-    // Сохранение данных пользователя в SharedPreferences
     private void saveUserCredentials() {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
@@ -107,7 +102,6 @@ public class Authorization extends AppCompatActivity {
         }
     }
 
-    // Очистка данных пользователя из SharedPreferences
     private void clearUserCredentials() {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.remove(KEY_EMAIL);
@@ -116,7 +110,6 @@ public class Authorization extends AppCompatActivity {
         editor.apply();
     }
 
-    // Переключение видимости пароля
     private void togglePasswordVisibility() {
         Typeface currentTypeface = passwordEditText.getTypeface();
         int selection = passwordEditText.getSelectionEnd();
@@ -128,12 +121,10 @@ public class Authorization extends AppCompatActivity {
         }
 
         isPasswordVisible = !isPasswordVisible;
-
         passwordEditText.setTypeface(currentTypeface);
         passwordEditText.setSelection(selection);
     }
 
-    // Обработка клика по кнопке "Войти"
     public void onClickLogin(View view) {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
@@ -144,13 +135,10 @@ public class Authorization extends AppCompatActivity {
             return;
         }
 
-        // Добавление логирования для диагностики
-        Log.d("Authorization", "Попытка аутентификации с email: " + email);
 
         FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        Log.d("Authorization", "Авторизация успешна!");
                         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                         if (user != null) {
                             Intent intent = new Intent(Authorization.this, UserProfile.class);
@@ -158,33 +146,28 @@ public class Authorization extends AppCompatActivity {
                             finish();
                         }
                     } else {
-                        Log.e("Authorization", "Ошибка авторизации: " + task.getException().getMessage());
                         errorTextView.setVisibility(View.VISIBLE);
                         errorTextView.setText("Неправильный email или пароль");
                     }
                 });
     }
 
-    // Переход на экран регистрации
     public void onClickGoToRegistration(View view) {
         Intent intent = new Intent(Authorization.this, Registration.class);
         startActivity(intent);
         finish();
     }
 
-    // Попытка автоматической авторизации
     private void authenticateUser(String email, String password) {
         FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        Log.d("Authorization", "Авторизация успешна (автозаполнение)!");
 
                         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                         Intent intent = new Intent(Authorization.this, UserProfile.class);
                         startActivity(intent);
                         finish();
                     } else {
-                        Log.e("Authorization", "Ошибка при автозаполнении: " + task.getException().getMessage());
                     }
                 });
     }

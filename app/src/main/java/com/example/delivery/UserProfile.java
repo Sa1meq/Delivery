@@ -1,5 +1,7 @@
 package com.example.delivery;
 
+import static java.security.AccessController.getContext;
+
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -17,15 +19,22 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
+import com.example.delivery.model.RouteOrder;
+import com.example.delivery.repository.CourierRepository;
+import com.example.delivery.repository.RouteOrderRepository;
 import com.example.delivery.repository.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.List;
+
 public class UserProfile extends AppCompatActivity {
     private TextView userNameTextView;
-    private TextView orderHistoryButton, activeOrdersButton, exitButton, placeOrder, becomeCourierButton, rechargeBalanceButton, balanceText, aboutServiceButton;
+    private TextView orderHistoryButton, activeOrdersButton, exitButton, placeOrder, becomeCourierButton, rechargeBalanceButton, balanceText, aboutServiceButton, adminPanelButton;
     private UserRepository userRepository;
+    private CourierRepository courierRepository;
+    private RouteOrderRepository routeOrderRepository;
     private static final int PICK_IMAGE_REQUEST = 1;
     private ImageView avatarImage, notificationIcon;
     private AlertDialog loadingDialog;
@@ -51,14 +60,17 @@ public class UserProfile extends AppCompatActivity {
         balanceText = findViewById(R.id.balanceText);
         exitButton = findViewById(R.id.exitButton);
         aboutServiceButton = findViewById(R.id.aboutServiceButton);
-
+        adminPanelButton = findViewById(R.id.adminPanelButton);
         sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
         FirebaseAuth auth = FirebaseAuth.getInstance();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         userRepository = new UserRepository(db, auth);
+        courierRepository = new CourierRepository(FirebaseFirestore.getInstance());
+        routeOrderRepository = new RouteOrderRepository();
 
         FirebaseUser firebaseUser = auth.getCurrentUser();
+
 
         if (firebaseUser != null) {
             String userId = firebaseUser.getUid();
@@ -69,7 +81,7 @@ public class UserProfile extends AppCompatActivity {
                     try {
                         double balance = Double.parseDouble(user.getBalance());
                         String formattedBalance = String.format("%.2f", balance);
-                        runOnUiThread(() -> balanceText.setText("Ваш баланс: " + formattedBalance +  " BYN"));
+                        runOnUiThread(() -> balanceText.setText("Ваш баланс: " + formattedBalance + " BYN"));
                     } catch (NumberFormatException e) {
                         runOnUiThread(() -> balanceText.setText("Ошибка баланса"));
                     }
@@ -83,6 +95,11 @@ public class UserProfile extends AppCompatActivity {
                                 .into(avatarImage));
                     } else {
                         avatarImage.setImageResource(R.drawable.ic_avatar);
+                    }
+                    if (user.isAdmin()) {
+                        runOnUiThread(() -> adminPanelButton.setVisibility(View.VISIBLE));
+                    } else {
+                        runOnUiThread(() -> adminPanelButton.setVisibility(View.GONE));
                     }
                 } else {
                     userNameTextView.setText("Неизвестный пользователь");
@@ -100,7 +117,11 @@ public class UserProfile extends AppCompatActivity {
             intent.setType("image/*");
             startActivityForResult(intent, PICK_IMAGE_REQUEST);
         });
-
+        adminPanelButton.setOnClickListener(v -> {
+            Intent intent = new Intent(UserProfile.this, AdminPanel.class);
+            startActivity(intent);
+            finish();
+        });
         orderHistoryButton.setOnClickListener(v -> {
             Intent intent = new Intent(UserProfile.this, UserOrdersHistory.class);
             startActivity(intent);
@@ -111,7 +132,6 @@ public class UserProfile extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
-
         becomeCourierButton.setOnClickListener(v -> {
             Intent intent = new Intent(UserProfile.this, RegisterCourier.class);
             startActivity(intent);
@@ -132,8 +152,15 @@ public class UserProfile extends AppCompatActivity {
             finish();
         });
         notificationIcon.setOnClickListener(v -> {
-            showRatingDialog();
+            routeOrderRepository.getOrdersToRate(firebaseUser.getUid()).thenAccept(orders -> {
+                if (orders != null && !orders.isEmpty()) {
+                    showRatingDialog(orders.get(0));
+                } else {
+                    Toast.makeText(UserProfile.this, "Ошибка получения заказа", Toast.LENGTH_SHORT).show();
+                }
+            });
         });
+
         exitButton.setOnClickListener(v -> {
             if (firebaseUser != null) {
                 clearUserCredentials();
@@ -276,7 +303,7 @@ public class UserProfile extends AppCompatActivity {
                     if (success) {
                         runOnUiThread(() -> {
                             String formattedBalance = String.format("%.2f", newBalance);
-                            balanceText.setText("Ваш баланс: " + formattedBalance +  "BYN");
+                            balanceText.setText("Ваш баланс: " + formattedBalance + "BYN");
                             Toast.makeText(this, "Баланс успешно пополнен", Toast.LENGTH_SHORT).show();
                         });
                     } else {
@@ -293,6 +320,7 @@ public class UserProfile extends AppCompatActivity {
             }
         });
     }
+
     private void clearUserCredentials() {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.remove(KEY_EMAIL);
@@ -300,6 +328,7 @@ public class UserProfile extends AppCompatActivity {
         editor.putBoolean(KEY_REMEMBER_ME, false);
         editor.apply();
     }
+
     private void showAboutDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
@@ -326,34 +355,40 @@ public class UserProfile extends AppCompatActivity {
         dialog.show();
     }
 
-    private void showRatingDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    public void showRatingDialog(RouteOrder order) {
+        if (order != null) {
+            courierRepository.getCourierById(order.getCourierId()).thenAccept(courier -> {
+                AlertDialog.Builder builder = new AlertDialog.Builder(UserProfile.this);
+                View view = getLayoutInflater().inflate(R.layout.dialog_rate_courier, null);
 
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_rate_courier, null);
-        builder.setView(dialogView);
+                TextView workerNameTextView = view.findViewById(R.id.workerNameTextView);
+                RatingBar ratingBar = view.findViewById(R.id.ratingBar);
+                Button submitRatingButton = view.findViewById(R.id.submitRatingButton);
 
-        RatingBar ratingBar = dialogView.findViewById(R.id.ratingBar);
-        Button submitRatingButton = dialogView.findViewById(R.id.submitRatingButton);
-        TextView workerNameTextView = dialogView.findViewById(R.id.workerNameTextView);
+                workerNameTextView.setText(courier.getFirstName());
 
-        workerNameTextView.setText("Имя курьера");
+                builder.setView(view);
+                builder.setTitle("Оцените курьера");
 
-        builder.setTitle("Оцените курьера");
+                AlertDialog dialog = builder.create();
 
-        submitRatingButton.setOnClickListener(v -> {
-            float rating = ratingBar.getRating();
-            if (rating >= 1 && rating <= 5) {
-                Toast.makeText(this, "Рейтинг отправлен: " + rating, Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Рейтинг должен быть от 1 до 5", Toast.LENGTH_SHORT).show();
-            }
-        });
+                submitRatingButton.setOnClickListener(v -> {
+                    float rating = ratingBar.getRating();
+                    if (rating > 0) {
+                        courierRepository.updateCourierRating(courier.getId(), rating)
+                                .thenRun(() -> {
+                                    routeOrderRepository.setOrderRated(order.getOrderId())
+                                            .thenRun(() -> {
+                                                dialog.dismiss();
+                                            });
+                                });
+                    } else {
+                        Toast.makeText(UserProfile.this, "Пожалуйста, поставьте оценку", Toast.LENGTH_SHORT).show();
+                    }
+                });
 
-        builder.setNegativeButton("Отмена", null);
-
-        builder.show();
+                dialog.show();
+            });
+        }
     }
-
-
-
 }

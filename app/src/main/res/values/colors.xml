@@ -3,9 +3,11 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="red">#FF0000</color>
+    <color name="green">#4CAF50</color>
     
     <color name="my_primary">#EC7D23</color>
     <color name="my_secondary">#2E2620</color>
     <color name="default_card_background">#FFFFFF</color>
     <color name="selected_card_background">#D3D3D3</color>
+
 </resources>

@@ -7,14 +7,16 @@ public class Courier {
     public String phone;
     public String balance;
     public String typeOfCourier;
-    public String rating;
+    private float rating;
+    private int ratingCount;
     public String countOfDayDeliveres;
+    public boolean isVerified;
 
     public Courier() {
     }
 
 
-    public Courier(String id, String firstName, String surName, String phone, String typeOfCourier, String rating, String countOfDayDeliveres, String balance) {
+    public Courier(String id, String firstName, String surName, String phone, String typeOfCourier, float rating, String countOfDayDeliveres, String balance, int ratingCount, boolean isVerified) {
         this.id = id;
         this.firstName = firstName;
         this.surName = surName;
@@ -23,6 +25,27 @@ public class Courier {
         this.rating = rating;
         this.countOfDayDeliveres = countOfDayDeliveres;
         this.balance = balance;
+        this.ratingCount = ratingCount;
+    }
+
+    public boolean isVerified() {
+        return isVerified;
+    }
+
+    public void setVerified(boolean verifed) {
+        isVerified = verifed;
+    }
+
+    public void setRating(float rating) {
+        this.rating = rating;
+    }
+
+    public int getRatingCount() {
+        return ratingCount;
+    }
+
+    public void setRatingCount(int ratingCount) {
+        this.ratingCount = ratingCount;
     }
 
     public String getId() {
@@ -45,9 +68,6 @@ public class Courier {
         return typeOfCourier;
     }
 
-    public String getRating() {
-        return rating;
-    }
 
     public String getCountOfDayDeliveres() {
         return countOfDayDeliveres;
@@ -73,8 +93,8 @@ public class Courier {
         this.typeOfCourier = typeOfCourier;
     }
 
-    public void setRating(String rating) {
-        this.rating = rating;
+    public float getRating() {
+        return rating;
     }
 
     public void setCountOfDayDeliveres(String countOfDayDeliveres) {

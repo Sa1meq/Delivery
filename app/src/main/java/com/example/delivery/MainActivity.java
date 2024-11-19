@@ -352,6 +352,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 
     private void requestRoute() {
+        String selectedCourierType = getSelectedCourierType();
+        if (selectedCourierType.equals("Не указан")) {
+            Toast.makeText(MainActivity.this, "Выберите тариф!", Toast.LENGTH_SHORT).show();
+            return;
+        }
         DrivingOptions drivingOptions = new DrivingOptions();
         VehicleOptions vehicleOptions = new VehicleOptions();
         List<RequestPoint> requestPoints = new ArrayList<>();

@@ -53,11 +53,25 @@ public class RouteOrderRepository {
     public CompletableFuture<Void> completeOrder(String orderId) {
         CompletableFuture<Void> future = new CompletableFuture<>();
         DocumentReference docRef = firestore.collection("routeOrders").document(orderId);
+
+        // Завершаем заказ
         docRef.update("isCompleted", true, "isAccepted", false, "isActive", false)
-                .addOnSuccessListener(aVoid -> future.complete(null))
+                .addOnSuccessListener(aVoid -> {
+                    // Проверяем, нужно ли отправить уведомление о рейтинге
+                    docRef.get().addOnSuccessListener(snapshot -> {
+                        RouteOrder routeOrder = snapshot.toObject(RouteOrder.class);
+                        if (routeOrder != null && !routeOrder.isRated) {
+                            // Логика уведомления
+//                            sendRatingNotification(routeOrder.userId, routeOrder.orderId);
+                        }
+                        future.complete(null);
+                    }).addOnFailureListener(future::completeExceptionally);
+                })
                 .addOnFailureListener(future::completeExceptionally);
+
         return future;
     }
+
 
 
 
@@ -71,6 +85,31 @@ public class RouteOrderRepository {
             List<RouteOrder> routeOrders = queryDocumentSnapshots.toObjects(RouteOrder.class);
             Log.d("Firestore", "Получено заказов: " + routeOrders.size());
             future.complete(routeOrders);
+        }).addOnFailureListener(future::completeExceptionally);
+        return future;
+    }
+
+    public CompletableFuture<Void> setOrderRated(String orderId) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        DocumentReference docRef = firestore.collection("routeOrders").document(orderId);
+
+        docRef.update("isRated", true)
+                .addOnSuccessListener(aVoid -> future.complete(null))
+                .addOnFailureListener(future::completeExceptionally);
+
+        return future;
+    }
+
+    public CompletableFuture<List<RouteOrder>> getOrdersToRate(String userId) {
+        CompletableFuture<List<RouteOrder>> future = new CompletableFuture<>();
+        Query query = firestore.collection("routeOrders")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("isCompleted", true)
+                .whereEqualTo("isRated", false);
+
+        query.get().addOnSuccessListener(queryDocumentSnapshots -> {
+            List<RouteOrder> ordersToRate = queryDocumentSnapshots.toObjects(RouteOrder.class);
+            future.complete(ordersToRate);
         }).addOnFailureListener(future::completeExceptionally);
         return future;
     }

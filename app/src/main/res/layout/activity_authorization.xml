@@ -87,7 +87,7 @@
                 <EditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text"
+                    android:inputType="textEmailAddress"
                     android:id="@+id/emailEditText"></EditText>
 
                 <View
@@ -126,7 +126,8 @@
                         android:layout_marginStart="60dp"
                         android:text="Забыли пароль?"
                         android:id="@+id/rememberPassword"
-                        android:gravity="center">
+                        android:gravity="center"
+                        android:visibility="gone">
                     </TextView>
 
                 </LinearLayout>
@@ -176,7 +177,8 @@
                     android:layout_height="wrap_content"
                     android:text="Войти с помощью"
                     android:layout_gravity="center"
-                    android:alpha="0.7"></TextView>
+                    android:alpha="0.7"
+                    android:visibility="gone"></TextView>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -188,7 +190,8 @@
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:layout_margin="12dp"
-                        android:background="@drawable/google">
+                        android:background="@drawable/google"
+                        android:visibility="gone">
                     </ImageView>
 
                 </LinearLayout>

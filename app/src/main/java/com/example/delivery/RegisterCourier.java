@@ -5,12 +5,12 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -27,6 +27,7 @@ public class RegisterCourier extends AppCompatActivity {
     private EditText phoneEditText;
     private Button registerButton;
     private TextView textViewLogin;
+    private TextView errorTextView;
 
     private String typeOfCourier = null;
     private CourierRepository courierRepository;
@@ -41,6 +42,7 @@ public class RegisterCourier extends AppCompatActivity {
         phoneEditText = findViewById(R.id.editTextPhone);
         registerButton = findViewById(R.id.registerButton);
         textViewLogin = findViewById(R.id.textViewLogin);
+        errorTextView = findViewById(R.id.errorTextView); // Инициализация errorTextView
         courierRepository = new CourierRepository(FirebaseFirestore.getInstance());
 
         ImageView closeButton = findViewById(R.id.closeButton);
@@ -99,47 +101,71 @@ public class RegisterCourier extends AppCompatActivity {
         String surName = surNameEditText.getText().toString().trim();
         String phone = phoneEditText.getText().toString().trim();
 
+        errorTextView.setVisibility(View.GONE);
+
         if (validateInputs(firstName, surName, phone, typeOfCourier)) {
-            FirebaseAuth auth = FirebaseAuth.getInstance();
-            FirebaseUser currentUser = auth.getCurrentUser();
+            courierRepository.getCourierByPhone(phone).thenAccept(existingCourier -> {
+                if (existingCourier != null) {
+                    showErrorMessage("Курьер с таким номером уже существует.");
+                } else {
+                    FirebaseAuth auth = FirebaseAuth.getInstance();
+                    FirebaseUser currentUser = auth.getCurrentUser();
 
-            if (currentUser != null) {
-                String userId = currentUser.getUid();
-                Courier courier = new Courier(userId, firstName, surName, phone, typeOfCourier, "0.00", "0", "0");
+                    if (currentUser != null) {
+                        String userId = currentUser.getUid();
+                        Courier courier = new Courier(userId, firstName, surName, phone, typeOfCourier, 0.00F, "0", "0.00", 0, false);
 
-                courierRepository.addCourier(courier, userId).thenAccept(aVoid -> {
-                    Toast.makeText(RegisterCourier.this, "Курьер успешно зарегистрирован!", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(RegisterCourier.this, CourierProfile.class);
-                    startActivity(intent);
-                    finish();
-                }).exceptionally(e -> {
-                    Toast.makeText(RegisterCourier.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    return null;
-                });
-            } else {
-                Toast.makeText(this, "Ошибка аутентификации", Toast.LENGTH_SHORT).show();
-            }
+                        courierRepository.addCourier(courier, userId).thenAccept(aVoid -> {
+                            showErrorMessage("Ожидайте верификации админом.");
+                        }).exceptionally(e -> {
+                            showErrorMessage("Ошибка: " + e.getMessage());
+                            return null;
+                        });
+                    } else {
+                        showErrorMessage("Ошибка аутентификации");
+                    }
+                }
+            }).exceptionally(e -> {
+                showErrorMessage("Ошибка проверки курьера: " + e.getMessage());
+                return null;
+            });
         }
     }
 
+
     private boolean validateInputs(String firstName, String surName, String phone, String typeOfCourier) {
         if (TextUtils.isEmpty(firstName)) {
-            Toast.makeText(this, "Имя обязательно", Toast.LENGTH_SHORT).show();
+            showErrorMessage("Имя обязательно");
             return false;
         }
         if (TextUtils.isEmpty(surName)) {
-            Toast.makeText(this, "Фамилия обязательна", Toast.LENGTH_SHORT).show();
+            showErrorMessage("Фамилия обязательна");
             return false;
         }
         if (TextUtils.isEmpty(phone)) {
-            Toast.makeText(this, "Телефон обязателен", Toast.LENGTH_SHORT).show();
+            showErrorMessage("Телефон обязателен");
+            return false;
+        }
+        if (!isValidPhone(phone)) {
+            showErrorMessage("Неверный формат телефона. Используйте: +375 (XX) XXXXXXX");
             return false;
         }
         if (TextUtils.isEmpty(typeOfCourier)) {
-            Toast.makeText(this, "Тип курьера обязателен", Toast.LENGTH_SHORT).show();
+            showErrorMessage("Тип курьера обязателен");
             return false;
         }
         return true;
+    }
+
+    private boolean isValidPhone(String phone) {
+        // Проверка на соответствие формату +375 (XX) XXXXXXX
+        String phonePattern = "^\\+375\\d{2}\\d{7}$"; // Регулярное выражение для проверки формата
+        return phone.matches(phonePattern);
+    }
+
+    private void showErrorMessage(String message) {
+        errorTextView.setVisibility(View.VISIBLE);
+        errorTextView.setText(message);
     }
 
     private void setSelectedCard(View selectedCard) {

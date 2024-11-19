@@ -19,9 +19,8 @@ public class CourierProfile extends AppCompatActivity {
     private TextView nameTextView;
     private TextView phoneTextView;
     private TextView ratingTextView;
+    private TextView earningsTextView;
     private Button ordersButton;
-    private Button statsButton;
-    private Button historyButton;
     private Button logoutButton;
 
     private CourierRepository courierRepository;
@@ -35,9 +34,8 @@ public class CourierProfile extends AppCompatActivity {
         nameTextView = findViewById(R.id.nameTextView);
         phoneTextView = findViewById(R.id.phoneTextView);
         ratingTextView = findViewById(R.id.ratingTextView);
+        earningsTextView = findViewById(R.id.earningsTextView);
         ordersButton = findViewById(R.id.ordersButton);
-        statsButton = findViewById(R.id.mapsButton);
-        historyButton = findViewById(R.id.historyButton);
         logoutButton = findViewById(R.id.logoutButton);
 
         courierRepository = new CourierRepository(FirebaseFirestore.getInstance());
@@ -46,32 +44,25 @@ public class CourierProfile extends AppCompatActivity {
 
         loadCourierData(userId);
 
+        ordersButton.setOnClickListener(v -> {
+            Intent intent = new Intent(CourierProfile.this, CourierOrdersList.class);
+            startActivity(intent);
+            finish();
+        });
 
-       ordersButton.setOnClickListener(v -> {
-          Intent intent = new Intent(CourierProfile.this, CourierOrdersList.class);
-          startActivity(intent);
-          finish();
-       });
-//
-//        historyButton.setOnClickListener(v -> {
-//            // Переход к истории заказов
-//            startActivity(new Intent(CourierActivity.this, OrderHistoryActivity.class));
-//        });
-//
-//        logoutButton.setOnClickListener(v -> {
-//            // Логика выхода
-//            FirebaseAuth.getInstance().signOut();
-//            startActivity(new Intent(CourierActivity.this, LoginActivity.class));
-//            finish();
-//        });
+        logoutButton.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            startActivity(new Intent(CourierProfile.this, UserProfile.class));
+            finish();
+        });
     }
-
     private void loadCourierData(String userId) {
         courierRepository.getCourierById(userId).thenAccept(courier -> {
             if (courier != null) {
                 nameTextView.setText(courier.getFirstName() + " " + courier.getSurName());
-                phoneTextView.setText(courier.getPhone());
+                phoneTextView.setText("Телефон: " + courier.getPhone());
                 ratingTextView.setText("Рейтинг: " + courier.getRating());
+                earningsTextView.setText("Заработок: " + courier.getBalance() + " BYN");
             } else {
                 Toast.makeText(CourierProfile.this, "Не удалось загрузить данные курьера", Toast.LENGTH_SHORT).show();
             }

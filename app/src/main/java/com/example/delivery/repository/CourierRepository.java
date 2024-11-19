@@ -1,5 +1,7 @@
 package com.example.delivery.repository;
 
+import android.util.Log;
+
 import com.example.delivery.model.Courier;
 import com.example.delivery.model.User;
 import com.google.firebase.firestore.CollectionReference;
@@ -9,6 +11,8 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class CourierRepository {
@@ -81,13 +85,76 @@ public class CourierRepository {
         return future;
     }
 
-    public CompletableFuture<Void> updateCourierRating(String courierId, float newRating) {
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        DocumentReference docRef = courierCollection.document(courierId);
+    public CompletableFuture<Boolean> updateCourierRating(String courierId, float newRating) {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
 
-        docRef.update("rating", newRating)
-                .addOnSuccessListener(aVoid -> future.complete(null))
-                .addOnFailureListener(future::completeExceptionally);
+        courierCollection.document(courierId).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                Courier courier = task.getResult().toObject(Courier.class);
+                if (courier != null) {
+                    int currentRatingCount = courier.getRatingCount();
+                    float currentRating = courier.getRating();
+
+                    float updatedRating = ((currentRating * currentRatingCount) + newRating) / (currentRatingCount + 1);
+                    courier.setRating(updatedRating);
+                    courier.setRatingCount(currentRatingCount + 1);
+
+
+                    courierCollection.document(courierId).set(courier)
+                            .addOnSuccessListener(aVoid -> future.complete(true))
+                            .addOnFailureListener(future::completeExceptionally);
+                } else {
+                    future.complete(false);
+                }
+            } else {
+                future.complete(false);
+            }
+        }).addOnFailureListener(future::completeExceptionally);
+
+        return future;
+    }
+
+    public CompletableFuture<List<Courier>> getPendingCouriers() {
+        CompletableFuture<List<Courier>> future = new CompletableFuture<>();
+        courierCollection.whereEqualTo("isVerified", false).get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        if (!task.getResult().isEmpty()) {
+                            List<Courier> couriers = new ArrayList<>();
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                Courier courier = document.toObject(Courier.class);
+                                couriers.add(courier);
+                            }
+                            future.complete(couriers);
+                        } else {
+                            future.complete(new ArrayList<>());
+                        }
+                    } else {
+                        future.completeExceptionally(new Exception("Error fetching couriers"));
+                    }
+                });
+        return future;
+    }
+
+
+    public CompletableFuture<Boolean> updateCourierVerification(String courierId, boolean isVerified) {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        courierCollection.document(courierId).get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        Courier courier = task.getResult().toObject(Courier.class);
+                        if (courier != null) {
+                            courier.setVerified(isVerified);
+                            courierCollection.document(courierId).set(courier)
+                                    .addOnSuccessListener(aVoid -> future.complete(true))
+                                    .addOnFailureListener(e -> future.complete(false));
+                        } else {
+                            future.complete(false);
+                        }
+                    } else {
+                        future.complete(false);
+                    }
+                });
         return future;
     }
 

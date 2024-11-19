@@ -56,53 +56,64 @@
             android:id="@+id/orderHistoryButton"
             style="@style/ProfileOptionStyle"
             android:text="История заказов"
-            android:drawableStart="@drawable/ic_ordershistory"/>
+            app:drawableStartCompat="@drawable/ic_ordershistory" />
 
         <TextView
             android:id="@+id/activeOrdersButton"
             style="@style/ProfileOptionStyle"
             android:text="Активные заказы"
-            android:drawableStart="@drawable/ic_activeorders"/>
+            app:drawableStartCompat="@drawable/ic_activeorders" />
 
         <TextView
             android:id="@+id/placeOrders"
             style="@style/ProfileOptionStyle"
             android:text="Сделать заказ"
-            android:drawableStart="@drawable/ic_place_order"/>
+            app:drawableStartCompat="@drawable/ic_place_order" />
 
         <TextView
             android:id="@+id/supportButton"
             style="@style/ProfileOptionStyle"
             android:text="Поддержка"
-            android:drawableStart="@drawable/ic_supp"
-            android:visibility="gone"/>
+            android:visibility="gone"
+            app:drawableStartCompat="@drawable/ic_supp" />
 
         <TextView
             android:id="@+id/rechargeBalanceButton"
             style="@style/ProfileOptionStyle"
             android:text="Пополнить баланс"
-            android:drawableStart="@drawable/ic_balance"/>
+            app:drawableStartCompat="@drawable/ic_balance" />
 
         <TextView
             android:id="@+id/becomeCourierButton"
             style="@style/ProfileOptionStyle"
             android:text="Стать курьером"
-            android:drawableStart="@drawable/ic_gocourier"
-            />
+            app:drawableStartCompat="@drawable/ic_gocourier" />
 
         <TextView
             android:id="@+id/aboutServiceButton"
             style="@style/ProfileOptionStyle"
             android:text="О сервисе"
-            android:drawableStart="@drawable/ic_info"/>
+            app:drawableStartCompat="@drawable/ic_info" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/adminPanelButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Админ панель"
+        android:gravity="bottom"
+        app:drawableStartCompat="@drawable/ic_adm_panel"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/exitButton"
+        style="@style/ProfileOptionStyle"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/exitButton"
         style="@style/ProfileOptionStyle"
         android:text="Выход"
-        android:drawableStart="@drawable/ic_exit"
         android:gravity="bottom"
+        app:drawableStartCompat="@drawable/ic_exit"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginBottom="10dp"/>

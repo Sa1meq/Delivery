@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardElevation="4dp"
+    app:cardCornerRadius="8dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp">
+        <ImageView
+            android:id="@+id/imageViewCourierAvatar"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginEnd="16dp"
+            android:src="@drawable/ic_avatar" />
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_weight="1">
+            <TextView
+                android:id="@+id/textViewCourierName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Имя"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/textViewCourierSurName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Фамилия"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/textViewCourierPhone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+375 XX XXX XXXX"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/textViewCourierType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Тип курьера"
+                android:textSize="14sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginStart="16dp">
+            <Button
+                android:id="@+id/buttonApproveCourier"
+                android:layout_width="125dp"
+                android:layout_height="40dp"
+                android:text="Одобрить"
+                android:backgroundTint="@color/green" />
+            <Button
+                android:id="@+id/buttonRejectCourier"
+                android:layout_width="125dp"
+                android:layout_height="40dp"
+                android:text="Отклонить"
+                android:backgroundTint="@color/red"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

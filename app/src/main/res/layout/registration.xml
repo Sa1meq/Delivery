@@ -123,7 +123,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:drawableEnd="@drawable/visibility_icon"
-                android:inputType="textPassword"></EditText>
+                android:inputType="textPassword"
+                android:imeOptions="actionNext"></EditText>
 
             <View
                 android:layout_width="wrap_content"
@@ -141,7 +142,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:drawableEnd="@drawable/visibility_icon"
-                android:inputType="textPassword"></EditText>
+                android:inputType="textPassword"
+                android:imeOptions="actionDone"></EditText>
 
 
             <LinearLayout

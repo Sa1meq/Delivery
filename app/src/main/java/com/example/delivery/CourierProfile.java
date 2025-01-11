@@ -52,7 +52,7 @@ public class CourierProfile extends AppCompatActivity {
 
         logoutButton.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
-            startActivity(new Intent(CourierProfile.this, UserProfile.class));
+            startActivity(new Intent(CourierProfile.this, Registration.class));
             finish();
         });
     }

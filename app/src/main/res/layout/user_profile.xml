@@ -30,23 +30,12 @@
         app:layout_constraintStart_toEndOf="@id/avatarImage"
         />
 
-    <TextView
-        android:id="@+id/balanceText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Баланс: "
-        app:layout_constraintTop_toBottomOf="@id/papa"
-        app:layout_constraintStart_toEndOf="@id/avatarImage"
-        android:textStyle="bold"
-        android:textColor="@color/black"
-        android:layout_marginStart="10dp"/>
-
     <LinearLayout
         android:id="@+id/optionsContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="vertical"
-        app:layout_constraintTop_toBottomOf="@id/balanceText"
+        app:layout_constraintTop_toBottomOf="@id/avatarImage"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/exitButton"
@@ -74,13 +63,12 @@
             android:id="@+id/supportButton"
             style="@style/ProfileOptionStyle"
             android:text="Поддержка"
-            android:visibility="gone"
             app:drawableStartCompat="@drawable/ic_supp" />
 
         <TextView
             android:id="@+id/rechargeBalanceButton"
             style="@style/ProfileOptionStyle"
-            android:text="Пополнить баланс"
+            android:text="Способы оплаты"
             app:drawableStartCompat="@drawable/ic_balance" />
 
         <TextView

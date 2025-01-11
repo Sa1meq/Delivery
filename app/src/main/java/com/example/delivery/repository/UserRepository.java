@@ -1,9 +1,13 @@
 package com.example.delivery.repository;
 
+import com.example.delivery.model.Card;
 import com.example.delivery.model.User;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
@@ -92,6 +96,7 @@ public class UserRepository {
                 });
         return future;
     }
+
     public CompletableFuture<Boolean> updateUser(String id, User user) {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         usersCollection.document(id).set(user)

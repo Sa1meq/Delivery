@@ -1,0 +1,65 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp">
+
+        <EditText
+            android:id="@+id/cardNumberEditText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Номер карты"
+            android:inputType="text"
+            android:maxLength="19"
+            android:layout_marginEnd="8dp" />
+
+        <ImageView
+            android:id="@+id/cardLogoImageView"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="Логотип карты" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp">
+
+        <EditText
+            android:id="@+id/expiryDateEditText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="ММ/ГГ"
+            android:inputType="number" />
+
+        <View
+            android:layout_width="12dp"
+            android:layout_height="match_parent" />
+
+        <EditText
+            android:id="@+id/cvcEditText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="CVC"
+            android:inputType="number" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/saveCardButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/my_primary"
+        android:text="Сохранить"
+        android:textColor="@android:color/white" />
+</LinearLayout>

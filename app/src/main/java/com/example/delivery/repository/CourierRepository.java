@@ -159,7 +159,6 @@ public class CourierRepository {
     }
 
 
-
     public CompletableFuture<Boolean> deleteCourierById(String id, FirebaseStorage firebaseStorage) {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         courierCollection.document(id).delete()

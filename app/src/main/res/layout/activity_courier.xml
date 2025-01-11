@@ -59,7 +59,6 @@
             android:layout_marginTop="4dp"
             android:text="Рейтинг: 4.5" />
 
-        <!-- Заработок -->
         <TextView
             android:id="@+id/earningsTextView"
             android:layout_width="wrap_content"
@@ -85,7 +84,8 @@ android:textColor="@android:color/white"/>
         android:layout_height="wrap_content"
         android:text="Активные заказы"
         android:layout_marginTop="16dp"
-        android:textColor="@android:color/white"/>
+        android:textColor="@android:color/white"
+        android:visibility="gone"/>
 
 <Button
 android:id="@+id/logoutButton"

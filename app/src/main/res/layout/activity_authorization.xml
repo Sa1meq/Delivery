@@ -106,7 +106,8 @@
                     android:layout_height="wrap_content"
                     android:inputType="textPassword"
                     android:drawableEnd="@drawable/visibility_icon"
-                    android:id="@+id/passwordEditText"></EditText>
+                    android:id="@+id/passwordEditText"
+                    android:imeOptions="actionDone"></EditText>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -127,7 +128,7 @@
                         android:text="Забыли пароль?"
                         android:id="@+id/rememberPassword"
                         android:gravity="center"
-                        android:visibility="gone">
+                        >
                     </TextView>
 
                 </LinearLayout>

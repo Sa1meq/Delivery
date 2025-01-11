@@ -49,6 +49,7 @@ public class OrdersAdapter extends RecyclerView.Adapter<OrdersAdapter.OrderViewH
         double distanceInKm = routeOrder.totalDistance / 1000.0;
         holder.distanceTextView.setText("Расстояние: " + String.format("%.1f", distanceInKm) + " км");
         holder.timeTextView.setText("Время: " + routeOrder.travelTime / 60 + " минут");
+        holder.costOrder.setText("Сумма заработка: " + routeOrder.getEstimatedCost());
 
         String courierId = FirebaseAuth.getInstance().getUid();
         new CourierRepository(FirebaseFirestore.getInstance())
@@ -78,6 +79,7 @@ public class OrdersAdapter extends RecyclerView.Adapter<OrdersAdapter.OrderViewH
         TextView startAddressTextView;
         TextView endAddressTextView;
         TextView descriptionTextView;
+        TextView costOrder;
 
         public OrderViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -88,6 +90,7 @@ public class OrdersAdapter extends RecyclerView.Adapter<OrdersAdapter.OrderViewH
             startAddressTextView = itemView.findViewById(R.id.start_address);
             endAddressTextView = itemView.findViewById(R.id.end_address);
             descriptionTextView = itemView.findViewById(R.id.order_description);
+            costOrder = itemView.findViewById(R.id.costOrder);
         }
     }
 

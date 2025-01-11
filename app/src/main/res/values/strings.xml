@@ -9,5 +9,15 @@
     <string name="logincourieracc">Войти в курьерский аккаунт</string>
     <string name="gotoprofile">Перейти в профиль</string>
     <string name="exit">Выйти из аккаунта</string>
+    <string name="_1234">**** **** **** 1234</string>
+    <string name="_12_25">Срок действия: 12/25</string>
+    <string-array name="card_operators">
+        <item>Visa</item>
+        <item>MasterCard</item>
+        <item>БЕЛКАРД</item>
+        <item>МИР</item>
+    </string-array>
+    <string name="title_activity_support">SupportActivity</string>
+
 
 </resources>

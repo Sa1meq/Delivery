@@ -31,12 +31,15 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.delivery.model.Card;
 import com.example.delivery.model.RouteOrder;
+import com.example.delivery.repository.CardRepository;
 import com.example.delivery.repository.RouteOrderRepository;
 import com.example.delivery.repository.UserRepository;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.yandex.mapkit.GeoObject;
 import com.yandex.mapkit.MapKitFactory;
 import com.yandex.mapkit.RequestPoint;
@@ -115,6 +118,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private boolean isRequestInProgress = false;
     private TextWatcher textWatcher;
     private RadioButton radioButtonPedestrian, radioButtonCar, radioButtonTruck;
+    private CardRepository cardRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,6 +131,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         searchManager = SearchFactory.getInstance().createSearchManager(SearchManagerType.COMBINED);
         routeOrderRepository = new RouteOrderRepository();
         userRepository = new UserRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance());
+        cardRepository = new CardRepository();
 
         startAddressEditText = findViewById(R.id.startAddressEditText);
         endAddressEditText = findViewById(R.id.endAddressEditText); // Инициализация EditText
@@ -357,6 +362,70 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             Toast.makeText(MainActivity.this, "Выберите тариф!", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        String userId = FirebaseAuth.getInstance().getUid();
+        CardRepository cardRepository = new CardRepository();
+
+        cardRepository.cardsCollection.whereEqualTo("cardUserID", userId).get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
+                        boolean hasMainCard = false;
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            Boolean isMain = document.getBoolean("main");
+                            if (Boolean.TRUE.equals(isMain)) {
+                                hasMainCard = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasMainCard) {
+                            showAlertDialog(
+                                    "Основная карта не выбрана",
+                                    "У вас нет основной карты. Пожалуйста, выберите основную карту.",
+                                    () -> {
+                                        Intent intent = new Intent(MainActivity.this, CardActivity.class);
+                                        startActivity(intent);
+                                    }
+                            );
+                        } else {
+                            showConfirmationDialog();
+                        }
+                    } else {
+                        showAlertDialog(
+                                "Нет добавленных карт",
+                                "У вас нет добавленных карт. Перенаправляем на экран добавления карты.",
+                                () -> {
+                                    Intent intent = new Intent(MainActivity.this, CardActivity.class);
+                                    startActivity(intent);
+                                }
+                        );
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(MainActivity.this, "Ошибка проверки карт: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void showAlertDialog(String title, String message, Runnable onOkClicked) {
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton("ОК", (dialog, which) -> onOkClicked.run())
+                .setCancelable(false)
+                .show();
+    }
+
+    private void showConfirmationDialog() {
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Подтверждение заказа")
+                .setMessage("Вы уверены, что хотите оформить заказ?")
+                .setPositiveButton("ОК", (dialog, which) -> proceedWithOrder())
+                .setNegativeButton("Отмена", (dialog, which) -> dialog.dismiss())
+                .setCancelable(false)
+                .show();
+    }
+
+    private void proceedWithOrder() {
         DrivingOptions drivingOptions = new DrivingOptions();
         VehicleOptions vehicleOptions = new VehicleOptions();
         List<RequestPoint> requestPoints = new ArrayList<>();
@@ -389,66 +458,29 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                 String formattedCost = String.format(Locale.getDefault(), "%.2f", orderCost).replace(',', '.');
                                 estimatedCostEditText.setText(formattedCost);
 
-                                UserRepository userRepository = new UserRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance());
-                                String userId = FirebaseAuth.getInstance().getUid();
+                                String orderDescription = orderDescriptionEditText.getText().toString();
 
-                                userRepository.getUserById(userId).thenAccept(user -> {
-                                    if (user != null) {
-                                        String balanceString = user.getBalance().replace(',', '.');
-                                        try {
-                                            double currentBalance = Double.parseDouble(balanceString);
+                                RouteOrder routeOrder = new RouteOrder(
+                                        UUID.randomUUID().toString(),
+                                        FirebaseAuth.getInstance().getUid(),
+                                        null,
+                                        routePoints,
+                                        distanceToEndPoint,
+                                        (long) timeToEndPoint,
+                                        startAddress,
+                                        endAddress,
+                                        courierType,
+                                        Double.parseDouble(formattedCost),
+                                        parseEstimatedDeliveryTime(),
+                                        orderDescription
+                                );
 
-                                            if (currentBalance >= orderCost) {
-                                                double newBalance = currentBalance - orderCost;
-                                                user.setBalance(String.format(Locale.getDefault(), "%.2f", newBalance).replace(',', '.'));
-
-                                                userRepository.updateUser(userId, user)
-                                                        .thenAccept(updated -> {
-                                                            if (updated) {
-                                                                String orderDescription = orderDescriptionEditText.getText().toString();
-
-                                                                RouteOrder routeOrder = new RouteOrder(
-                                                                        UUID.randomUUID().toString(),
-                                                                        userId,
-                                                                        null,
-                                                                        routePoints,
-                                                                        distanceToEndPoint,
-                                                                        (long) timeToEndPoint,
-                                                                        startAddress,
-                                                                        endAddress,
-                                                                        courierType,
-                                                                        Double.parseDouble(formattedCost),
-                                                                        parseEstimatedDeliveryTime(),
-                                                                        orderDescription
-                                                                );
-
-                                                                routeOrderRepository.saveRouteOrder(routeOrder)
-                                                                        .thenAccept(aVoid -> Toast.makeText(MainActivity.this, "Заказ успешно оформлен", Toast.LENGTH_SHORT).show())
-                                                                        .exceptionally(e -> {
-                                                                            Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                                                            return null;
-                                                                        });
-                                                            } else {
-                                                                Toast.makeText(MainActivity.this, "Ошибка обновления баланса", Toast.LENGTH_SHORT).show();
-                                                            }
-                                                        })
-                                                        .exceptionally(e -> {
-                                                            Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                                            return null;
-                                                        });
-                                            } else {
-                                                Toast.makeText(MainActivity.this, "Недостаточно средств на балансе", Toast.LENGTH_SHORT).show();
-                                            }
-                                        } catch (NumberFormatException e) {
-                                            Toast.makeText(MainActivity.this, "Ошибка: некорректный формат баланса", Toast.LENGTH_SHORT).show();
-                                        }
-                                    } else {
-                                        Toast.makeText(MainActivity.this, "Пользователь не найден", Toast.LENGTH_SHORT).show();
-                                    }
-                                }).exceptionally(e -> {
-                                    Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                    return null;
-                                });
+                                routeOrderRepository.saveRouteOrder(routeOrder)
+                                        .thenAccept(aVoid -> Toast.makeText(MainActivity.this, "Заказ успешно оформлен", Toast.LENGTH_SHORT).show())
+                                        .exceptionally(e -> {
+                                            Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            return null;
+                                        });
                             }
                         } else {
                             Toast.makeText(MainActivity.this, "Маршрут не найден", Toast.LENGTH_SHORT).show();
@@ -463,6 +495,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
         );
     }
+
+
+
 
 
     private float distanceBetweenPointsOnRoute(DrivingRoute route, Point first, Point second) {
@@ -641,6 +676,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         return courierCost * 1.3;
     }
+
+
 
 
     @Override

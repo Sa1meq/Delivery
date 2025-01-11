@@ -1,0 +1,38 @@
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginHorizontal="8dp"
+    card_view:cardCornerRadius="20dp"
+    card_view:cardElevation="4dp"
+    card_view:cardBackgroundColor="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/questionTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Вопрос"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorPrimary"
+            android:paddingBottom="8dp" />
+
+        <TextView
+            android:id="@+id/answerTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ответ"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:visibility="gone" />
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

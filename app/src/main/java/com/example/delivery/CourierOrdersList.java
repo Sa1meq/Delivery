@@ -41,7 +41,6 @@ public class CourierOrdersList extends AppCompatActivity {
         routeOrderRepository = new RouteOrderRepository();
         courierId = FirebaseAuth.getInstance().getUid();
         backImageView = findViewById(R.id.backImageView);
-
         loadCourierOrders();
         backImageView.setOnClickListener(v -> {
             Intent intent = new Intent(CourierOrdersList.this, CourierProfile.class);

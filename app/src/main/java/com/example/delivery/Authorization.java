@@ -116,14 +116,17 @@ public class Authorization extends AppCompatActivity {
 
         if (isPasswordVisible) {
             passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
+            passwordEditText.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.visibility_icon, 0);
         } else {
             passwordEditText.setTransformationMethod(null);
+            passwordEditText.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.baseline_visibility_off_24, 0);
         }
 
         isPasswordVisible = !isPasswordVisible;
         passwordEditText.setTypeface(currentTypeface);
         passwordEditText.setSelection(selection);
     }
+
 
     public void onClickLogin(View view) {
         String email = emailEditText.getText().toString().trim();

@@ -1,15 +1,11 @@
 package com.example.delivery;
 
-import static java.security.AccessController.getContext;
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.InputFilter;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
@@ -27,11 +23,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.List;
-
 public class UserProfile extends AppCompatActivity {
     private TextView userNameTextView;
-    private TextView orderHistoryButton, activeOrdersButton, exitButton, placeOrder, becomeCourierButton, rechargeBalanceButton, balanceText, aboutServiceButton, adminPanelButton;
+    private TextView orderHistoryButton, activeOrdersButton, exitButton, placeOrder, becomeCourierButton, rechargeBalanceButton, balanceText, aboutServiceButton, adminPanelButton, supportButton;
     private UserRepository userRepository;
     private CourierRepository courierRepository;
     private RouteOrderRepository routeOrderRepository;
@@ -54,10 +48,10 @@ public class UserProfile extends AppCompatActivity {
         activeOrdersButton = findViewById(R.id.activeOrdersButton);
         placeOrder = findViewById(R.id.placeOrders);
         becomeCourierButton = findViewById(R.id.becomeCourierButton);
+        supportButton = findViewById(R.id.supportButton);
         avatarImage = findViewById(R.id.avatarImage);
         notificationIcon = findViewById(R.id.notificationIcon);
         rechargeBalanceButton = findViewById(R.id.rechargeBalanceButton);
-        balanceText = findViewById(R.id.balanceText);
         exitButton = findViewById(R.id.exitButton);
         aboutServiceButton = findViewById(R.id.aboutServiceButton);
         adminPanelButton = findViewById(R.id.adminPanelButton);
@@ -78,13 +72,7 @@ public class UserProfile extends AppCompatActivity {
             userRepository.getUserById(userId).thenAccept(user -> {
                 if (user != null) {
                     userNameTextView.setText(user.getName());
-                    try {
-                        double balance = Double.parseDouble(user.getBalance());
-                        String formattedBalance = String.format("%.2f", balance);
-                        runOnUiThread(() -> balanceText.setText("Ваш баланс: " + formattedBalance + " BYN"));
-                    } catch (NumberFormatException e) {
-                        runOnUiThread(() -> balanceText.setText("Ошибка баланса"));
-                    }
+
 
                     String avatarUrl = user.getAvatarUrl();
                     if (avatarUrl != null && !avatarUrl.isEmpty()) {
@@ -126,6 +114,11 @@ public class UserProfile extends AppCompatActivity {
             Intent intent = new Intent(UserProfile.this, UserOrdersHistory.class);
             startActivity(intent);
         });
+        supportButton.setOnClickListener(view -> {
+            Intent intent = new Intent(UserProfile.this, SupportActivity.class);
+            startActivity(intent);
+            finish();
+        });
 
         placeOrder.setOnClickListener(v -> {
             Intent intent = new Intent(UserProfile.this, MainActivity.class);
@@ -140,7 +133,9 @@ public class UserProfile extends AppCompatActivity {
 
         rechargeBalanceButton.setOnClickListener(v -> {
             if (firebaseUser != null) {
-                showRechargeBalanceDialog(firebaseUser.getUid());
+                Intent intent = new Intent(UserProfile.this, CardActivity.class);
+                startActivity(intent);
+                finish();
             } else {
                 Toast.makeText(this, "Пользователь не авторизован", Toast.LENGTH_SHORT).show();
             }
@@ -255,71 +250,8 @@ public class UserProfile extends AppCompatActivity {
         }
     }
 
-    private void showRechargeBalanceDialog(String userId) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_recharge_balance, null);
-        builder.setView(dialogView);
 
-        EditText inputAmount = dialogView.findViewById(R.id.inputAmount);
-        inputAmount.setFilters(new InputFilter[]{new InputFilter.LengthFilter(7)});
 
-        TextView confirmButton = dialogView.findViewById(R.id.confirmButton);
-        TextView cancelButton = dialogView.findViewById(R.id.cancelButton);
-
-        AlertDialog dialog = builder.create();
-
-        confirmButton.setOnClickListener(v -> {
-            String amountStr = inputAmount.getText().toString().trim();
-            if (!amountStr.isEmpty()) {
-                try {
-                    double amount = Double.parseDouble(amountStr);
-                    if (amount > 0) {
-                        updateBalance(userId, amount);
-                        dialog.dismiss();
-                    } else {
-                        Toast.makeText(this, "Введите корректную сумму", Toast.LENGTH_SHORT).show();
-                    }
-                } catch (NumberFormatException e) {
-                    Toast.makeText(this, "Введите корректное число", Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                Toast.makeText(this, "Поле не может быть пустым", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        cancelButton.setOnClickListener(v -> dialog.dismiss());
-
-        dialog.show();
-    }
-
-    private void updateBalance(String userId, double amount) {
-        userRepository.getUserById(userId).thenAccept(user -> {
-            if (user != null) {
-                double currentBalance = Double.parseDouble(user.getBalance());
-                double newBalance = currentBalance + amount;
-                user.setBalance(String.valueOf(newBalance));
-
-                userRepository.updateUser(userId, user).thenAccept(success -> {
-                    if (success) {
-                        runOnUiThread(() -> {
-                            String formattedBalance = String.format("%.2f", newBalance);
-                            balanceText.setText("Ваш баланс: " + formattedBalance + "BYN");
-                            Toast.makeText(this, "Баланс успешно пополнен", Toast.LENGTH_SHORT).show();
-                        });
-                    } else {
-                        runOnUiThread(() -> {
-                            Toast.makeText(this, "Ошибка обновления баланса", Toast.LENGTH_SHORT).show();
-                        });
-                    }
-                }).exceptionally(throwable -> {
-                    runOnUiThread(() -> {
-                        Toast.makeText(this, "Ошибка соединения с сервером", Toast.LENGTH_SHORT).show();
-                    });
-                    return null;
-                });
-            }
-        });
-    }
 
     private void clearUserCredentials() {
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -354,6 +286,7 @@ public class UserProfile extends AppCompatActivity {
 
         dialog.show();
     }
+    
 
     public void showRatingDialog(RouteOrder order) {
         if (order != null) {

@@ -1,0 +1,197 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+    class UserProfile {
+        - TextView userNameTextView
+        - TextView orderHistoryButton
+        - TextView activeOrdersButton
+        - TextView exitButton
+        - TextView placeOrder
+        - TextView becomeCourierButton
+        - TextView rechargeBalanceButton
+        - TextView balanceText
+        - TextView aboutServiceButton
+        - TextView adminPanelButton
+        - UserRepository userRepository
+        - CourierRepository courierRepository
+        - RouteOrderRepository routeOrderRepository
+        - ImageView avatarImage
+        - ImageView notificationIcon
+        - AlertDialog loadingDialog
+        - SharedPreferences sharedPreferences
+        + onCreate(Bundle savedInstanceState)
+        + uploadAvatarToCloudinary(Uri imageUri)
+        + updateAvatarInFirestore(String userId, String imageUrl)
+        + showLoadingDialog()
+        + hideLoadingDialog()
+        + showRechargeBalanceDialog(String userId)
+        + updateBalance(String userId, double amount)
+        + clearUserCredentials()
+        + showAboutDialog()
+        + showRatingDialog(RouteOrder order)
+    }
+
+    class UserRepository {
+        + getUserById(String userId)
+        + updateUser(String userId, User user)
+    }
+
+    class CourierRepository {
+        + getCourierById(String courierId)
+        + updateCourierRating(String courierId, float rating)
+    }
+
+    class RouteOrderRepository {
+        + getOrdersToRate(String userId)
+        + setOrderRated(String orderId)
+    }
+
+    class RouteOrder {
+        - String orderId
+        - String courierId
+        + getCourierId()
+    }
+
+    class User {
+        - String name
+        - String balance
+        - String avatarUrl
+        + getName()
+        + getBalance()
+        + setBalance(String balance)
+        + setAvatarUrl(String avatarUrl)
+        + isAdmin()
+    }
+
+    UserProfile --> UserRepository : uses
+    UserProfile --> CourierRepository : uses
+    UserProfile --> RouteOrderRepository : uses
+    UserProfile --> RouteOrder : manages
+    UserProfile --> User : manages
+    class UserOrdersHistory {
+            - RecyclerView ordersRecyclerView
+            - OrderAdapter orderAdapter
+            - List<RouteOrder> orderList
+            - RouteOrderRepository orderRepository
+            + onCreate(@Nullable Bundle savedInstanceState)
+            + loadUserOrders()
+        }
+
+        class OrderAdapter {
+            - List<RouteOrder> orders
+            + OrderAdapter(List<RouteOrder> orders)
+            + onCreateViewHolder(ViewGroup parent, int viewType)
+            + onBindViewHolder(RecyclerView.ViewHolder holder, int position)
+            + getItemCount()
+        }
+
+        class RouteOrderRepository {
+            + getOrdersByUserId(String userId)
+        }
+
+        class RouteOrder {
+            - String orderId
+            - String userId
+            - String details
+            + getOrderId()
+            + getUserId()
+            + getDetails()
+        }
+
+        class UserProfile {
+            + onCreate(Bundle savedInstanceState)
+        }
+
+
+        UserOrdersHistory --> OrderAdapter : uses
+        UserOrdersHistory --> RouteOrderRepository : uses
+        UserOrdersHistory --> RouteOrder : manages
+        UserOrdersHistory --> UserProfile : navigates to
+         UserActiveOrders --> OrderAdapter : uses
+         class UserActiveOrders {
+                 - RecyclerView ordersRecyclerView
+                 - OrderAdapter orderAdapter
+                 - List<RouteOrder> activeOrderList
+                 - RouteOrderRepository orderRepository
+                 + onCreate(@Nullable Bundle savedInstanceState)
+                 + loadActiveOrders()
+             }
+
+             class OrderAdapter {
+                 - List<RouteOrder> orders
+                 + OrderAdapter(List<RouteOrder> orders)
+                 + onCreateViewHolder(ViewGroup parent, int viewType)
+                 + onBindViewHolder(RecyclerView.ViewHolder holder, int position)
+                 + getItemCount()
+             }
+
+             class RouteOrderRepository {
+                 + getActiveOrdersByUserId(String userId)
+             }
+
+             class RouteOrder {
+                 - String orderId
+                 - String userId
+                 - String details
+                 + getOrderId()
+                 + getUserId()
+                 + getDetails()
+             }
+
+             class UserProfile {
+                 + onCreate(Bundle savedInstanceState)
+             }
+            UserActiveOrders --> RouteOrderRepository : uses
+            UserActiveOrders --> RouteOrder : manages
+            UserActiveOrders --> UserProfile : navigates to
+                class Registration {
+                    - UserRepository userRepository
+                    - EditText editName
+                    - EditText editEmail
+                    - EditText editPassword
+                    - EditText repeatPassword
+                    - Button registerButton
+                    - TextView loginTextView
+                    - TextView errorTextView
+                    - boolean isPasswordVisible
+                    - boolean isRepeatPasswordVisible
+                    + onCreate(Bundle savedInstanceState)
+                    + onClickRegistration(View view)
+                    - togglePasswordVisibility()
+                    - toggleRepeatPasswordVisibility()
+                    - showError(String errorMessage)
+                }
+
+                class UserRepository {
+                    + addUser(String name, String email, String password, String balance)
+                }
+
+                class User {
+                    - String name
+                    - String email
+                    - String password
+                    - String balance
+                    + getName()
+                    + getEmail()
+                    + getBalance()
+                }
+
+                class Authorization {
+                    + onCreate(Bundle savedInstanceState)
+                }
+
+                class UserProfile {
+                    + onCreate(Bundle savedInstanceState)
+                }
+
+                Registration --> UserRepository : uses
+                Registration --> User : creates
+                Registration --> Authorization : navigates to
+                Registration --> UserProfile : navigates to
+
+
+
+
+}
+
+@enduml

@@ -46,6 +46,19 @@ public class SupportChatRepository {
         return future;
     }
 
+    public CompletableFuture<Void> closeChat(String chatId) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        DocumentReference chatDoc = chatsCollection.document(chatId);
+
+        // Обновляем статус чата на "closed"
+        chatDoc.update("status", "closed")
+                .addOnSuccessListener(aVoid -> future.complete(null))
+                .addOnFailureListener(e -> future.completeExceptionally(new RuntimeException("Ошибка закрытия чата: " + e.getMessage())));
+
+        return future;
+    }
+
+
     public CompletableFuture<SupportChat> createNewChat(SupportChat newChat) {
         CompletableFuture<SupportChat> future = new CompletableFuture<>();
 

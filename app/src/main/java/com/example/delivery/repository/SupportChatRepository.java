@@ -77,6 +77,18 @@ public class SupportChatRepository {
         return future;
     }
 
+    public CompletableFuture<List<SupportChat>> getOpenChats() {
+        CompletableFuture<List<SupportChat>> future = new CompletableFuture<>();
+        chatsCollection.whereEqualTo("status", "open").get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<SupportChat> chats = querySnapshot.toObjects(SupportChat.class);
+                    future.complete(chats);
+                })
+                .addOnFailureListener(e -> future.completeExceptionally(new RuntimeException("Ошибка получения открытых чатов: " + e.getMessage())));
+        return future;
+    }
+
+
     // Удалить чат (пример дополнительного метода)
     public CompletableFuture<Void> deleteChat(String chatId) {
         CompletableFuture<Void> future = new CompletableFuture<>();

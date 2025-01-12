@@ -20,7 +20,7 @@ public class AdminPanel extends AppCompatActivity {
         chatButton = findViewById(R.id.chatButton);
 
         verificationButton.setOnClickListener(v -> navigateToVerification());
-//        chatButton.setOnClickListener(v -> navigateToChats());
+        chatButton.setOnClickListener(v -> navigateToChats());
     }
 
     private void navigateToVerification() {
@@ -29,9 +29,9 @@ public class AdminPanel extends AppCompatActivity {
         startActivity(intent);
     }
 
-//    private void navigateToChats() {
-//        // Переход на экран чатов
-//        Intent intent = new Intent(AdminPanel.this, AdminChatListActivity.class);
-//        startActivity(intent);
-//    }
+    private void navigateToChats() {
+        // Переход на экран чатов
+        Intent intent = new Intent(AdminPanel.this, AdminChatListActivity.class);
+        startActivity(intent);
+    }
 }

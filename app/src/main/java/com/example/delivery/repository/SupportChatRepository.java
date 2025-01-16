@@ -8,8 +8,12 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.util.Consumer;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -22,6 +26,11 @@ public class SupportChatRepository {
         this.firestore = firestore;
         this.chatsCollection = firestore.collection("supportChats");
     }
+
+    public interface Callback<T> {
+        void onComplete(T result);
+    }
+
 
     public CompletableFuture<List<SupportChat>> getUserChats(String userId) {
         CompletableFuture<List<SupportChat>> future = new CompletableFuture<>();
@@ -45,6 +54,46 @@ public class SupportChatRepository {
                 .addOnFailureListener(e -> future.completeExceptionally(new RuntimeException("Ошибка получения чата: " + e.getMessage())));
         return future;
     }
+
+    public CompletableFuture<List<SupportMessage>> loadOldMessages(String chatId) {
+        CompletableFuture<List<SupportMessage>> future = new CompletableFuture<>();
+        firestore.collection("supportChats")
+                .document(chatId)
+                .collection("messages")
+                .orderBy("timestamp")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<SupportMessage> messages = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : querySnapshot) {
+                        messages.add(doc.toObject(SupportMessage.class));
+                    }
+                    future.complete(messages);
+                })
+                .addOnFailureListener(e -> future.completeExceptionally(e));
+        return future;
+    }
+
+    public ListenerRegistration getChatMessagesListener(String chatId, Callback<List<SupportMessage>> callback) {
+        return firestore.collection("supportChats")
+                .document(chatId)
+                .collection("messages")
+                .orderBy("timestamp")
+                .addSnapshotListener((querySnapshot, e) -> {
+                    if (e != null) {
+                        e.printStackTrace();
+                        return;
+                    }
+                    if (querySnapshot != null) {
+                        List<SupportMessage> newMessages = new ArrayList<>();
+                        for (QueryDocumentSnapshot doc : querySnapshot) {
+                            newMessages.add(doc.toObject(SupportMessage.class));
+                        }
+                        callback.onComplete(newMessages);
+                    }
+                });
+    }
+
+
 
     public CompletableFuture<Void> closeChat(String chatId) {
         CompletableFuture<Void> future = new CompletableFuture<>();

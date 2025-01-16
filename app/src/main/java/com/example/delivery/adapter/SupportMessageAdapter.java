@@ -66,4 +66,10 @@ public class SupportMessageAdapter extends RecyclerView.Adapter<SupportMessageAd
             timestampTextView = itemView.findViewById(R.id.timestampTextView);
         }
     }
+    public void addMessages(List<SupportMessage> newMessages) {
+        int startPosition = messages.size();
+        messages.addAll(newMessages);
+        notifyItemRangeInserted(startPosition, newMessages.size());
+    }
+
 }

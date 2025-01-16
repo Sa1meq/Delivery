@@ -38,7 +38,7 @@ public class VerificationActivity extends AppCompatActivity {
         loadPendingCouriers();
         ImageView backImageView = findViewById(R.id.backImageView);
         backImageView.setOnClickListener(v -> {
-            Intent intent = new Intent(VerificationActivity.this, UserProfile.class);
+            Intent intent = new Intent(VerificationActivity.this, AdminPanel.class);
             startActivity(intent);
             finish();
         });

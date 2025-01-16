@@ -23,7 +23,7 @@
         android:id="@+id/textViewAdminTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Панель Администратора"
+        android:text="Запросы на верификацию"
         android:textSize="20sp"
         android:textStyle="bold"
         android:layout_marginTop="32dp"

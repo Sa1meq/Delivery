@@ -1,26 +1,40 @@
 package com.example.delivery.model;
 
+import com.google.firebase.Timestamp;
+
 public class SupportMessage {
-    private String messageId;
-    private String senderId; // user or admin
-    private String messageContent;
-    private long timestamp;
+    private String id; // Уникальный идентификатор сообщения
+    private String content; // Текст сообщения
+    private String senderId; // ID отправителя
+    private String chatId; // ID чата, к которому принадлежит сообщение
+    private Timestamp createTime; // Время создания сообщения
+    private boolean isAdmin; // True, если сообщение от администратора
 
-    public SupportMessage(String senderId, String messageContent, long timestamp) {
+    public SupportMessage(String id, String content, String senderId, String chatId, Timestamp createTime, boolean isAdmin) {
+        this.id = id;
+        this.content = content;
         this.senderId = senderId;
-        this.messageContent = messageContent;
-        this.timestamp = timestamp;
+        this.chatId = chatId;
+        this.createTime = createTime;
+        this.isAdmin = isAdmin;
     }
 
-    public SupportMessage() {
+    public SupportMessage() {}
+
+    public String getId() {
+        return id;
     }
 
-    public String getMessageId() {
-        return messageId;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public void setMessageId(String messageId) {
-        this.messageId = messageId;
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 
     public String getSenderId() {
@@ -31,19 +45,27 @@ public class SupportMessage {
         this.senderId = senderId;
     }
 
-    public String getMessageContent() {
-        return messageContent;
+    public String getChatId() {
+        return chatId;
     }
 
-    public void setMessageContent(String messageContent) {
-        this.messageContent = messageContent;
+    public void setChatId(String chatId) {
+        this.chatId = chatId;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public Timestamp getCreateTime() {
+        return createTime;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setCreateTime(Timestamp createTime) {
+        this.createTime = createTime;
+    }
+
+    public boolean isAdmin() {
+        return isAdmin;
+    }
+
+    public void setAdmin(boolean admin) {
+        isAdmin = admin;
     }
 }

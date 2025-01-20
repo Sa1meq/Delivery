@@ -4,100 +4,126 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.delivery.adapter.SupportChatAdapter;
+import com.example.delivery.adapter.ChatAdapter;
 import com.example.delivery.model.SupportChat;
 import com.example.delivery.repository.SupportChatRepository;
+import com.example.delivery.LoadingDialog;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class SupportChatListActivity extends AppCompatActivity {
 
-    private RecyclerView chatRecyclerView;
-    private SupportChatAdapter chatAdapter;
     private SupportChatRepository chatRepository;
-    private Button createNewChatButton;
+    private ChatAdapter chatAdapter;
+    private final List<SupportChat> chatList = new ArrayList<>();
+    private RecyclerView chatRecyclerView;
+    private LoadingDialog loadingDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_support_chat_list);
 
-        chatRecyclerView = findViewById(R.id.chatRecyclerView);
+        // Инициализация репозитория и компонентов UI
         chatRepository = new SupportChatRepository(FirebaseFirestore.getInstance());
+        loadingDialog = new LoadingDialog(this);
 
-        chatAdapter = new SupportChatAdapter(new ArrayList<>());
+        chatRecyclerView = findViewById(R.id.chat_recycler_view);
         chatRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        chatAdapter = new ChatAdapter(this, chatList, new ChatAdapter.ChatClickListener() {
+            @Override
+            public void onChatClick(SupportChat chat) {
+                Intent intent = new Intent(SupportChatListActivity.this, SupportChatActivity.class);
+                intent.putExtra("CHAT_ID", chat.getId());
+                startActivity(intent);
+            }
+
+            @Override
+            public void onDeleteClick(SupportChat chat) {
+                deleteChat(chat);
+            }
+        });
+
         chatRecyclerView.setAdapter(chatAdapter);
-        createNewChatButton = findViewById(R.id.createNewChatButton);
 
-        String userId = FirebaseAuth.getInstance().getUid();
-        chatRepository.getUserChats(userId).thenAccept(chats -> {
-            runOnUiThread(() -> {
-                if (chats != null && !chats.isEmpty()) {
-                    chatAdapter.setChats(chats);
-                } else {
-                    Toast.makeText(SupportChatListActivity.this, "No chats found. Create a new one.", Toast.LENGTH_SHORT).show();
-                }
-            });
-        });
+        FloatingActionButton addChatButton = findViewById(R.id.add_chat_button);
+        addChatButton.setOnClickListener(view -> onClickAddChat());
 
-
-        chatAdapter.setOnChatClickListener(chat -> {
-            Intent intent = new Intent(SupportChatListActivity.this, SupportChatActivity.class);
-            intent.putExtra("chatId", chat.getChatId());
-            startActivity(intent);
-        });
-
-        createNewChatButton.setOnClickListener(v -> createNewChat());
-
-
+        loadChats();
     }
 
-    private void createNewChat() {
+    public void onClickAddChat() {
+        Intent intent = new Intent(SupportChatListActivity.this, CreateSupportChatActivity.class);
+        startActivity(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadChats();
+    }
+
+    private void loadChats() {
+        loadingDialog.setMessage("Загрузка чатов...");
+        loadingDialog.show();
+
         String userId = FirebaseAuth.getInstance().getUid();
         if (userId == null) {
-            Toast.makeText(this, "User not authenticated!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Ошибка авторизации", Toast.LENGTH_SHORT).show();
+            loadingDialog.dismiss();
             return;
         }
 
-        SupportChat newChat = new SupportChat();
-        newChat.setUserId(userId);
-        newChat.setAdminId(null);
-        newChat.setStatus("open");
-        newChat.setCreatedAt(System.currentTimeMillis());
-        newChat.setMessages(new ArrayList<>());
-
-        chatRepository.createNewChat(newChat)
-                .thenRun(() -> {
-                    String chatId = newChat.getChatId();
-                    if (chatId != null) {
-                        Log.d("SupportChatListActivity", "New chat created with ID: " + chatId);
-                        Intent intent = new Intent(SupportChatListActivity.this, SupportChatActivity.class);
-                        intent.putExtra("chatId", chatId);
-                        startActivity(intent);
-                    } else {
-                        Toast.makeText(SupportChatListActivity.this, "Failed to get chat ID", Toast.LENGTH_SHORT).show();
-                    }
+        chatRepository.getAllChatsByUserId(userId)
+                .thenAccept(chats -> {
+                    loadingDialog.dismiss();
+                    chatList.clear();
+                    chatList.addAll(chats);
+                    chatAdapter.notifyDataSetChanged();
                 })
                 .exceptionally(throwable -> {
-                    Log.e("SupportChatListActivity", "Error creating chat: " + throwable.getMessage());
-                    runOnUiThread(() -> {
-                        Toast.makeText(SupportChatListActivity.this, "Failed to create chat: " + throwable.getMessage(), Toast.LENGTH_SHORT).show();
-                    });
+                    loadingDialog.dismiss();
+                    Toast.makeText(this, "Ошибка загрузки чатов", Toast.LENGTH_SHORT).show();
+                    Log.e("SupportChatList", "Ошибка загрузки чатов", throwable);
                     return null;
                 });
     }
 
+    private void deleteChat(@NonNull SupportChat chat) {
+        loadingDialog.setMessage("Удаление чата...");
+        loadingDialog.show();
+
+        chatRepository.deleteChatById(chat.getId()); // Изменено на deleteChatById
+        CompletableFuture.runAsync(() -> {
+            // Успешное удаление
+            runOnUiThread(() -> {
+                loadingDialog.dismiss();
+                chatList.remove(chat);
+                chatAdapter.notifyDataSetChanged();
+                Toast.makeText(this, "Чат удален", Toast.LENGTH_SHORT).show();
+            });
+        }).exceptionally(throwable -> {
+            // Обработка ошибок
+            runOnUiThread(() -> {
+                loadingDialog.dismiss();
+                Toast.makeText(this, "Ошибка удаления чата", Toast.LENGTH_SHORT).show();
+                Log.e("SupportChatList", "Ошибка удаления чата", throwable);
+            });
+            return null;
+        });
+    }
 
 }
-
-

@@ -11,8 +11,11 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.example.delivery.auth.Authentication;
 import com.example.delivery.repository.UserRepository;
@@ -24,21 +27,28 @@ public class Authorization extends AppCompatActivity {
 
     private UserRepository userRepository;
     private EditText emailEditText, passwordEditText;
-    private TextView errorTextView;
+    private TextView errorTextView, rememberPasswordTextView;
     private boolean isPasswordVisible = false;
     private SharedPreferences sharedPreferences;
     private static final String PREFS_NAME = "UserPrefs";
     private static final String KEY_EMAIL = "email";
     private static final String KEY_PASSWORD = "password";
     private static final String KEY_REMEMBER_ME = "rememberMe";
+    private static final String KEY_FIRST_LAUNCH = "firstLaunch";
     private CheckBox rememberMeCheckBox;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_authorization);
-
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        if (isFirstLaunch()) {
+            markIntroAsShown();
+            Intent introIntent = new Intent(this, OnboardingActivity.class);
+            startActivity(introIntent);
+            finish();
+        }
 
         userRepository = new UserRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance());
 
@@ -49,6 +59,9 @@ public class Authorization extends AppCompatActivity {
 
 
         loadUserCredentials();
+
+        rememberPasswordTextView = findViewById(R.id.rememberPassword);
+        rememberPasswordTextView.setOnClickListener(v -> showPasswordRecoveryDialog());
 
         passwordEditText.setOnTouchListener((v, event) -> {
             final int DRAWABLE_END = 2;
@@ -69,6 +82,16 @@ public class Authorization extends AppCompatActivity {
                 clearUserCredentials(); // Очистка данных
             }
         });
+    }
+
+    private boolean isFirstLaunch() {
+        return sharedPreferences.getBoolean(KEY_FIRST_LAUNCH, true);
+    }
+
+    private void markIntroAsShown() {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(KEY_FIRST_LAUNCH, false);
+        editor.apply();
     }
 
     private void loadUserCredentials() {
@@ -173,5 +196,59 @@ public class Authorization extends AppCompatActivity {
                     } else {
                     }
                 });
+    }
+
+    private void showPasswordRecoveryDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_recover_password, null);
+        builder.setView(dialogView);
+
+        EditText emailInput = dialogView.findViewById(R.id.recoverEmailEditText);
+        EditText nicknameInput = dialogView.findViewById(R.id.recoverNicknameEditText);
+
+        builder.setTitle("Восстановление пароля")
+                .setPositiveButton("Подтвердить", (dialog, which) -> {
+                    String email = emailInput.getText().toString().trim();
+                    String nickname = nicknameInput.getText().toString().trim();
+
+                    if (email.isEmpty() || nickname.isEmpty()) {
+                        Toast.makeText(this, "Заполните все поля", Toast.LENGTH_SHORT).show();
+                        showPasswordRecoveryDialog();
+                    }
+
+                    userRepository.getUserByEmail(email).thenAccept(user -> {
+                        if (user != null && user.getName().equals(nickname)) {
+                            showNewPasswordDialog(email);
+                        } else {
+                            runOnUiThread(() -> Toast.makeText(this, "Некорректные данные", Toast.LENGTH_SHORT).show());
+                        }
+                    }).exceptionally(ex -> {
+                        runOnUiThread(() -> Toast.makeText(this, "Ошибка проверки данных", Toast.LENGTH_SHORT).show());
+                        return null;
+                    });
+                })
+                .setNegativeButton("Отмена", null)
+                .create()
+                .show();
+    }
+
+    private void showNewPasswordDialog(String email) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_new_password, null);
+        builder.setView(dialogView);
+
+        EditText newPasswordInput = dialogView.findViewById(R.id.newPasswordEditText);
+
+        builder.setTitle("Установите новый пароль")
+                .setPositiveButton("Сохранить", (dialog, which) -> {
+                    String newPassword = newPasswordInput.getText().toString().trim();
+
+                    if (newPassword.isEmpty()) {
+                        Toast.makeText(this, "Введите новый пароль", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Отмена", null)
+                .create()
+                .show();
     }
 }

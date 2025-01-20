@@ -1,125 +1,119 @@
 package com.example.delivery;
 
-import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.delivery.R;
-import com.example.delivery.adapter.SupportMessageAdapter;
+
+import com.example.delivery.adapter.MessageAdapter;
+import com.example.delivery.model.SupportChat;
 import com.example.delivery.model.SupportMessage;
 import com.example.delivery.repository.SupportChatRepository;
-import com.google.firebase.auth.FirebaseAuth;
+import com.example.delivery.repository.SupportMessageRepository;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class AdminChatActivity extends AppCompatActivity {
-    private RecyclerView chatMessagesRecyclerView;
-    private EditText messageEditText;
-    private Button sendMessageButton;
+
+    private RecyclerView messageListRecycler;
+    private EditText editMessage;
+    private ImageButton sendButton;
     private Button closeChatButton;
-    private SupportChatRepository chatRepository;
+    private MessageAdapter messageAdapter;
+
     private List<SupportMessage> messages = new ArrayList<>();
-    private SupportMessageAdapter adapter;
-    private String chatId;
-    private ListenerRegistration chatListener;
+    private SupportMessageRepository messageRepository;
+    private SupportChatRepository chatRepository;
+    private SupportChat chat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_chat);
 
-        chatMessagesRecyclerView = findViewById(R.id.chatMessagesRecyclerView);
-        messageEditText = findViewById(R.id.messageEditText);
-        sendMessageButton = findViewById(R.id.sendMessageButton);
-        closeChatButton = findViewById(R.id.closeChatButton);
-
-        // Устанавливаем менеджер для RecyclerView
-        chatMessagesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new SupportMessageAdapter(messages, "admin");
-        chatMessagesRecyclerView.setAdapter(adapter);
-
-        chatRepository = new SupportChatRepository(FirebaseFirestore.getInstance());
-
-        // Получаем chatId из Intent
-        chatId = getIntent().getStringExtra("chatId");
-
+        String chatId = getIntent().getStringExtra("CHAT_ID");
         if (chatId == null || chatId.isEmpty()) {
+            Toast.makeText(this, "Ошибка загрузки чата", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        // Загрузка старых сообщений
-        chatRepository.loadOldMessages(chatId).thenAccept(oldMessages -> {
+        messageRepository = new SupportMessageRepository(FirebaseFirestore.getInstance());
+        chatRepository = new SupportChatRepository(FirebaseFirestore.getInstance());
+
+        messageListRecycler = findViewById(R.id.recycler_message_list);
+        editMessage = findViewById(R.id.edit_message);
+        sendButton = findViewById(R.id.button_send);
+        closeChatButton = findViewById(R.id.button_close_chat);
+
+        messageAdapter = new MessageAdapter(this, messages);
+        messageListRecycler.setLayoutManager(new LinearLayoutManager(this));
+        messageListRecycler.setAdapter(messageAdapter);
+
+        loadChat(chatId);
+        sendButton.setOnClickListener(view -> sendMessage());
+        closeChatButton.setOnClickListener(view -> closeChat());
+    }
+
+    private void loadChat(String chatId) {
+        chatRepository.getChatById(chatId).thenAccept(loadedChat -> {
+            chat = loadedChat;
+            loadMessages();
+        }).exceptionally(throwable -> {
             runOnUiThread(() -> {
-                messages.clear();
-                messages.addAll(oldMessages);
-                adapter.notifyDataSetChanged();
-                chatMessagesRecyclerView.scrollToPosition(messages.size() - 1);
-            });
-        }).exceptionally(e -> {
-            e.printStackTrace();
-            return null;
-        });
-
-        // Подписка на новые сообщения
-        chatListener = chatRepository.getChatMessagesListener(chatId, newMessages -> {
-            runOnUiThread(() -> {
-                if (newMessages.isEmpty()) {
-                    Toast.makeText(this, "Нет сообщений", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(this, "Загружено " + newMessages.size() + " сообщений", Toast.LENGTH_SHORT).show();
-                    messages.addAll(newMessages);
-                    adapter.notifyDataSetChanged();
-                    chatMessagesRecyclerView.scrollToPosition(messages.size() - 1);
-                }
-            });
-        });
-
-        // Обработчик отправки сообщения
-        sendMessageButton.setOnClickListener(v -> {
-            String messageContent = messageEditText.getText().toString().trim();
-            if (!messageContent.isEmpty()) {
-                SupportMessage message = new SupportMessage("admin", messageContent, System.currentTimeMillis());
-                chatRepository.addMessageToChat(chatId, message).thenRun(() -> {
-                    runOnUiThread(() -> messageEditText.setText(""));  // Очистка поля ввода
-                }).exceptionally(e -> {
-                    e.printStackTrace();
-                    return null;
-                });
-            }
-        });
-
-        closeChatButton.setOnClickListener(v -> {
-            chatRepository.closeChat(chatId).thenRun(() -> {
-                Toast.makeText(AdminChatActivity.this, "Чат закрыт", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Ошибка загрузки чата", Toast.LENGTH_SHORT).show();
                 finish();
-            }).exceptionally(e -> {
-                e.printStackTrace();
-                return null;
             });
-        });
-
-        ImageView backImageView = findViewById(R.id.backImageView);
-        backImageView.setOnClickListener(v -> {
-            Intent intent = new Intent(AdminChatActivity.this, AdminChatListActivity.class);
-            startActivity(intent);
-            finish();
+            return null;
         });
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (chatListener != null) {
-            chatListener.remove();
+    private void loadMessages() {
+        CompletableFuture<List<SupportMessage>> future = messageRepository.getMessagesByChatId(chat.getId());
+        future.thenAccept(loadedMessages -> {
+            runOnUiThread(() -> {
+                messages.clear();
+                messages.addAll(loadedMessages);
+                messageAdapter.notifyDataSetChanged();
+                scrollToBottom();
+            });
+        }).exceptionally(throwable -> {
+            runOnUiThread(() -> Toast.makeText(this, "Ошибка загрузки сообщений", Toast.LENGTH_SHORT).show());
+            return null;
+        });
+    }
+
+    private void sendMessage() {
+        String content = editMessage.getText().toString().trim();
+        if (content.isEmpty()) {
+            Toast.makeText(this, "Введите сообщение", Toast.LENGTH_SHORT).show();
+            return;
         }
+
+        editMessage.setText("");
+        SupportMessage newMessage = messageRepository.addMessage(content, "admin", chat.getId(), true);
+        messages.add(newMessage);
+        messageAdapter.notifyItemInserted(messages.size() - 1);
+        scrollToBottom();
+    }
+
+    private void closeChat() {
+        chatRepository.closeChat(chat.getId());
+        Toast.makeText(this, "Чат закрыт", Toast.LENGTH_SHORT).show();
+        finish();
+    }
+
+    private void scrollToBottom() {
+        messageListRecycler.post(() -> messageListRecycler.scrollToPosition(messages.size() - 1));
     }
 }

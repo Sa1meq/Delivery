@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.bumptech.glide.Glide;
 import com.example.delivery.model.RouteOrder;
@@ -42,7 +43,7 @@ public class UserProfile extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.user_profile);
-
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         userNameTextView = findViewById(R.id.papa);
         orderHistoryButton = findViewById(R.id.orderHistoryButton);
         activeOrdersButton = findViewById(R.id.activeOrdersButton);
@@ -68,12 +69,9 @@ public class UserProfile extends AppCompatActivity {
 
         if (firebaseUser != null) {
             String userId = firebaseUser.getUid();
-
             userRepository.getUserById(userId).thenAccept(user -> {
                 if (user != null) {
                     userNameTextView.setText(user.getName());
-
-
                     String avatarUrl = user.getAvatarUrl();
                     if (avatarUrl != null && !avatarUrl.isEmpty()) {
                         runOnUiThread(() -> Glide.with(UserProfile.this)

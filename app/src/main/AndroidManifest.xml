@@ -35,11 +35,19 @@
             android:exported="true"
             android:screenOrientation="portrait" />
         <activity
+            android:name=".CreateSupportChatActivity"
+            android:exported="true"
+            android:screenOrientation="portrait" />
+        <activity
             android:name=".AdminPanel"
             android:exported="true"
             android:screenOrientation="portrait" />
         <activity
             android:name=".AdminChatActivity"
+            android:exported="true"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".OnboardingActivity"
             android:exported="true"
             android:screenOrientation="portrait" />
         <activity

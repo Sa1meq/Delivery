@@ -87,7 +87,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, LocationListener {
+public class    MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, LocationListener {
 
     public static final int REQUEST_LOCATION_PERMISSION = 1;
     private static final int ADDRESS_PICKER_REQUEST = 1;
@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         cardRepository = new CardRepository();
 
         startAddressEditText = findViewById(R.id.startAddressEditText);
-        endAddressEditText = findViewById(R.id.endAddressEditText); // Инициализация EditText
+        endAddressEditText = findViewById(R.id.endAddressEditText);
         getRouteButton = findViewById(R.id.getRouteButton);
         radioButtonPedestrian = findViewById(R.id.radioButtonPedestrian);
         radioButtonCar = findViewById(R.id.radioButtonCar);
@@ -154,7 +154,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         textWatcher = new AddressTextWatcher();
         startAddressEditText.addTextChangedListener(textWatcher);
-        endAddressEditText.addTextChangedListener(textWatcher); // Использование EditText
+        endAddressEditText.addTextChangedListener(textWatcher);
 
         getRouteButton.setOnClickListener(v -> {
             String startAddress = startAddressEditText.getText().toString();
@@ -496,10 +496,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         );
     }
 
-
-
-
-
     private float distanceBetweenPointsOnRoute(DrivingRoute route, Point first, Point second) {
         PolylineIndex polylineIndex = PolylineUtils.createPolylineIndex(route.getGeometry());
         if (polylineIndex == null) {
@@ -676,9 +672,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         return courierCost * 1.3;
     }
-
-
-
 
     @Override
     protected void onStart() {

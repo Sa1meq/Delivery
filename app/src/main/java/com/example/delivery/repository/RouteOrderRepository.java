@@ -40,9 +40,6 @@ public class RouteOrderRepository {
         return future;
     }
 
-
-
-
     public CompletableFuture<Void> updateCourierForOrder(String orderId, String courierId) {
         CompletableFuture<Void> future = new CompletableFuture<>();
         DocumentReference docRef = firestore.collection("routeOrders").document(orderId);
@@ -55,20 +52,16 @@ public class RouteOrderRepository {
     public CompletableFuture<Void> updateCourierBalance(String courierId, double amountToAdd) {
         CompletableFuture<Void> future = new CompletableFuture<>();
         DocumentReference courierRef = firestore.collection("couriers").document(courierId);
-
         courierRef.get().addOnSuccessListener(snapshot -> {
             if (snapshot.exists()) {
                 Courier courier = snapshot.toObject(Courier.class);
                 if (courier != null) {
                     try {
-                        // Преобразование строки баланса в число
                         double currentBalance = Double.parseDouble(courier.getBalance());
                         double newBalance = currentBalance + amountToAdd;
 
-                        // Установка нового значения баланса
-                        courier.setBalance(String.format(Locale.US, "%.2f", newBalance)); // Сохранение с двумя знаками после запятой
+                        courier.setBalance(String.format(Locale.US, "%.2f", newBalance));
 
-                        // Обновление Firestore
                         courierRef.set(courier)
                                 .addOnSuccessListener(aVoid -> future.complete(null))
                                 .addOnFailureListener(future::completeExceptionally);
@@ -118,10 +111,6 @@ public class RouteOrderRepository {
         return future;
     }
 
-
-
-
-
     public CompletableFuture<List<RouteOrder>> getAllPendingRouteOrdersForCourier(String courierId) {
         CompletableFuture<List<RouteOrder>> future = new CompletableFuture<>();
         Query query = firestore.collection("routeOrders")
@@ -153,14 +142,12 @@ public class RouteOrderRepository {
                 .whereEqualTo("userId", userId)
                 .whereEqualTo("isCompleted", true)
                 .whereEqualTo("isRated", false);
-
         query.get().addOnSuccessListener(queryDocumentSnapshots -> {
             List<RouteOrder> ordersToRate = queryDocumentSnapshots.toObjects(RouteOrder.class);
             future.complete(ordersToRate);
         }).addOnFailureListener(future::completeExceptionally);
         return future;
     }
-
 
     public CompletableFuture<List<RouteOrder>> getOrdersByUserId(String userId) {
         CompletableFuture<List<RouteOrder>> future = new CompletableFuture<>();

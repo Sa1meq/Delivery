@@ -68,7 +68,7 @@
         <TextView
             android:id="@+id/rechargeBalanceButton"
             style="@style/ProfileOptionStyle"
-            android:text="Способы оплаты"
+            android:text="Выбор карты"
             app:drawableStartCompat="@drawable/ic_balance" />
 
         <TextView

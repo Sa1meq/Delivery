@@ -3,6 +3,7 @@ package com.example.delivery;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -19,6 +20,7 @@ public class SupportActivity extends AppCompatActivity {
 
     private RecyclerView faqRecyclerView;
     private Button supportButton;
+    private ImageView backImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +29,7 @@ public class SupportActivity extends AppCompatActivity {
 
         faqRecyclerView = findViewById(R.id.faqRecyclerView);
         supportButton = findViewById(R.id.supportButton);
+        backImageView = findViewById(R.id.backImageView);
 
         List<FaqItem> faqList = Arrays.asList(
                 new FaqItem("Почему не привязывается карта?", "Убедитесь, что вы ввели данные карты корректно."),
@@ -42,6 +45,12 @@ public class SupportActivity extends AppCompatActivity {
         faqRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         faqRecyclerView.setAdapter(adapter);
 
+
+        backImageView.setOnClickListener(v -> {
+            Intent intent = new Intent(SupportActivity.this, UserProfile.class);
+            startActivity(intent);
+            finish();
+        });
    supportButton.setOnClickListener(v -> {
           Intent intent = new Intent(SupportActivity.this, SupportChatListActivity.class);
         startActivity(intent);

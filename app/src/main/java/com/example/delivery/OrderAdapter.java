@@ -1,5 +1,7 @@
 package com.example.delivery;
 
+import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,9 +13,11 @@ import java.util.List;
 
 public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.OrderViewHolder> {
     private List<RouteOrder> orders;
+    private Context context;
 
-    public OrderAdapter(List<RouteOrder> orders) {
+    public OrderAdapter(List<RouteOrder> orders, Context context) {
         this.orders = orders;
+        this.context = context;
     }
 
     @NonNull
@@ -27,17 +31,33 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.OrderViewHol
     @Override
     public void onBindViewHolder(@NonNull OrderViewHolder holder, int position) {
         RouteOrder order = orders.get(position);
+
         holder.startAddress.setText("Откуда: " + order.getStartAddress());
         holder.endAddress.setText("Куда: " + order.getEndAddress());
         holder.estimatedCost.setText("Стоимость: " + order.getEstimatedCost() + " BYN");
         holder.orderDescription.setText("Описание: " + order.getOrderDescription());
         holder.orderStatus.setText("Статус: " + getOrderStatus(order));
+
+        if (order.isAccepted()) {
+            holder.itemView.setOnClickListener(v -> {
+                Intent intent = new Intent(context, UserActiveOrderInfo.class);
+                intent.putExtra("orderId", order.getOrderId());
+                context.startActivity(intent);
+            });
+
+            holder.itemView.setAlpha(1.0f);
+        } else {
+            holder.itemView.setOnClickListener(null);
+
+            holder.itemView.setAlpha(0.5f);
+        }
     }
 
     @Override
     public int getItemCount() {
         return orders.size();
     }
+
     private String getOrderStatus(RouteOrder order) {
         if (order.isCompleted()) {
             return "Заказ доставлен";

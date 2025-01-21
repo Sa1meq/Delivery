@@ -29,7 +29,7 @@ public class UserOrdersHistory extends AppCompatActivity {
         ordersRecyclerView = findViewById(R.id.ordersRecyclerView);
         ordersRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        orderAdapter = new OrderAdapter(orderList);
+        orderAdapter = new OrderAdapter(orderList, this);
         ordersRecyclerView.setAdapter(orderAdapter);
 
         ImageView backImageView = findViewById(R.id.backImageView);

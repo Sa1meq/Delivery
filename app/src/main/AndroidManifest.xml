@@ -85,6 +85,10 @@
             android:exported="true"
             android:screenOrientation="portrait" />
         <activity
+            android:name=".UserActiveOrderInfo"
+            android:exported="true"
+            android:screenOrientation="portrait" />
+        <activity
             android:name=".RegisterCourier"
             android:exported="true"
             android:screenOrientation="portrait" />

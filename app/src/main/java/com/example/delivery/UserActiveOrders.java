@@ -14,7 +14,6 @@ import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public class UserActiveOrders extends AppCompatActivity {
     private RecyclerView ordersRecyclerView;
@@ -26,10 +25,11 @@ public class UserActiveOrders extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_active_orders);
+
         ordersRecyclerView = findViewById(R.id.ordersRecyclerView);
         ordersRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        orderAdapter = new OrderAdapter(activeOrderList);
+        orderAdapter = new OrderAdapter(activeOrderList, this);
         ordersRecyclerView.setAdapter(orderAdapter);
 
         loadActiveOrders();

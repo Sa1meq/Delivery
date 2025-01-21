@@ -16,7 +16,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.delivery.model.CourierLocation;
+import com.example.delivery.model.SerializedPoint;
 import com.example.delivery.repository.RouteOrderRepository;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.yandex.mapkit.MapKitFactory;
 import com.yandex.mapkit.RequestPoint;
 import com.yandex.mapkit.RequestPointType;
@@ -41,9 +45,9 @@ import com.yandex.runtime.image.ImageProvider;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class CourierAcceptedOrder extends AppCompatActivity implements LocationListener {
-
     private MapView mapView;
     private List<Point> routePoints = new ArrayList<>();
     private RouteOrderRepository routeOrderRepository = new RouteOrderRepository();
@@ -59,8 +63,6 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
     private Button checkReady;
     private DrivingSession drivingSession;
     private DrivingRoute currentRoute;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -126,7 +128,6 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
                         routePoints.clear();
                         routePoints.addAll(routeOrder.routePoints);
                         Log.d("RoutePoints", "Точки маршрута получены: " + routePoints);
-
                         buildRouteFromUserLocationToFirstPoint();
                     } else {
                         Toast.makeText(CourierAcceptedOrder.this, "Недостаточно точек маршрута", Toast.LENGTH_SHORT).show();
@@ -281,6 +282,30 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
         }
     }
 
+    private void saveCourierLocation(Point location) {
+        if (location == null) return;
+
+        String courierId = FirebaseAuth.getInstance().getCurrentUser().getUid(); // Предполагаем, что используешь Firebase Auth
+        String orderId = getIntent().getStringExtra("orderId");
+
+        List<SerializedPoint> serializedPoints = new ArrayList<>();
+        serializedPoints.add(SerializedPoint.fromMapKitPoint(location));
+
+        CourierLocation courierLocation = new CourierLocation(
+                UUID.randomUUID().toString(),
+                orderId,
+                courierId,
+                serializedPoints
+        );
+
+        FirebaseFirestore.getInstance().collection("courierLocations")
+                .document(courierLocation.getId())
+                .set(courierLocation)
+                .addOnSuccessListener(aVoid -> Log.d("CourierLocation", "Местоположение сохранено"))
+                .addOnFailureListener(e -> Log.e("CourierLocation", "Ошибка сохранения местоположения", e));
+    }
+
+
     @Override
     public void onLocationUpdated(@NonNull com.yandex.mapkit.location.Location location) {
         userLocation = new Point(location.getPosition().getLatitude(), location.getPosition().getLongitude());
@@ -302,8 +327,10 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
             }
         }
 
+        saveCourierLocation(userLocation); // Сохранение в Firestore
         buildRouteFromUserLocationToFirstPoint();
     }
+
 
 
     @Override

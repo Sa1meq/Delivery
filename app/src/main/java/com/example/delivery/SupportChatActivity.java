@@ -106,6 +106,10 @@ public class SupportChatActivity extends AppCompatActivity {
             Toast.makeText(this, "Введите сообщение", Toast.LENGTH_SHORT).show();
             return;
         }
+        if (chat.getStatus().equals("closed")){
+            Toast.makeText(this, "Обращение закрыто!", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         editMessage.setText("");
         SupportMessage newMessage = messageRepository.addMessage(content, chat.getUserId(), chat.getId(), false);

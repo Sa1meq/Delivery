@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.delivery.adapter.ChatAdapter;
 import com.example.delivery.model.SupportChat;
 import com.example.delivery.repository.SupportChatRepository;
-import com.example.delivery.LoadingDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -36,7 +35,6 @@ public class SupportChatListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_support_chat_list);
 
-        // Инициализация репозитория и компонентов UI
         chatRepository = new SupportChatRepository(FirebaseFirestore.getInstance());
         loadingDialog = new LoadingDialog(this);
 
@@ -46,6 +44,9 @@ public class SupportChatListActivity extends AppCompatActivity {
         chatAdapter = new ChatAdapter(this, chatList, new ChatAdapter.ChatClickListener() {
             @Override
             public void onChatClick(SupportChat chat) {
+                if (chat.getStatus().equals("closed")){
+                    return;
+                }
                 Intent intent = new Intent(SupportChatListActivity.this, SupportChatActivity.class);
                 intent.putExtra("CHAT_ID", chat.getId());
                 startActivity(intent);

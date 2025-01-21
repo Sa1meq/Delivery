@@ -39,9 +39,9 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         holder.messageTime.setText(message.getCreateTime().toDate().toString().substring(11, 16));
 
         if (message.isAdmin()) {
-            holder.messageContainer.setBackgroundResource(R.drawable.bg_message_admin);
+            holder.messageText.setBackgroundResource(R.drawable.bg_message_admin);
         } else {
-            holder.messageContainer.setBackgroundResource(R.drawable.bg_message_user);
+            holder.messageText.setBackgroundResource(R.drawable.bg_message_user);
         }
     }
 

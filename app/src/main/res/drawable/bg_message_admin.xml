@@ -1,6 +1,11 @@
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-    <solid android:color="#FFE6E6" />
-    <corners android:radius="16dp" />
-    <stroke android:width="2dp" android:color="#E24A4A" />
+<!-- res/drawable/bg_message_admin.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/colorAccent"/> <!-- Цвет для сообщений администратора -->
+    <corners android:radius="18dp"/> <!-- Закругленные углы -->
+    <stroke android:color="@color/my_primary" android:width="2dp"/> <!-- Граница оранжевая -->
+    <padding
+        android:left="16dp"
+        android:top="12dp"
+        android:right="16dp"
+        android:bottom="12dp"/> <!-- Отступы для текста -->
 </shape>

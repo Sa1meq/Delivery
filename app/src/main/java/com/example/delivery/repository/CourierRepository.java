@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class CourierRepository {
-    private final CollectionReference courierCollection;
+    public final CollectionReference courierCollection;
     private final FirebaseFirestore db;
 
     public CourierRepository(FirebaseFirestore db) {
@@ -157,6 +157,99 @@ public class CourierRepository {
                 });
         return future;
     }
+
+    public CompletableFuture<Boolean> blockCourier(String courierId, long blockDuration) {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        courierCollection.document(courierId).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                Courier courier = task.getResult().toObject(Courier.class);
+                if (courier != null) {
+                    long currentTime = System.currentTimeMillis();
+                    courier.setBlockedUntil(currentTime + blockDuration);
+                    courier.setStatus("blocked");
+
+                    courierCollection.document(courierId).set(courier)
+                            .addOnSuccessListener(aVoid -> future.complete(true))
+                            .addOnFailureListener(future::completeExceptionally);
+                } else {
+                    future.complete(false);
+                }
+            } else {
+                future.complete(false);
+            }
+        }).addOnFailureListener(future::completeExceptionally);
+        return future;
+    }
+
+    public CompletableFuture<Boolean> unblockCourier(String courierId) {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        courierCollection.document(courierId).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                Courier courier = task.getResult().toObject(Courier.class);
+                if (courier != null) {
+                    long currentTime = System.currentTimeMillis();
+                    if (courier.getBlockedUntil() > currentTime) {
+                        courier.setStatus("active");
+                        courier.setBlockedUntil(0);
+
+                        courierCollection.document(courierId).set(courier)
+                                .addOnSuccessListener(aVoid -> future.complete(true))
+                                .addOnFailureListener(future::completeExceptionally);
+                    } else {
+                        future.complete(false);
+                    }
+                } else {
+                    future.complete(false); // Если курьер не найден
+                }
+            } else {
+                future.complete(false); // Ошибка при получении данных
+            }
+        }).addOnFailureListener(future::completeExceptionally);
+
+        return future;
+    }
+
+
+    public CompletableFuture<Boolean> updateCourierBonusPoints(String courierId, int bonusPoints) {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        courierCollection.document(courierId).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                Courier courier = task.getResult().toObject(Courier.class);
+                if (courier != null) {
+                    courier.setBonusPoints(courier.getBonusPoints() + bonusPoints);
+                    courierCollection.document(courierId).set(courier)
+                            .addOnSuccessListener(aVoid -> future.complete(true))
+                            .addOnFailureListener(future::completeExceptionally);
+                } else {
+                    future.complete(false);
+                }
+            } else {
+                future.complete(false);
+            }
+        }).addOnFailureListener(future::completeExceptionally);
+        return future;
+    }
+
+    public CompletableFuture<Boolean> updateCourierEarnings(String courierId, double earnings) {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        courierCollection.document(courierId).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                Courier courier = task.getResult().toObject(Courier.class);
+                if (courier != null) {
+                    courier.setBalance(courier.getBalance() + earnings);
+                    courierCollection.document(courierId).set(courier)
+                            .addOnSuccessListener(aVoid -> future.complete(true))
+                            .addOnFailureListener(future::completeExceptionally);
+                } else {
+                    future.complete(false);
+                }
+            } else {
+                future.complete(false);
+            }
+        }).addOnFailureListener(future::completeExceptionally);
+        return future;
+    }
+
 
 
     public CompletableFuture<Boolean> deleteCourierById(String id, FirebaseStorage firebaseStorage) {

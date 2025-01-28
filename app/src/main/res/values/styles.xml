@@ -14,7 +14,10 @@
         <item name="tabBackground">@drawable/tab_background</item>
         <item name="tabIndicatorHeight">4dp</item>
     </style>
-
+    <style name="ShapeAppearance.MaterialComponents.LargeComponent.CornerFull" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
     <style name="CenteredTabs" parent="Widget.MaterialComponents.TabLayout">
         <item name="tabTextAppearance">@style/TabTextAppearance</item>
         <item name="tabSelectedTextColor">@android:color/white</item>

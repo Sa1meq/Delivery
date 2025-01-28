@@ -113,7 +113,7 @@ public class RegisterCourier extends AppCompatActivity {
 
                     if (currentUser != null) {
                         String userId = currentUser.getUid();
-                        Courier courier = new Courier(userId, firstName, surName, phone, typeOfCourier, 0.00F, "0", "0.00", 0, false);
+                        Courier courier = new Courier(userId, firstName, surName, phone, typeOfCourier, 0.00F, "0", "0.00", 0, false, 0, "active", 0);
 
                         courierRepository.addCourier(courier, userId).thenAccept(aVoid -> {
                             showErrorMessage("Ожидайте верификации админом.");

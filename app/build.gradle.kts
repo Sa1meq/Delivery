@@ -55,6 +55,7 @@ dependencies {
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
+    implementation ("com.google.code.gson:gson:2.10.1")
 
 
     runtimeOnly("com.cloudinary:cloudinary-android-core:3.0.2")

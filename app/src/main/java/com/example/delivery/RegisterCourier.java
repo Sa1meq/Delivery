@@ -1,178 +1,268 @@
 package com.example.delivery;
 
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextUtils;
-import android.text.TextWatcher;
-import android.util.Patterns;
+import android.provider.OpenableColumns;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.LinearLayout;
+import android.widget.RadioGroup;
+import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.delivery.model.Courier;
 import com.example.delivery.repository.CourierRepository;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.concurrent.CompletableFuture;
 
 public class RegisterCourier extends AppCompatActivity {
 
-    private EditText firstNameEditText;
-    private EditText surNameEditText;
-    private EditText phoneEditText;
-    private Button registerButton;
-    private TextView textViewLogin;
-    private TextView errorTextView;
+    private static final int PICK_FILE_REQUEST_CODE = 1;
 
-    private String typeOfCourier = null;
-    private CourierRepository courierRepository;
+    private EditText editTextFirstName, editTextSurName, editTextMiddleName, editTextPhone,
+            editTextHobbies, editTextPreviousJobs, editTextAdditionalInfo, editTextEmail ;
+    private CheckBox checkBoxDrivingLicense, checkBoxExperience;
+    private Button buttonUploadFile, buttonSubmit;
+    private LinearLayout linearLayoutLicenseCategories;
+    private RadioGroup radioGroupCourierType;
+
+    private Uri fileUri;
+    private String userId = FirebaseAuth.getInstance().getUid();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register_courier);
 
-        firstNameEditText = findViewById(R.id.editTextFirstName);
-        surNameEditText = findViewById(R.id.editTextSurName);
-        phoneEditText = findViewById(R.id.editTextPhone);
-        registerButton = findViewById(R.id.registerButton);
-        textViewLogin = findViewById(R.id.textViewLogin);
-        errorTextView = findViewById(R.id.errorTextView); // Инициализация errorTextView
-        courierRepository = new CourierRepository(FirebaseFirestore.getInstance());
+        editTextFirstName = findViewById(R.id.editTextFirstName);
+        editTextSurName = findViewById(R.id.editTextSurName);
+        editTextMiddleName = findViewById(R.id.editTextMiddleName);
+        editTextPhone = findViewById(R.id.editTextPhone);
+        editTextHobbies = findViewById(R.id.editTextHobbies);
+        editTextPreviousJobs = findViewById(R.id.editTextPreviousJobs);
+        checkBoxDrivingLicense = findViewById(R.id.checkBoxDrivingLicense);
+        checkBoxExperience = findViewById(R.id.checkBoxExperience);
+        linearLayoutLicenseCategories = findViewById(R.id.linearLayoutLicenseCategories);
+        editTextAdditionalInfo = findViewById(R.id.editTextAdditionalInfo);
+        buttonUploadFile = findViewById(R.id.buttonUploadFile);
+        buttonSubmit = findViewById(R.id.buttonSubmit);
+        editTextEmail = findViewById(R.id.editTextEmail);
+        radioGroupCourierType = findViewById(R.id.radioGroupCourierType);
 
-        ImageView closeButton = findViewById(R.id.closeButton);
-        closeButton.setOnClickListener(v -> {
-            Intent intent = new Intent(RegisterCourier.this, UserProfile.class);
-            startActivity(intent);
-            finish();
-        });
+        buttonUploadFile.setOnClickListener(v -> openFilePicker());
 
-        phoneEditText.setText("+375");
-        phoneEditText.setSelection(4);
-
-        findViewById(R.id.cardPedestrian).setOnClickListener(view -> {
-            typeOfCourier = "Пеший";
-            setSelectedCard(view);
-        });
-        findViewById(R.id.cardCar).setOnClickListener(view -> {
-            typeOfCourier = "Авто";
-            setSelectedCard(view);
-        });
-        findViewById(R.id.cardTruck).setOnClickListener(view -> {
-            typeOfCourier = "Грузовой";
-            setSelectedCard(view);
-        });
-
-        registerButton.setOnClickListener(v -> registerCourier());
-
-        textViewLogin.setOnClickListener(v -> {
-            Intent intent = new Intent(RegisterCourier.this, LoginCourier.class);
-            startActivity(intent);
-        });
-
-        phoneEditText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int start, int count, int after) {
-                // Этот метод не используется
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int start, int before, int after) {
-                String currentText = phoneEditText.getText().toString();
-                if (!currentText.startsWith("+375")) {
-                    phoneEditText.setText("+375");
-                    phoneEditText.setSelection(4);
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-            }
-        });
+        buttonSubmit.setOnClickListener(v -> submitQuestionnaire());
     }
 
-    private void registerCourier() {
-        String firstName = firstNameEditText.getText().toString().trim();
-        String surName = surNameEditText.getText().toString().trim();
-        String phone = phoneEditText.getText().toString().trim();
+    public void onDrivingLicenseChecked(View view) {
+        if (checkBoxDrivingLicense.isChecked()) {
+            linearLayoutLicenseCategories.setVisibility(View.VISIBLE);
+            checkBoxExperience.setVisibility(View.VISIBLE);
+        } else {
+            linearLayoutLicenseCategories.setVisibility(View.GONE);
+            checkBoxExperience.setVisibility(View.GONE);
+        }
+    }
 
-        errorTextView.setVisibility(View.GONE);
+    private void openFilePicker() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        startActivityForResult(intent, PICK_FILE_REQUEST_CODE);
+    }
 
-        if (validateInputs(firstName, surName, phone, typeOfCourier)) {
-            courierRepository.getCourierByPhone(phone).thenAccept(existingCourier -> {
-                if (existingCourier != null) {
-                    showErrorMessage("Курьер с таким номером уже существует.");
-                } else {
-                    FirebaseAuth auth = FirebaseAuth.getInstance();
-                    FirebaseUser currentUser = auth.getCurrentUser();
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_FILE_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+            fileUri = data.getData();
+            if (fileUri != null) {
+                String fileName = getFileName(fileUri);
+                Toast.makeText(this, "Файл выбран: " + fileName, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
-                    if (currentUser != null) {
-                        String userId = currentUser.getUid();
-                        Courier courier = new Courier(userId, firstName, surName, phone, typeOfCourier, 0.00F, "0", "0.00", 0, false, 0, "active", 0);
-
-                        courierRepository.addCourier(courier, userId).thenAccept(aVoid -> {
-                            showErrorMessage("Ожидайте верификации админом.");
-                        }).exceptionally(e -> {
-                            showErrorMessage("Ошибка: " + e.getMessage());
-                            return null;
-                        });
-                    } else {
-                        showErrorMessage("Ошибка аутентификации");
+    private String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (nameIndex != -1) {
+                        result = cursor.getString(nameIndex);
                     }
                 }
-            }).exceptionally(e -> {
-                showErrorMessage("Ошибка проверки курьера: " + e.getMessage());
-                return null;
-            });
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
+    }
+
+    private void submitQuestionnaire() {
+        // Проверка заполнения обязательных полей
+        if (!validateFields()) {
+            return; // Если поля не заполнены, прерываем выполнение
+        }
+
+        // Получаем данные из полей
+        String firstName = editTextFirstName.getText().toString();
+        String surName = editTextSurName.getText().toString();
+        String middleName = editTextMiddleName.getText().toString();
+        String phone = editTextPhone.getText().toString();
+        String email = editTextEmail.getText().toString();
+        String hobbies = editTextHobbies.getText().toString();
+        String previousJobs = editTextPreviousJobs.getText().toString();
+        boolean hasDrivingLicense = checkBoxDrivingLicense.isChecked();
+        String additionalInfo = editTextAdditionalInfo.getText().toString();
+
+        StringBuilder drivingLicenseCategories = new StringBuilder();
+        if (hasDrivingLicense) {
+            if (((CheckBox) findViewById(R.id.checkBoxA)).isChecked()) drivingLicenseCategories.append("A ");
+            if (((CheckBox) findViewById(R.id.checkBoxA1)).isChecked()) drivingLicenseCategories.append("A1 ");
+            if (((CheckBox) findViewById(R.id.checkBoxAM)).isChecked()) drivingLicenseCategories.append("AM ");
+            if (((CheckBox) findViewById(R.id.checkBoxB)).isChecked()) drivingLicenseCategories.append("B ");
+            if (((CheckBox) findViewById(R.id.checkBoxBE)).isChecked()) drivingLicenseCategories.append("BE ");
+            if (((CheckBox) findViewById(R.id.checkBoxC)).isChecked()) drivingLicenseCategories.append("C ");
+            if (((CheckBox) findViewById(R.id.checkBoxCE)).isChecked()) drivingLicenseCategories.append("CE ");
+            if (((CheckBox) findViewById(R.id.checkBoxD)).isChecked()) drivingLicenseCategories.append("D ");
+            if (((CheckBox) findViewById(R.id.checkBoxDE)).isChecked()) drivingLicenseCategories.append("DE ");
+        }
+
+        // Получаем значение стажа
+        boolean hasExperience = checkBoxExperience.isChecked();
+
+        String courierType = "";
+        int selectedCourierTypeId = radioGroupCourierType.getCheckedRadioButtonId();
+        if (selectedCourierTypeId != -1) {
+            if (selectedCourierTypeId == R.id.radioButtonPedestrian) {
+                courierType = "Пеший";
+            } else if (selectedCourierTypeId == R.id.radioButtonCar) {
+                courierType = "Авто";
+            } else if (selectedCourierTypeId == R.id.radioButtonTruck) {
+                courierType = "Грузовой";
+            }
+        }
+
+
+        // Создаем объект Courier
+        Courier courier = new Courier();
+        courier.setFirstName(firstName);
+        courier.setSurName(surName);
+        courier.setMiddleName(middleName);
+        courier.setPhone(phone);
+        courier.setEmail(email);
+        courier.setBalance("0.0");
+        courier.setHobbies(hobbies);
+        courier.setPreviousJobs(previousJobs);
+        courier.setHasDrivingLicense(hasDrivingLicense);
+        courier.setDrivingLicenseCategories(drivingLicenseCategories.toString().trim());
+        courier.setHasExperience(hasExperience);
+        courier.setTypeOfCourier(courierType);
+        courier.setAdditionalInfo(additionalInfo);
+
+        if (fileUri != null) {
+            uploadFileToCloudinary(fileUri, userId)
+                    .thenAccept(fileUrl -> {
+                        courier.setAttachedFiles(fileUrl);
+                        saveCourierProfile(courier, userId);
+                    })
+                    .exceptionally(ex -> {
+                        Toast.makeText(this, "Ошибка при загрузке файла: " + ex.getMessage(), Toast.LENGTH_SHORT).show();
+                        return null;
+                    });
+        } else {
+            saveCourierProfile(courier, userId);
         }
     }
 
+    private void saveCourierProfile(Courier courier, String userId) {
+        CourierRepository courierRepository = new CourierRepository(FirebaseFirestore.getInstance());
+        courierRepository.addCourier(courier, userId)
+                .thenAccept(success -> {
+                    if (success) {
+                        Toast.makeText(this, "Анкета успешно отправлена!", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(this, UserProfile.class);
+                        startActivity(intent);
+                        finish(); // Закрываем Activity после успешной отправки
+                    }
+                })
+                .exceptionally(ex -> {
+                    Toast.makeText(this, "Ошибка: " + ex.getMessage(), Toast.LENGTH_SHORT).show();
+                    return null;
+                });
+    }
 
-    private boolean validateInputs(String firstName, String surName, String phone, String typeOfCourier) {
-        if (TextUtils.isEmpty(firstName)) {
-            showErrorMessage("Имя обязательно");
+    private boolean validateFields() {
+        // Проверка имени
+        if (editTextFirstName.getText().toString().trim().isEmpty()) {
+            editTextFirstName.setError("Введите имя");
             return false;
         }
-        if (TextUtils.isEmpty(surName)) {
-            showErrorMessage("Фамилия обязательна");
+
+        // Проверка фамилии
+        if (editTextSurName.getText().toString().trim().isEmpty()) {
+            editTextSurName.setError("Введите фамилию");
             return false;
         }
-        if (TextUtils.isEmpty(phone)) {
-            showErrorMessage("Телефон обязателен");
+
+        String phone = editTextPhone.getText().toString().trim();
+        if (phone.isEmpty()) {
+            editTextPhone.setError("Введите номер телефона");
+            return false;
+        } else if (!isValidPhone(phone)) {
+            editTextPhone.setError("Номер телефона должен быть в формате +375 (XX) XXX XX XX");
             return false;
         }
-        if (!isValidPhone(phone)) {
-            showErrorMessage("Неверный формат телефона. Используйте: +375 (XX) XXXXXXX");
+
+        // Проверка электронной почты
+        String email = editTextEmail.getText().toString().trim();
+        if (email.isEmpty()) {
+            editTextEmail.setError("Введите электронную почту");
+            return false;
+        } else if (!isValidEmail(email)) {
+            editTextEmail.setError("Введите корректный адрес электронной почты");
             return false;
         }
-        if (TextUtils.isEmpty(typeOfCourier)) {
-            showErrorMessage("Тип курьера обязателен");
-            return false;
-        }
+
+        // Если все поля заполнены корректно
         return true;
     }
 
+    private boolean isValidEmail(String email) {
+        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
+    }
     private boolean isValidPhone(String phone) {
-        // Проверка на соответствие формату +375 (XX) XXXXXXX
-        String phonePattern = "^\\+375\\d{2}\\d{7}$"; // Регулярное выражение для проверки формата
+        String phonePattern = "^\\+375\\d{2}\\d{3}\\d{2}\\d{2}$";
         return phone.matches(phonePattern);
     }
 
-    private void showErrorMessage(String message) {
-        errorTextView.setVisibility(View.VISIBLE);
-        errorTextView.setText(message);
-    }
-
-    private void setSelectedCard(View selectedCard) {
-        findViewById(R.id.cardPedestrian).setBackgroundColor(getResources().getColor(R.color.default_card_background));
-        findViewById(R.id.cardCar).setBackgroundColor(getResources().getColor(R.color.default_card_background));
-        findViewById(R.id.cardTruck).setBackgroundColor(getResources().getColor(R.color.default_card_background));
-
-        selectedCard.setBackgroundColor(getResources().getColor(R.color.selected_card_background));
+    private CompletableFuture<String> uploadFileToCloudinary(Uri fileUri, String userId) {
+        CompletableFuture<String> future = new CompletableFuture<>();
+        CloudinaryUploader cloudinaryUploader = new CloudinaryUploader(this);
+        cloudinaryUploader.uploadImage(fileUri, userId, new CloudinaryUploader.UploadCallback() {
+            @Override
+            public void onUploadComplete(String imageUrl) {
+                if (imageUrl != null) {
+                    future.complete(imageUrl);
+                } else {
+                    future.completeExceptionally(new RuntimeException("Ошибка при загрузке файла в Cloudinary."));
+                }
+            }
+        });
+        return future;
     }
 }

@@ -4,6 +4,7 @@ public class Courier {
     public String id;
     public String firstName;
     public String surName;
+    public String middleName; // Отчество
     public String phone;
     public String balance;
     public String typeOfCourier;
@@ -11,29 +12,131 @@ public class Courier {
     private int ratingCount;
     public String countOfDayDeliveres;
     public boolean isVerified;
-    private long blockedUntil; // Время окончания блокировки
-    private String status; // Статус курьера (например, "active", "blocked")
+    private long blockedUntil; // Время окончания
+    private String status;
     private int bonusPoints; // Бонусные баллы
+    private String enterCode;
+    private String email;
+
+    // Новые поля для анкеты
+    private String hobbies; // Хобби
+    private String previousJobs; // Предыдущие места работы
+    private boolean hasDrivingLicense; // Наличие водительских прав
+    private String drivingLicenseCategories; // Категории водительских прав
+    private String additionalInfo; // Дополнительная информация
+    private String attachedFiles;
+    private boolean hasExperience;
 
     public Courier() {
     }
 
-    public Courier(String id, String firstName, String surName, String phone, String typeOfCourier, float rating, String countOfDayDeliveres, String balance, int ratingCount, boolean isVerified, long blockedUntil, String status, int bonusPoints) {
+    public Courier(String id, String firstName, String surName, String middleName, String phone, String balance, String typeOfCourier, float rating, int ratingCount, String countOfDayDeliveres, boolean isVerified, long blockedUntil, String status, int bonusPoints, String hobbies, String previousJobs, boolean hasDrivingLicense, String drivingLicenseCategories, String additionalInfo, String attachedFiles, boolean hasExperience, String enterCode, String email) {
         this.id = id;
         this.firstName = firstName;
         this.surName = surName;
+        this.middleName = middleName;
         this.phone = phone;
+        this.balance = balance;
         this.typeOfCourier = typeOfCourier;
         this.rating = rating;
-        this.countOfDayDeliveres = countOfDayDeliveres;
-        this.balance = balance;
         this.ratingCount = ratingCount;
+        this.countOfDayDeliveres = countOfDayDeliveres;
         this.isVerified = isVerified;
         this.blockedUntil = blockedUntil;
         this.status = status;
         this.bonusPoints = bonusPoints;
+        this.hobbies = hobbies;
+        this.previousJobs = previousJobs;
+        this.hasDrivingLicense = hasDrivingLicense;
+        this.drivingLicenseCategories = drivingLicenseCategories;
+        this.additionalInfo = additionalInfo;
+        this.attachedFiles = attachedFiles;
+        this.hasExperience = hasExperience;
+        this.enterCode = enterCode;
+        this.email = email;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getEnterCode() {
+        return enterCode;
+    }
+
+    public void setEnterCode(String enterCode) {
+        this.enterCode = enterCode;
+    }
+
+    public boolean isHasExperience() {
+        return hasExperience;
+    }
+
+    public void setHasExperience(boolean hasExperience) {
+        this.hasExperience = hasExperience;
+    }
+
+    public String getMiddleName() {
+        return middleName;
+    }
+
+    public void setMiddleName(String middleName) {
+        this.middleName = middleName;
+    }
+
+    public String getHobbies() {
+        return hobbies;
+    }
+
+    public void setHobbies(String hobbies) {
+        this.hobbies = hobbies;
+    }
+
+    public String getPreviousJobs() {
+        return previousJobs;
+    }
+
+    public void setPreviousJobs(String previousJobs) {
+        this.previousJobs = previousJobs;
+    }
+
+    public boolean isHasDrivingLicense() {
+        return hasDrivingLicense;
+    }
+
+    public void setHasDrivingLicense(boolean hasDrivingLicense) {
+        this.hasDrivingLicense = hasDrivingLicense;
+    }
+
+    public String getDrivingLicenseCategories() {
+        return drivingLicenseCategories;
+    }
+
+    public void setDrivingLicenseCategories(String drivingLicenseCategories) {
+        this.drivingLicenseCategories = drivingLicenseCategories;
+    }
+
+    public String getAdditionalInfo() {
+        return additionalInfo;
+    }
+
+    public void setAdditionalInfo(String additionalInfo) {
+        this.additionalInfo = additionalInfo;
+    }
+
+    public String getAttachedFiles() {
+        return attachedFiles;
+    }
+
+    public void setAttachedFiles(String attachedFiles) {
+        this.attachedFiles = attachedFiles;
+    }
+
+    // Остальные геттеры и сеттеры
     public long getBlockedUntil() {
         return blockedUntil;
     }
@@ -58,8 +161,6 @@ public class Courier {
         this.bonusPoints = bonusPoints;
     }
 
-
-    // Существующие геттеры и сеттеры
     public boolean isVerified() {
         return isVerified;
     }

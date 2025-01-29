@@ -77,15 +77,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:alpha="0.7"
-                android:text="Телефон"
+                android:text="Код доступа"
                 android:textStyle="bold" />
 
             <EditText
                 android:id="@+id/editTextPhone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="phone"
-                android:hint="Введите телефон"
+                android:inputType="number"
+                android:hint="Введите код доступа"
                 android:padding="16dp"
                 android:textColorHint="#B0BEC5" />
 
@@ -120,15 +120,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="15dp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:alpha="0.7"
-                android:text="Нет аккаунта? Зарегистрируйтесь"
-                android:textColor="@android:color/black"
-                android:textSize="16sp"
-                android:layout_gravity="center"
-                android:id="@+id/textViewRegister" />
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>

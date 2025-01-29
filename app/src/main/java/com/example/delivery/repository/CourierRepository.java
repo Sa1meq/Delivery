@@ -1,11 +1,10 @@
 package com.example.delivery.repository;
 
-import android.util.Log;
+
+import android.net.Uri;
 
 import com.example.delivery.model.Courier;
-import com.example.delivery.model.User;
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
@@ -14,6 +13,7 @@ import com.google.firebase.storage.StorageReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 public class CourierRepository {
     public final CollectionReference courierCollection;
@@ -24,18 +24,14 @@ public class CourierRepository {
         this.courierCollection = db.collection("couriers");
     }
 
-    public CompletableFuture<Courier> addCourier(Courier courier, String userId) {
-        CompletableFuture<Courier> future = new CompletableFuture<>();
+    public CompletableFuture<Boolean> addCourier(Courier courier, String userId) {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
         courier.id = userId;
         courierCollection.document(userId).set(courier)
-                .addOnSuccessListener(aVoid -> future.complete(courier))
+                .addOnSuccessListener(aVoid -> future.complete(true))
                 .addOnFailureListener(future::completeExceptionally);
-
         return future;
     }
-
-
-
 
     public CompletableFuture<Courier> getCourierById(String id) {
         CompletableFuture<Courier> future = new CompletableFuture<>();
@@ -209,6 +205,31 @@ public class CourierRepository {
         return future;
     }
 
+    public CompletableFuture<Boolean> updateCourierEnterCode(String courierId, String enterCode) {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        courierCollection.document(courierId).update("enterCode", enterCode)
+                .addOnSuccessListener(aVoid -> future.complete(true))
+                .addOnFailureListener(future::completeExceptionally);
+        return future;
+    }
+
+
+    public CompletableFuture<Courier> getCourierByEnterCode(String enterCode) {
+        CompletableFuture<Courier> future = new CompletableFuture<>();
+        courierCollection.whereEqualTo("enterCode", enterCode).get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && !task.getResult().isEmpty()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            Courier courier = document.toObject(Courier.class);
+                            future.complete(courier);
+                            break;
+                        }
+                    } else {
+                        future.complete(null);
+                    }
+                }).addOnFailureListener(future::completeExceptionally);
+        return future;
+    }
 
     public CompletableFuture<Boolean> updateCourierBonusPoints(String courierId, int bonusPoints) {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
@@ -267,4 +288,5 @@ public class CourierRepository {
                 });
         return future;
     }
+
 }

@@ -174,4 +174,13 @@ public class RouteOrderRepository {
         return future;
     }
 
+    public CompletableFuture <List<RouteOrder>> cancelOrder(String orderId){
+       CompletableFuture<List<RouteOrder>> future = new CompletableFuture<>();
+       Query query = firestore.collection("routeOrders")
+               .whereEqualTo("orderId", orderId)
+               .whereEqualTo("isActive", false);
+
+        return future;
+    }
+
 }

@@ -214,7 +214,7 @@ public class    MainActivity extends AppCompatActivity implements NavigationView
             startActivity(intent);
             finish();
         } else if (itemId == R.id.nav_courier) {
-            Intent intent = new Intent(MainActivity.this, RegisterCourier.class);
+            Intent intent = new Intent(MainActivity.this, Registration.class);
             startActivity(intent);
             finish();
         }

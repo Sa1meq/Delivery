@@ -17,6 +17,7 @@ public class CourierAdapter extends RecyclerView.Adapter<CourierAdapter.CourierV
     private List<Courier> couriers;
     private OnVerifyListener onVerifyListener;
     private OnRejectListener onRejectListener;
+    private OnItemClickListener onItemClickListener;
 
     public interface OnVerifyListener {
         void onVerify(Courier courier);
@@ -26,10 +27,15 @@ public class CourierAdapter extends RecyclerView.Adapter<CourierAdapter.CourierV
         void onReject(Courier courier);
     }
 
-    public CourierAdapter(List<Courier> couriers, OnVerifyListener onVerifyListener, OnRejectListener onRejectListener) {
+    public interface OnItemClickListener {
+        void onItemClick(Courier courier);
+    }
+
+    public CourierAdapter(List<Courier> couriers, OnVerifyListener onVerifyListener, OnRejectListener onRejectListener, OnItemClickListener onItemClickListener) {
         this.couriers = couriers;
         this.onVerifyListener = onVerifyListener;
         this.onRejectListener = onRejectListener;
+        this.onItemClickListener = onItemClickListener;
     }
 
     @Override
@@ -45,6 +51,10 @@ public class CourierAdapter extends RecyclerView.Adapter<CourierAdapter.CourierV
         holder.surNameTextView.setText(courier.getSurName());
         holder.phoneTextView.setText(courier.getPhone());
         holder.textViewCourierType.setText(courier.getTypeOfCourier());
+
+        // Клик по элементу списка, открытие подробностей курьера
+        holder.itemView.setOnClickListener(v -> onItemClickListener.onItemClick(courier));
+
         holder.verifyButton.setOnClickListener(v -> onVerifyListener.onVerify(courier));
         holder.rejectButton.setOnClickListener(v -> onRejectListener.onReject(courier));
     }

@@ -82,6 +82,11 @@
             style="@style/ProfileOptionStyle"
             android:text="О сервисе"
             app:drawableStartCompat="@drawable/ic_info" />
+        <TextView
+            android:id="@+id/courierAccountButton"
+            style="@style/ProfileOptionStyle"
+            android:text="Вход в курьерский аккаунт"
+            app:drawableStartCompat="@drawable/ic_work" />
     </LinearLayout>
 
     <TextView

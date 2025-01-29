@@ -26,7 +26,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class UserProfile extends AppCompatActivity {
     private TextView userNameTextView;
-    private TextView orderHistoryButton, activeOrdersButton, exitButton, placeOrder, becomeCourierButton, rechargeBalanceButton, balanceText, aboutServiceButton, adminPanelButton, supportButton;
+    private TextView orderHistoryButton, activeOrdersButton, exitButton, placeOrder, becomeCourierButton, rechargeBalanceButton, courierAccountButton, aboutServiceButton, adminPanelButton, supportButton;
     private UserRepository userRepository;
     private CourierRepository courierRepository;
     private RouteOrderRepository routeOrderRepository;
@@ -57,6 +57,7 @@ public class UserProfile extends AppCompatActivity {
         aboutServiceButton = findViewById(R.id.aboutServiceButton);
         adminPanelButton = findViewById(R.id.adminPanelButton);
         sharedPreferences = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        courierAccountButton = findViewById(R.id.courierAccountButton);
 
         FirebaseAuth auth = FirebaseAuth.getInstance();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -87,6 +88,13 @@ public class UserProfile extends AppCompatActivity {
                     } else {
                         runOnUiThread(() -> adminPanelButton.setVisibility(View.GONE));
                     }
+                    courierRepository.getCourierById(userId).thenAccept(courier -> {
+                        if (courier.getEnterCode() != null) {
+                            runOnUiThread(() -> courierAccountButton.setVisibility(View.VISIBLE));
+                        } else {
+                            runOnUiThread(() -> courierAccountButton.setVisibility(View.GONE));
+                        }
+                    });
                 } else {
                     userNameTextView.setText("Неизвестный пользователь");
                 }
@@ -105,6 +113,11 @@ public class UserProfile extends AppCompatActivity {
         });
         adminPanelButton.setOnClickListener(v -> {
             Intent intent = new Intent(UserProfile.this, AdminPanel.class);
+            startActivity(intent);
+            finish();
+        });
+        courierAccountButton.setOnClickListener(v -> {
+            Intent intent = new Intent(UserProfile.this, LoginCourier.class);
             startActivity(intent);
             finish();
         });

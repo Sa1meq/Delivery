@@ -28,6 +28,7 @@
         <item name="tabPaddingEnd">8dp</item>
     </style>
 
+
     <style name="TabTextAppearance" parent="TextAppearance.AppCompat.Small">
         <item name="android:textSize">0sp</item>
     </style>

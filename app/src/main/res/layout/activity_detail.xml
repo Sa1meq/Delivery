@@ -8,31 +8,47 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingBottom="24dp">
 
-        <!-- Аватар пользователя -->
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/avatarImageView"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="16dp"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.LargeComponent.CornerFull"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_avatar" />
-
-        <!-- Имя -->
-        <TextView
-            android:id="@+id/nameTextView"
+        <!-- Profile Header -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:gravity="center"
-            android:text="Имя"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            app:cardElevation="4dp"
+            app:cardCornerRadius="12dp"
+            app:strokeColor="@color/my_primary"
+            app:strokeWidth="1dp">
 
-        <!-- Карточка информации -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/avatarImageView"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:layout_gravity="center"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.LargeComponent.CornerFull"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_avatar" />
+
+                <TextView
+                    android:id="@+id/nameTextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center"
+                    android:textColor="@color/black"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Info Section -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -47,101 +63,217 @@
                 android:padding="16dp">
 
                 <!-- Email -->
-                <TextView
-                    android:id="@+id/emailTextView"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Email: example@gmail.com"
-                    android:textSize="16sp"
-                    android:paddingBottom="8dp" />
+                    android:orientation="horizontal"
+                    android:paddingVertical="8dp">
 
-                <!-- Баланс -->
-                <TextView
-                    android:id="@+id/balanceTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Баланс: 0.00"
-                    android:textSize="16sp"
-                    android:paddingBottom="8dp" />
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_email"
+                        app:tint="@color/my_primary" />
 
-                <!-- Рейтинг -->
-                <TextView
-                    android:id="@+id/ratingTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Рейтинг: 5.0"
-                    android:textSize="16sp"
-                    android:paddingBottom="8dp"
-                    android:visibility="gone" />
+                    <TextView
+                        android:id="@+id/emailTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
+                </LinearLayout>
 
-                <!-- Тип курьера -->
-                <TextView
-                    android:id="@+id/typeTextView"
+                <!-- Balance -->
+                <LinearLayout
+                    android:id="@+id/balanceLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Тип курьера: Пеший"
-                    android:textSize="16sp"
-                    android:paddingBottom="8dp"
-                    android:visibility="gone" />
+                    android:orientation="horizontal"
+                    android:paddingVertical="8dp"
+                    android:visibility="gone">
 
-                <!-- Телефон -->
-                <TextView
-                    android:id="@+id/phoneTextView"
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_wallet"
+                        app:tint="@color/my_primary" />
+
+                    <TextView
+                        android:id="@+id/balanceTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <!-- Phone -->
+                <LinearLayout
+                    android:id="@+id/phoneLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Телефон: +7 000 000 00 00"
-                    android:paddingBottom="8dp"
-                    android:textSize="16sp"
-                    android:visibility="gone" />
+                    android:orientation="horizontal"
+                    android:paddingVertical="8dp"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_phone"
+                        app:tint="@color/my_primary" />
+
+                    <TextView
+                        android:id="@+id/phoneTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <!-- Rating -->
+                <LinearLayout
+                    android:id="@+id/ratingLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingVertical="8dp"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_rating"
+                        app:tint="@color/my_primary" />
+
+                    <TextView
+                        android:id="@+id/ratingTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/typeLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingVertical="8dp"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_car"
+                        app:tint="@color/my_primary" />
+
+                    <TextView
+                        android:id="@+id/typeTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/bonusPoints"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingVertical="8dp"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_bonus"
+                        app:tint="@color/my_primary" />
+
+                    <TextView
+                        android:id="@+id/bonusTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
+                </LinearLayout>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-        <Button
-            android:id="@+id/deleteUserButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Удалить пользователя"
-            android:visibility="gone"
-            android:paddingTop="16dp"/>
 
-        <Button
-            android:id="@+id/makeAdminButton"
+        <!-- Action Buttons -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Назначить администратором"
-            android:visibility="gone"
-            android:paddingTop="16dp"/>
-        <Button
-            android:id="@+id/blockCourierButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Заблокировать курьера"
-            android:visibility="gone"
-            android:paddingTop="16dp"/>
+            android:layout_marginTop="16dp"
+            android:orientation="vertical">
 
-        <Button
-            android:id="@+id/updateRatingButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Изменить рейтинг"
-            android:visibility="gone"
-            android:paddingTop="16dp"/>
+            <Button
+                android:id="@+id/deleteUserButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Удалить пользователя"
+                android:visibility="gone" />
 
-        <Button
-            android:id="@+id/updateBonusButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Изменить бонусные баллы"
-            android:visibility="gone"
-            android:paddingTop="16dp"/>
+            <Button
+                android:id="@+id/makeAdminButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Назначить администратором"
+                android:visibility="gone" />
 
-        <Button
-            android:id="@+id/updateEarningsButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Изменить заработок"
-            android:visibility="gone"
-            android:paddingTop="16dp"/>
+            <Button
+                android:id="@+id/blockCourierButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Заблокировать курьера"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/updateRatingButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Изменить рейтинг"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/updateBonusButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Изменить бонусные баллы"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/updateEarningsButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Изменить заработок"
+                android:visibility="gone" />
+            <Button
+                android:id="@+id/sendEnterCode"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Отправить код курьера"
+                android:visibility="gone" />
+
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>

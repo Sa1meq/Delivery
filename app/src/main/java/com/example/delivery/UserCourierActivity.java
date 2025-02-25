@@ -86,15 +86,18 @@ public class UserCourierActivity extends AppCompatActivity {
                 List<Courier> couriers = task.getResult().toObjects(Courier.class);
                 adapter = new UserCourierAdapter(null, couriers, (user, courier) -> {
                     Intent intent = new Intent(this, DetailActivity.class);
-
                     intent.putExtra("type", "courier");
                     intent.putExtra("courierID", courier.getId());
                     intent.putExtra("userId", courier.getId());
+                    intent.putExtra("name", courier.getFirstName());
+                    intent.putExtra("secondName", courier.getSurName());
+                    intent.putExtra("email", courier.getEmail());
                     intent.putExtra("phone", courier.getPhone());
                     intent.putExtra("balance", courier.getBalance());
+                    intent.putExtra("Url", courier.getAvatarUrl());
                     intent.putExtra("rating", courier.getRating());
                     intent.putExtra("typeOfCourier", courier.getTypeOfCourier());
-
+                    intent.putExtra("bonusPoints", courier.getBonusPoints());
                     startActivity(intent);
                 });
                 recyclerView.setAdapter(adapter);

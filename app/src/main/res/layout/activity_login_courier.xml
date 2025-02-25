@@ -67,7 +67,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:alpha="0.7"
-                android:text="Введите номер телефона для авторизации" />
+                android:text="Введите код доступа для начала работы" />
 
             <View
                 android:layout_width="wrap_content"

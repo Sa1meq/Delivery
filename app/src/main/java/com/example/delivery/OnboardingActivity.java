@@ -3,10 +3,11 @@ package com.example.delivery;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.appcompat.widget.Toolbar;
+import androidx.viewpager2.widget.MarginPageTransformer;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.delivery.adapter.OnboardingAdapter;
@@ -19,10 +20,10 @@ public class OnboardingActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "AppPrefs";
     private static final String KEY_FIRST_LAUNCH = "firstLaunch";
 
-
     private ViewPager2 viewPager;
     private TabLayout tabLayout;
     private MaterialButton btnNext;
+    private MaterialButton btnBack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,18 +35,16 @@ public class OnboardingActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_onboarding);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        toolbar.setNavigationOnClickListener(v -> finish());
         viewPager = findViewById(R.id.viewPager);
         tabLayout = findViewById(R.id.tabLayout);
         btnNext = findViewById(R.id.btnNext);
+        btnBack = findViewById(R.id.btnBack);
 
         viewPager.setAdapter(new OnboardingAdapter(this));
 
-        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
-        }).attach();
+        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {}).attach();
 
+        // Обработка нажатия на кнопку "Далее"
         btnNext.setOnClickListener(v -> {
             if (viewPager.getCurrentItem() < 3) {
                 viewPager.setCurrentItem(viewPager.getCurrentItem() + 1);
@@ -54,6 +53,40 @@ public class OnboardingActivity extends AppCompatActivity {
                 navigateToAuthorization();
             }
         });
+
+        // Обработка нажатия на кнопку "Назад"
+        btnBack.setOnClickListener(v -> {
+            if (viewPager.getCurrentItem() > 0) {
+                viewPager.setCurrentItem(viewPager.getCurrentItem() - 1);
+            }
+        });
+
+        // Слушатель изменения страниц
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                updateUI(position);
+                viewPager.setPageTransformer(new MarginPageTransformer(16));
+            }
+        });
+
+        // Инициализация UI для первой страницы
+        updateUI(0);
+    }
+
+    private void updateUI(int position) {
+        // Показываем/скрываем кнопку "Назад"
+        btnBack.setVisibility(position > 0 ? View.VISIBLE : View.GONE);
+
+        // Меняем текст кнопки "Далее" на последней странице
+        if (position == 3) {
+            btnNext.setText("Начать");
+            btnNext.setIcon(null); // Убираем иконку стрелки
+        } else {
+            btnNext.setText("Далее");
+            btnNext.setIconResource(R.drawable.baseline_arrow_forward_24);
+        }
     }
 
     private boolean isFirstLaunch() {
@@ -68,7 +101,7 @@ public class OnboardingActivity extends AppCompatActivity {
     }
 
     private void navigateToAuthorization() {
-        Intent intent = new Intent(this, Authorization.class);
+        Intent intent = new Intent(this, Registration.class);
         startActivity(intent);
         finish();
     }

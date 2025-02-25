@@ -5,11 +5,51 @@
     android:layout_height="match_parent"
     android:padding="16dp">
 
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:padding="10dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:layout_marginBottom="20dp">
+
+            <ImageView
+                android:id="@+id/backImageView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:contentDescription="Назад"
+                android:focusable="true"
+                android:src="@drawable/baseline_arrow_back_24" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/titleTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
+                android:text="Анкета на курьерство"
+                android:textColor="#333333"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+        </LinearLayout>
 
         <!-- Имя -->
         <com.google.android.material.textfield.TextInputLayout
@@ -133,31 +173,6 @@
                 android:textColorHint="@color/white" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Хобби -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/textInputLayoutHobbies"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Хобби"
-            android:layout_marginTop="16dp"
-            app:boxStrokeColor="@color/black"
-            app:boxStrokeWidth="2dp"
-            app:endIconMode="clear_text"
-            app:endIconTint="@color/black"
-            app:hintTextColor="@color/black"
-            app:startIconDrawable="@drawable/ic_hobby"
-            app:startIconTint="@color/black">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editTextHobbies"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textMultiLine"
-                android:textColor="@color/black"
-                android:textColorHint="@color/white" />
-        </com.google.android.material.textfield.TextInputLayout>
-
         <!-- Предыдущие места работы -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/textInputLayoutPreviousJobs"
@@ -183,7 +198,7 @@
                 android:textColorHint="@color/white" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Наличие водительских прав -->
+        <!-- Выбор категорий водительских прав -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -199,86 +214,77 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <CheckBox
-                    android:id="@+id/checkBoxDrivingLicense"
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Есть водительские права"
+                    android:text="Категории водительских прав"
                     android:textColor="@color/black"
-                    android:onClick="onDrivingLicenseChecked"/>
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp"/>
 
-                <!-- CheckBox для выбора категорий -->
-                <LinearLayout
-                    android:id="@+id/linearLayoutLicenseCategories"
+                <CheckBox
+                    android:id="@+id/checkBoxA"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone"
-                    android:layout_marginTop="8dp">
+                    android:text="A"
+                    android:textColor="@color/black" />
 
-                    <CheckBox
-                        android:id="@+id/checkBoxA"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="A"
-                        android:textColor="@color/black" />
+                <CheckBox
+                    android:id="@+id/checkBoxA1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="A1"
+                    android:textColor="@color/black" />
 
-                    <CheckBox
-                        android:id="@+id/checkBoxA1"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="A1"
-                        android:textColor="@color/black" />
+                <CheckBox
+                    android:id="@+id/checkBoxAM"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="AM"
+                    android:textColor="@color/black" />
 
-                    <CheckBox
-                        android:id="@+id/checkBoxAM"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="AM"
-                        android:textColor="@color/black" />
+                <CheckBox
+                    android:id="@+id/checkBoxB"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="B"
+                    android:textColor="@color/black" />
 
-                    <CheckBox
-                        android:id="@+id/checkBoxB"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="B"
-                        android:textColor="@color/black" />
+                <CheckBox
+                    android:id="@+id/checkBoxBE"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="BE"
+                    android:textColor="@color/black" />
 
-                    <CheckBox
-                        android:id="@+id/checkBoxBE"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="BE"
-                        android:textColor="@color/black" />
+                <CheckBox
+                    android:id="@+id/checkBoxC"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="C"
+                    android:textColor="@color/black" />
 
-                    <CheckBox
-                        android:id="@+id/checkBoxC"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="C"
-                        android:textColor="@color/black" />
+                <CheckBox
+                    android:id="@+id/checkBoxCE"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="CE"
+                    android:textColor="@color/black" />
 
-                    <CheckBox
-                        android:id="@+id/checkBoxCE"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="CE"
-                        android:textColor="@color/black" />
+                <CheckBox
+                    android:id="@+id/checkBoxD"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="D"
+                    android:textColor="@color/black" />
 
-                    <CheckBox
-                        android:id="@+id/checkBoxD"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="D"
-                        android:textColor="@color/black" />
-
-                    <CheckBox
-                        android:id="@+id/checkBoxDE"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="DE"
-                        android:textColor="@color/black" />
-                </LinearLayout>
+                <CheckBox
+                    android:id="@+id/checkBoxDE"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="DE"
+                    android:textColor="@color/black" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -313,13 +319,6 @@
                     android:layout_height="wrap_content">
 
                     <RadioButton
-                        android:id="@+id/radioButtonPedestrian"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Пеший"
-                        android:textColor="@color/black" />
-
-                    <RadioButton
                         android:id="@+id/radioButtonCar"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -336,15 +335,16 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Стаж более 2 лет -->
         <CheckBox
             android:id="@+id/checkBoxExperience"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Стаж больше 2 лет"
-            android:visibility="gone"
-            android:textColor="@color/white"
+            android:textColor="@color/black"
             android:layout_marginTop="16dp" />
 
+        <!-- Дополнительная информация -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/textInputLayoutAdditionalInfo"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"

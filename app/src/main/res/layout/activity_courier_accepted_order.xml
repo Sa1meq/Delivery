@@ -9,21 +9,20 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <!-- Карта -->
         <com.yandex.mapkit.mapview.MapView
             android:id="@+id/mapView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-
     </FrameLayout>
 
+    <!-- Всплывающее меню внизу -->
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-
-        <!-- Добавляем EditText, Button и RecyclerView -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -32,16 +31,86 @@
             android:padding="16dp"
             android:layout_gravity="bottom">
 
-            <Button
+            <!-- Прогресс маршрута -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/progressText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Прогресс: 0%"
+                    android:textSize="14sp"
+                    android:textColor="@android:color/black"/>
+
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:progress="0"
+                    android:max="100"
+                    android:progressTint="@color/green"/>
+            </LinearLayout>
+
+            <!-- Кнопка навигации -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/yandex_nav_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Открыть в Яндекс.Навигаторе"
+                android:backgroundTint="@color/my_primary"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Кнопка подтверждения прибытия -->
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/checkReady"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Подтвердить прибытие" />
+                android:text="Подтвердить прибытие"
+                android:backgroundTint="@color/my_primary"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
 
+            <!-- Кнопка чата -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/chatButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Чат с клиентом"
+                android:backgroundTint="@color/my_primary"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
 
+            <!-- Кнопка отмены заказа -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/cancelButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Отменить заказ"
+                android:backgroundTint="@color/errorColor"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"/>
+
+            <!-- Кнопка жалобы -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/complaintButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Пожаловаться"
+                android:backgroundTint="@color/errorColor"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"/>
         </LinearLayout>
-
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
 
 </androidx.drawerlayout.widget.DrawerLayout>

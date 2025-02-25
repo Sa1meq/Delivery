@@ -4,6 +4,18 @@
     <color name="white">#FFFFFFFF</color>
     <color name="red">#FF0000</color>
     <color name="green">#4CAF50</color>
+
+        <color name="primaryColor">#6200EE</color>
+        <color name="messageReceivedBackground">#E0E0E0</color>
+        <color name="gray">#9E9E9E</color>
+        <color name="errorColor">#FF4444</color>>
+    <color name="yandex_primary">#FF0000</color>
+
+    <color name="yandex_secondary">#7F8285</color>
+
+    <color name="yandex_background">#FFFFFF</color>
+    <color name="yandex_accent_red">#FF3347</color>
+    <color name="yandex_dark">#1A1A1A</color>
     
     <color name="my_primary">#EC7D23</color>
     <color name="my_secondary">#2E2620</color>
@@ -16,5 +28,11 @@
     <color name="cardShadow">#DADADA</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="purple_500">#FF6200EE</color>
+    <color name="primary_100">#F0F4FF</color>
+    <color name="primary_300">#B3C6FF</color>
+    <color name="primary_500">#4D82FF</color>
+    <color name="primary_700">#0052CC</color>
+    <color name="gray_300">#E0E0E0</color>
+    <color name="gray_700">#616161</color>
 
 </resources>

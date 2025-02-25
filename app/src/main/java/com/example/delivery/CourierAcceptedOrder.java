@@ -3,22 +3,29 @@ package com.example.delivery;
 import static com.example.delivery.MainActivity.REQUEST_LOCATION_PERMISSION;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.delivery.model.CourierLocation;
 import com.example.delivery.model.SerializedPoint;
 import com.example.delivery.repository.RouteOrderRepository;
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.yandex.mapkit.MapKitFactory;
@@ -44,7 +51,9 @@ import com.yandex.runtime.Error;
 import com.yandex.runtime.image.ImageProvider;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 public class CourierAcceptedOrder extends AppCompatActivity implements LocationListener {
@@ -60,9 +69,17 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
     private MapObjectCollection pinCollection;
     private final Handler handler = new Handler();
     private boolean isSecondRoute = false;
-    private Button checkReady;
+    private MaterialButton checkReady;
+    private MaterialButton chatButton;
+    private MaterialButton cancelButton;
+    private MaterialButton complaintButton;;
     private DrivingSession drivingSession;
     private DrivingRoute currentRoute;
+    private int currentSegmentIndex = 0;
+    private boolean isLastSegment = false;
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,67 +92,109 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
         String orderId = getIntent().getStringExtra("orderId");
         drivingRouter = DirectionsFactory.getInstance().createDrivingRouter(DrivingRouterType.COMBINED);
         getRouteOrderFromDatabase(orderId);
+        chatButton = findViewById(R.id.chatButton);
+        cancelButton = findViewById(R.id.cancelButton);
+        complaintButton = findViewById(R.id.complaintButton);
 
-        checkReady.setOnClickListener(v -> {
-            if (drivingSession != null) {
-                drivingSession.cancel();
-            }
-            clearRoute();
-            if (isSecondRoute) {
-                finishRoute();
-                routeOrderRepository.completeOrder(orderId)
-                        .thenRun(() -> {
-                            Toast.makeText(CourierAcceptedOrder.this, "Заказ завершен", Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(CourierAcceptedOrder.this, CourierOrdersList.class);
-                            startActivity(intent);
-                            finish();
-                        })
-                        .exceptionally(e -> {
-                            Toast.makeText(CourierAcceptedOrder.this, "Ошибка завершения заказа: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                            return null;
-                        });
-            } else {
-                if (calculateRouteProgress(currentRoute, userLocation) >= 0.9) {
-                    isSecondRoute = true;
-                    buildRouteFromFirstToSecondPoint();
-                    startLocationUpdates();
-                    routeOrderRepository.getRouteOrderById(orderId)
-                            .thenAccept(routeOrder -> {
-                                if (routeOrder != null) {
-                                    routeOrder.isSecond = true;
-                                    routeOrderRepository.saveRouteOrder(routeOrder)
-                                            .exceptionally(e -> {
-                                                return null;
-                                            });
-                                }
-                            })
-                            .exceptionally(e -> {
-                                return null;
-                            });
-                } else {
-                    Toast.makeText(CourierAcceptedOrder.this, "Маршрут не завершен на 90% или более", Toast.LENGTH_SHORT).show();
+
+        routeOrderRepository = new RouteOrderRepository();
+
+        if (orderId == null) {
+            Toast.makeText(this, "Ошибка: ID заказа не найден", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        // Обработка нажатия на кнопку чата
+        chatButton.setOnClickListener(v -> {
+            Intent intent = new Intent(CourierAcceptedOrder.this, ChatActivity.class);
+            intent.putExtra("orderId", orderId);
+            startActivity(intent);
+        });
+
+        cancelButton.setOnClickListener(v -> {
+            routeOrderRepository.cancelOrder(orderId)
+                    .thenAccept(aVoid -> {
+                        Toast.makeText(CourierAcceptedOrder.this, "Заказ успешно отменен", Toast.LENGTH_SHORT).show();
+                        finish();
+                    })
+                    .exceptionally(e -> {
+                        Toast.makeText(CourierAcceptedOrder.this, "Ошибка при отмене заказа: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        return null;
+                    });
+        });
+        Button yandexNavButton = findViewById(R.id.yandex_nav_button);
+        yandexNavButton.setOnClickListener(v -> {
+            try {
+                if (!isLastSegment){
+                    Point destination = routePoints.get(0);
+                    String uri = String.format(Locale.ENGLISH, "yandexnavi://build_route_on_map?lat_to=%f&lon_to=%f",
+                            destination.getLatitude(),
+                            destination.getLongitude());
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+                    startActivity(intent);
                 }
+                else {
+                    Point destination = routePoints.get(1);
+                    String uri = String.format(Locale.ENGLISH, "yandexnavi://build_route_on_map?lat_to=%f&lon_to=%f",
+                            destination.getLatitude(),
+                            destination.getLongitude());
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+                    startActivity(intent);
+                }
+            } catch (Exception e) {
+                Toast.makeText(this, "Яндекс.Навигатор не установлен", Toast.LENGTH_SHORT).show();
+            }
+        });
+        complaintButton.setOnClickListener(v -> {
+            Intent intent = new Intent(CourierAcceptedOrder.this, CreateSupportChatActivity.class);
+            intent.putExtra("isComplaintFlow", true);
+            startActivity(intent);
+            finish();
+        });
+        checkReady.setOnClickListener(v -> {
+            if (currentRoute == null || userLocation == null) return;
+
+            float progress = calculateRouteProgress(currentRoute, userLocation);
+
+            if (progress >= 0.8f) {
+                if (isLastSegment) {
+                    completeOrder(orderId);
+                    Toast.makeText(this, "Заказ выполнен!", Toast.LENGTH_SHORT).show();
+                    finish();
+                } else {
+                    moveToNextSegment();
+                }
+            } else {
+                Toast.makeText(this, "Прогресс: " + (int)(progress * 100) + "%", Toast.LENGTH_SHORT).show();
             }
         });
 
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (currentRoute != null && userLocation != null) {
+                    float progress = calculateRouteProgress(currentRoute, userLocation);
+                    updateProgressUI(progress);
 
+                }
+                handler.postDelayed(this, 5000); // Обновление каждые 5 секунд
+            }
+        }, 5000);
     }
+
 
     private void getRouteOrderFromDatabase(String orderId) {
         routeOrderRepository.getRouteOrderById(orderId)
                 .thenAccept(routeOrder -> {
-                    if (routeOrder != null && routeOrder.routePoints != null && routeOrder.routePoints.size() >= 2) {
+                    if (routeOrder != null && routeOrder.routePoints.size() >= 2) {
                         routePoints.clear();
                         routePoints.addAll(routeOrder.routePoints);
-                        Log.d("RoutePoints", "Точки маршрута получены: " + routePoints);
-                        buildRouteFromUserLocationToFirstPoint();
-                    } else {
-                        Toast.makeText(CourierAcceptedOrder.this, "Недостаточно точек маршрута", Toast.LENGTH_SHORT).show();
+
+                        if (userLocation != null) {
+                            requestRoute(userLocation, routePoints.get(0));
+                        }
                     }
-                })
-                .exceptionally(e -> {
-                    Toast.makeText(CourierAcceptedOrder.this, "Ошибка загрузки маршрута: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    return null;
                 });
     }
 
@@ -146,33 +205,21 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
             return;
         }
 
-        requestRouteFromUserLocationToPoint(userLocation, routePoints.get(0), true);
-    }
-
-    private void buildRouteFromFirstToSecondPoint() {
-        if (routePoints.size() < 2) {
-            Toast.makeText(CourierAcceptedOrder.this, "Недостаточно точек для второго маршрута", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        currentRoute = null;
-        requestRouteFromUserLocationToPoint(routePoints.get(0), routePoints.get(1), false);
+        requestRoute(userLocation, routePoints.get(0));
+        currentSegmentIndex = 0;
+        isLastSegment = false;
     }
 
 
-    private void requestRouteFromUserLocationToPoint(Point startPoint, Point endPoint, boolean isStart) {
-        if (isRequestInProgress) {
-            Log.d("RouteRequest", "Запрос маршрута уже выполняется.");
-            return;
-        }
 
-        isRequestInProgress = true;
-
+    private void requestRoute(Point start, Point end) {
         DrivingOptions drivingOptions = new DrivingOptions();
         VehicleOptions vehicleOptions = new VehicleOptions();
 
-        List<RequestPoint> requestPoints = new ArrayList<>();
-        requestPoints.add(new RequestPoint(startPoint, RequestPointType.WAYPOINT, "", ""));
-        requestPoints.add(new RequestPoint(endPoint, RequestPointType.WAYPOINT, "", ""));
+        List<RequestPoint> requestPoints = Arrays.asList(
+                new RequestPoint(start, RequestPointType.WAYPOINT, null, null),
+                new RequestPoint(end, RequestPointType.WAYPOINT, null, null)
+        );
 
         drivingSession = drivingRouter.requestRoutes(
                 requestPoints,
@@ -182,26 +229,56 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
                     @Override
                     public void onDrivingRoutes(@NonNull List<DrivingRoute> routes) {
                         if (!routes.isEmpty()) {
-                            mapView.getMap().getMapObjects().addPolyline(routes.get(0).getGeometry());
                             currentRoute = routes.get(0);
-                            float progress = calculateRouteProgress(currentRoute, userLocation);
-                            Log.d("RouteProgress", "Прогресс по маршруту: " + progress * 100 + "%");
-                            if (userLocation != null) {
-                                Log.d("Route", "Маршрут от точки " + routePoints.get(0) + " к " + routePoints.get(1));
-                            }
-                        } else {
-                            Toast.makeText(CourierAcceptedOrder.this, "Маршрут не найден", Toast.LENGTH_SHORT).show();
+                            mapView.getMap().getMapObjects().addPolyline(currentRoute.getGeometry());
+                            mapView.getMap().move(new CameraPosition(
+                                    start, 12f, 0f, 0f
+                            ));
                         }
-                        isRequestInProgress = false;
                     }
 
                     @Override
                     public void onDrivingRoutesError(@NonNull Error error) {
-                        Toast.makeText(CourierAcceptedOrder.this, "Ошибка построения маршрута", Toast.LENGTH_SHORT).show();
-                        isRequestInProgress = false;
+                        Toast.makeText(CourierAcceptedOrder.this,
+                                "Ошибка построения маршрута: " + error, Toast.LENGTH_SHORT).show();
                     }
                 }
         );
+    }
+
+    private void moveToNextSegment() {
+        if (currentSegmentIndex >= routePoints.size() - 2) {
+            isLastSegment = true;
+            checkReady.setText("Завершить заказ");
+            clearRoute();
+            buildNextRouteSegment();
+            Toast.makeText(this, "Это последний сегмент маршрута", Toast.LENGTH_SHORT).show();
+        } else {
+            currentSegmentIndex++;
+            buildNextRouteSegment();
+        }
+    }
+
+    private void buildNextRouteSegment() {
+        Point start = routePoints.get(currentSegmentIndex);
+        Point end = routePoints.get(currentSegmentIndex + 1);
+        requestRoute(start, end);
+        isLastSegment = true;
+    }
+
+    private void completeOrder(String orderId) {
+        routeOrderRepository.completeOrder(orderId)
+                .thenRun(() -> {
+                    Toast.makeText(this, "Заказ завершен", Toast.LENGTH_SHORT).show();
+
+                    Intent intent = new Intent(this, CourierProfile.class);
+                    startActivity(intent);
+                    finish();
+                })
+                .exceptionally(e -> {
+                    Toast.makeText(this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    return null;
+                });
     }
 
     private double calculateDistance(Point point1, Point point2) {
@@ -224,33 +301,72 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
     }
 
     private float calculateRouteProgress(DrivingRoute route, Point userLocation) {
-        if (route == null) return 0.0f;
+        if (route == null || userLocation == null) return 0.0f;
 
         List<Point> routePoints = route.getGeometry().getPoints();
         double totalDistance = 0.0;
-        double distanceCovered = 0.0;
+        double coveredDistance = 0.0;
+        Point nearestPoint = routePoints.get(0);
+        double minDistance = Double.MAX_VALUE;
 
-        for (int i = 1; i < routePoints.size(); i++) {
-            totalDistance += calculateDistance(routePoints.get(i - 1), routePoints.get(i));
+        // Рассчитываем общее расстояние маршрута
+        for (int i = 0; i < routePoints.size() - 1; i++) {
+            totalDistance += calculateDistance(routePoints.get(i), routePoints.get(i + 1));
         }
 
-        if (userLocation != null) {
-            for (int i = 1; i < routePoints.size(); i++) {
-                Point segmentStart = routePoints.get(i - 1);
-                Point segmentEnd = routePoints.get(i);
-                double distanceToSegmentStart = calculateDistance(segmentStart, userLocation);
-                double distanceToSegmentEnd = calculateDistance(segmentEnd, userLocation);
+        // Находим ближайшую точку на маршруте
+        for (int i = 0; i < routePoints.size() - 1; i++) {
+            Point a = routePoints.get(i);
+            Point b = routePoints.get(i + 1);
+            Point projection = projectPointOnSegment(a, b, userLocation);
+            double dist = calculateDistance(userLocation, projection);
 
-                if (distanceToSegmentStart < distanceToSegmentEnd) {
-                    distanceCovered += distanceToSegmentStart;
-                    break;
-                } else {
-                    distanceCovered += calculateDistance(segmentStart, segmentEnd);
-                }
+            if (dist < minDistance) {
+                minDistance = dist;
+                nearestPoint = projection;
             }
         }
 
-        return Math.min((float) (distanceCovered / totalDistance), 1.0f);
+        // Рассчитываем пройденное расстояние до ближайшей точки
+        for (int i = 0; i < routePoints.size() - 1; i++) {
+            Point a = routePoints.get(i);
+            Point b = routePoints.get(i + 1);
+
+            if (b.equals(nearestPoint)) {
+                coveredDistance += calculateDistance(a, nearestPoint);
+                break;
+            } else {
+                coveredDistance += calculateDistance(a, b);
+            }
+        }
+
+        return totalDistance > 0 ? (float) (coveredDistance / totalDistance) : 0;
+    }
+
+    private Point projectPointOnSegment(Point a, Point b, Point p) {
+        double ax = a.getLongitude();
+        double ay = a.getLatitude();
+        double bx = b.getLongitude();
+        double by = b.getLatitude();
+        double px = p.getLongitude();
+        double py = p.getLatitude();
+
+        double vectorABx = bx - ax;
+        double vectorABy = by - ay;
+        double vectorAPx = px - ax;
+        double vectorAPy = py - ay;
+
+        double dot = vectorAPx * vectorABx + vectorAPy * vectorABy;
+        double lengthSq = vectorABx * vectorABx + vectorABy * vectorABy;
+
+        if (lengthSq == 0) return a;
+
+        double t = Math.max(0, Math.min(1, dot / lengthSq));
+
+        return new Point(
+                ay + t * vectorABy,
+                ax + t * vectorABx
+        );
     }
 
 
@@ -285,7 +401,7 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
     private void saveCourierLocation(Point location) {
         if (location == null) return;
 
-        String courierId = FirebaseAuth.getInstance().getCurrentUser().getUid(); // Предполагаем, что используешь Firebase Auth
+        String courierId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         String orderId = getIntent().getStringExtra("orderId");
 
         List<SerializedPoint> serializedPoints = new ArrayList<>();
@@ -305,6 +421,20 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
                 .addOnFailureListener(e -> Log.e("CourierLocation", "Ошибка сохранения местоположения", e));
     }
 
+    private void updateProgressUI(float progress) {
+        ProgressBar progressBar = findViewById(R.id.progressBar);
+        int percent = (int) (progress * 100);
+        progressBar.setProgress(percent);
+
+        TextView progressText = findViewById(R.id.progressText);
+        progressText.setText("Прогресс: " + percent + "%");
+
+        if (percent >= 80) {
+            checkReady.setBackgroundColor(ContextCompat.getColor(this, R.color.my_primary));
+        } else {
+            checkReady.setBackgroundColor(ContextCompat.getColor(this, R.color.my_primary));
+        }
+    }
 
     @Override
     public void onLocationUpdated(@NonNull com.yandex.mapkit.location.Location location) {
@@ -327,9 +457,12 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
             }
         }
 
-        saveCourierLocation(userLocation); // Сохранение в Firestore
-        buildRouteFromUserLocationToFirstPoint();
+        saveCourierLocation(userLocation);
+        if (!isLastSegment){
+            buildRouteFromUserLocationToFirstPoint();
+        }
     }
+
 
 
 
@@ -359,6 +492,36 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
         }
     }
 
+    private void showNotification(String message) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "delivery_channel")
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("Уведомление")
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            notificationManager.notify(1, builder.build());
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("currentSegmentIndex", currentSegmentIndex);
+        outState.putBoolean("isLastSegment", isLastSegment);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        currentSegmentIndex = savedInstanceState.getInt("currentSegmentIndex");
+        isLastSegment = savedInstanceState.getBoolean("isLastSegment");
+        if (isLastSegment) {
+            checkReady.setText("Завершить заказ");
+        }
+    }
+
     private void finishRoute() {
         if (userPlacemark != null && userPlacemark.isValid()) {
             userPlacemark = null;
@@ -366,6 +529,7 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
 
         clearRoute();
     }
+
 
     @Override
     protected void onStart() {

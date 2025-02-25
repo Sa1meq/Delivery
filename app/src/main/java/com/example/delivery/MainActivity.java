@@ -87,7 +87,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-public class    MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, LocationListener {
+public class    MainActivity extends AppCompatActivity implements LocationListener {
 
     public static final int REQUEST_LOCATION_PERMISSION = 1;
     private static final int ADDRESS_PICKER_REQUEST = 1;
@@ -136,11 +136,9 @@ public class    MainActivity extends AppCompatActivity implements NavigationView
         startAddressEditText = findViewById(R.id.startAddressEditText);
         endAddressEditText = findViewById(R.id.endAddressEditText);
         getRouteButton = findViewById(R.id.getRouteButton);
-        radioButtonPedestrian = findViewById(R.id.radioButtonPedestrian);
         radioButtonCar = findViewById(R.id.radioButtonCar);
         radioButtonTruck = findViewById(R.id.radioButtonTruck);
 
-        estimatedTimeEditText = findViewById(R.id.estimatedTimeEditText);
         estimatedCostEditText = findViewById(R.id.estimatedCostEditText);
         orderDescriptionEditText = findViewById(R.id.orderDescriptionEditText);
 
@@ -182,9 +180,6 @@ public class    MainActivity extends AppCompatActivity implements NavigationView
 
         pinCollection = mapView.getMap().getMapObjects().addCollection();
         drawerLayout = findViewById(R.id.drawer_layout);
-        NavigationView navigationView = findViewById(R.id.navigation_view);
-        navigationView.setNavigationItemSelectedListener(this::onNavigationItemSelected);
-        findViewById(R.id.menuIcon).setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
 
         locationManager = MapKitFactory.getInstance().createLocationManager();
     }
@@ -205,23 +200,6 @@ public class    MainActivity extends AppCompatActivity implements NavigationView
         }
     }
 
-    @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        int itemId = item.getItemId();
-
-        if (itemId == R.id.nav_profile) {
-            Intent intent = new Intent(MainActivity.this, UserProfile.class);
-            startActivity(intent);
-            finish();
-        } else if (itemId == R.id.nav_courier) {
-            Intent intent = new Intent(MainActivity.this, Registration.class);
-            startActivity(intent);
-            finish();
-        }
-
-        drawerLayout.closeDrawer(GravityCompat.START);
-        return true;
-    }
 
 
     private void addStartPlacemark(Point point) {
@@ -262,6 +240,7 @@ public class    MainActivity extends AppCompatActivity implements NavigationView
                         suggestions.add(item.getDisplayText());
                     }
                     suggestionAdapter.notifyDataSetChanged();
+
                     suggestionsRecyclerView.setVisibility(View.VISIBLE);
                 }
 
@@ -364,8 +343,6 @@ public class    MainActivity extends AppCompatActivity implements NavigationView
         }
 
         String userId = FirebaseAuth.getInstance().getUid();
-        CardRepository cardRepository = new CardRepository();
-
         cardRepository.cardsCollection.whereEqualTo("cardUserID", userId).get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
@@ -388,7 +365,8 @@ public class    MainActivity extends AppCompatActivity implements NavigationView
                                     }
                             );
                         } else {
-                            showConfirmationDialog();
+                            // Строим маршрут и показываем диалог
+                            buildRouteAndShowConfirmationDialog();
                         }
                     } else {
                         showAlertDialog(
@@ -406,6 +384,104 @@ public class    MainActivity extends AppCompatActivity implements NavigationView
                 });
     }
 
+    private void buildRouteAndShowConfirmationDialog() {
+        DrivingOptions drivingOptions = new DrivingOptions();
+        VehicleOptions vehicleOptions = new VehicleOptions();
+        List<RequestPoint> requestPoints = new ArrayList<>();
+        requestPoints.add(new RequestPoint(routePoints.get(0), RequestPointType.WAYPOINT, "", ""));
+        requestPoints.add(new RequestPoint(routePoints.get(1), RequestPointType.WAYPOINT, "", ""));
+
+        DrivingSession drivingSession = drivingRouter.requestRoutes(
+                requestPoints,
+                drivingOptions,
+                vehicleOptions,
+                new DrivingSession.DrivingRouteListener() {
+                    @Override
+                    public void onDrivingRoutes(@NonNull List<DrivingRoute> routes) {
+                        if (!routes.isEmpty()) {
+                            DrivingRoute route = routes.get(0);
+                            mapObjects.addPolyline(route.getGeometry());
+
+                            float distanceToEndPoint = distanceBetweenPointsOnRoute(route, routePoints.get(0), routePoints.get(1));
+                            float timeToEndPoint = timeTravelToPoint(route, routePoints.get(1));
+                            long timeInMinutes = (long) (timeToEndPoint / 60);
+
+                            String courierType = getSelectedCourierType();
+                            double orderCost = calculateOrderCost(courierType, distanceToEndPoint / 1000);
+                            String formattedCost = String.format(Locale.getDefault(), "%.2f", orderCost).replace(',', '.');
+
+                            // Показываем диалог с информацией
+                            showOrderConfirmationDialog(timeInMinutes, formattedCost, route);
+                        } else {
+                            Toast.makeText(MainActivity.this, "Маршрут не найден", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onDrivingRoutesError(@NonNull Error error) {
+                        Toast.makeText(MainActivity.this, "Ошибка построения маршрута", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+    }
+
+    private void showOrderConfirmationDialog(long timeInMinutes, String formattedCost, DrivingRoute route) {
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Подтверждение заказа")
+                .setMessage(
+                        "Примерное время доставки: " + timeInMinutes + " мин\n" +
+                                "Примерная стоимость: " + formattedCost + " руб\n\n" +
+                                "Вы подтверждаете заказ?"
+                )
+                .setPositiveButton("Подтвердить", (dialog, which) -> {
+                    // Сохраняем заказ
+                    saveOrder(route, timeInMinutes, formattedCost);
+                })
+                .setNegativeButton("Отмена", (dialog, which) -> {
+                    // Удаляем маршрут и сбрасываем данные
+                    mapObjects.clear();
+                    routePoints.clear();
+                    startAddressEditText.setText("");
+                    endAddressEditText.setText("");
+                    estimatedTimeEditText.setText("");
+                    estimatedCostEditText.setText("");
+                    orderDescriptionEditText.setText("");
+                })
+                .setCancelable(false)
+                .show();
+    }
+
+    private void saveOrder(DrivingRoute route, long timeInMinutes, String formattedCost) {
+        String startAddress = startAddressEditText.getText().toString();
+        String endAddress = endAddressEditText.getText().toString();
+        String courierType = getSelectedCourierType();
+        String orderDescription = orderDescriptionEditText.getText().toString();
+
+        RouteOrder routeOrder = new RouteOrder(
+                UUID.randomUUID().toString(),
+                FirebaseAuth.getInstance().getUid(),
+                null,
+                routePoints,
+                distanceBetweenPointsOnRoute(route, routePoints.get(0), routePoints.get(1)),
+                timeInMinutes * 60,
+                startAddress,
+                endAddress,
+                courierType,
+                Double.parseDouble(formattedCost),
+                timeInMinutes,
+                orderDescription
+        );
+
+        routeOrderRepository.saveRouteOrder(routeOrder)
+                .thenAccept(aVoid -> Toast.makeText(MainActivity.this, "Заказ успешно оформлен", Toast.LENGTH_SHORT).show())
+
+                .exceptionally(e -> {
+                    Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    return null;
+                });
+        finish();
+    }
+
     private void showAlertDialog(String title, String message, Runnable onOkClicked) {
         new AlertDialog.Builder(MainActivity.this)
                 .setTitle(title)
@@ -415,86 +491,6 @@ public class    MainActivity extends AppCompatActivity implements NavigationView
                 .show();
     }
 
-    private void showConfirmationDialog() {
-        new AlertDialog.Builder(MainActivity.this)
-                .setTitle("Подтверждение заказа")
-                .setMessage("Вы уверены, что хотите оформить заказ?")
-                .setPositiveButton("ОК", (dialog, which) -> proceedWithOrder())
-                .setNegativeButton("Отмена", (dialog, which) -> dialog.dismiss())
-                .setCancelable(false)
-                .show();
-    }
-
-    private void proceedWithOrder() {
-        DrivingOptions drivingOptions = new DrivingOptions();
-        VehicleOptions vehicleOptions = new VehicleOptions();
-        List<RequestPoint> requestPoints = new ArrayList<>();
-        requestPoints.add(new RequestPoint(routePoints.get(0), RequestPointType.WAYPOINT, "", ""));
-        requestPoints.add(new RequestPoint(routePoints.get(1), RequestPointType.WAYPOINT, "", ""));
-        DrivingSession drivingSession = drivingRouter.requestRoutes(
-                requestPoints,
-                drivingOptions,
-                vehicleOptions,
-                new DrivingSession.DrivingRouteListener() {
-                    @Override
-                    public void onDrivingRoutes(@NonNull List<DrivingRoute> routes) {
-                        isRequestInProgress = false;
-                        if (!routes.isEmpty()) {
-                            DrivingRoute route = routes.get(0);
-                            mapObjects.addPolyline(route.getGeometry());
-                            if (userLocation != null) {
-                                float distanceToEndPoint = distanceBetweenPointsOnRoute(route, routePoints.get(0), routePoints.get(1));
-                                float timeToEndPoint = timeTravelToPoint(route, routePoints.get(1));
-                                long timeInMinutes = (long) (timeToEndPoint / 60);
-
-                                estimatedTimeEditText.setText(String.valueOf(timeInMinutes));
-
-                                String startAddress = startAddressEditText.getText().toString();
-                                String endAddress = endAddressEditText.getText().toString();
-                                String courierType = getSelectedCourierType();
-
-                                double orderCost = calculateOrderCost(courierType, distanceToEndPoint / 1000);
-
-                                String formattedCost = String.format(Locale.getDefault(), "%.2f", orderCost).replace(',', '.');
-                                estimatedCostEditText.setText(formattedCost);
-
-                                String orderDescription = orderDescriptionEditText.getText().toString();
-
-                                RouteOrder routeOrder = new RouteOrder(
-                                        UUID.randomUUID().toString(),
-                                        FirebaseAuth.getInstance().getUid(),
-                                        null,
-                                        routePoints,
-                                        distanceToEndPoint,
-                                        (long) timeToEndPoint,
-                                        startAddress,
-                                        endAddress,
-                                        courierType,
-                                        Double.parseDouble(formattedCost),
-                                        parseEstimatedDeliveryTime(),
-                                        orderDescription
-                                );
-
-                                routeOrderRepository.saveRouteOrder(routeOrder)
-                                        .thenAccept(aVoid -> Toast.makeText(MainActivity.this, "Заказ успешно оформлен", Toast.LENGTH_SHORT).show())
-                                        .exceptionally(e -> {
-                                            Toast.makeText(MainActivity.this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                            return null;
-                                        });
-                            }
-                        } else {
-                            Toast.makeText(MainActivity.this, "Маршрут не найден", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-
-                    @Override
-                    public void onDrivingRoutesError(@NonNull Error error) {
-                        isRequestInProgress = false;
-                        Toast.makeText(MainActivity.this, "Ошибка построения маршрута", Toast.LENGTH_SHORT).show();
-                    }
-                }
-        );
-    }
 
     private float distanceBetweenPointsOnRoute(DrivingRoute route, Point first, Point second) {
         PolylineIndex polylineIndex = PolylineUtils.createPolylineIndex(route.getGeometry());
@@ -527,9 +523,7 @@ public class    MainActivity extends AppCompatActivity implements NavigationView
     private String getSelectedCourierType() {
         RadioGroup radioGroup = findViewById(R.id.radioGroupCourierType);
         int selectedId = radioGroup.getCheckedRadioButtonId();
-        if (selectedId == R.id.radioButtonPedestrian) {
-            return "Пеший";
-        } else if (selectedId == R.id.radioButtonCar) {
+         if (selectedId == R.id.radioButtonCar) {
             return "Авто";
         } else if (selectedId == R.id.radioButtonTruck) {
             return "Грузовой";
@@ -537,24 +531,6 @@ public class    MainActivity extends AppCompatActivity implements NavigationView
         return "Не указан";
     }
 
-
-    private double parseEstimatedCost() {
-        String costText = estimatedCostEditText.getText().toString();
-        try {
-            return Double.parseDouble(costText);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-
-    private Long parseEstimatedDeliveryTime() {
-        String timeText = estimatedTimeEditText.getText().toString();
-        try {
-            return Long.parseLong(timeText);
-        } catch (NumberFormatException e) {
-            return 0L;
-        }
-    }
     private void startLocationUpdates() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             double distance = 0;

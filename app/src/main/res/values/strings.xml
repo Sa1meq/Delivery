@@ -18,6 +18,20 @@
         <item>МИР</item>
     </string-array>
     <string name="title_activity_support">SupportActivity</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+        <string-array name="complaint_request_types">
+            <item>Жалоба на обслуживание</item>
+        </string-array>
+
+        <string-array name="all_request_types">
+            <item>Техническая проблема</item>
+            <item>Вопрос по заказу</item>
+            <item>Жалоба на обслуживание</item>
+            <item>Предложение по улучшению</item>
+            <item>Другое</item>
+        </string-array>
+
 
 
 </resources>

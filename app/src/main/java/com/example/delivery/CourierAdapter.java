@@ -52,7 +52,7 @@ public class CourierAdapter extends RecyclerView.Adapter<CourierAdapter.CourierV
         holder.phoneTextView.setText(courier.getPhone());
         holder.textViewCourierType.setText(courier.getTypeOfCourier());
 
-        // Клик по элементу списка, открытие подробностей курьера
+
         holder.itemView.setOnClickListener(v -> onItemClickListener.onItemClick(courier));
 
         holder.verifyButton.setOnClickListener(v -> onVerifyListener.onVerify(courier));

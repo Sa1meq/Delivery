@@ -151,4 +151,22 @@ public class UserRepository {
                 .addOnFailureListener(future::completeExceptionally);
         return future;
     }
+
+    public CompletableFuture<Boolean> updateUserPassword(String email, String newPassword) {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        usersCollection.whereEqualTo("email", email).get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && !task.getResult().isEmpty()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            document.getReference().update("password", newPassword)
+                                    .addOnSuccessListener(aVoid -> future.complete(true))
+                                    .addOnFailureListener(e -> future.complete(false));
+                            break;
+                        }
+                    } else {
+                        future.complete(false);
+                    }
+                });
+        return future;
+    }
 }

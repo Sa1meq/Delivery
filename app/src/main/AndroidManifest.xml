@@ -31,6 +31,10 @@
             android:exported="true"
             android:screenOrientation="portrait" />
         <activity
+            android:name=".CourierOrdersHistory"
+            android:exported="true"
+            android:screenOrientation="portrait" />
+        <activity
             android:name=".SupportChatActivity"
             android:exported="true"
             android:screenOrientation="portrait" />
@@ -81,15 +85,11 @@
             android:exported="true"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".CourierOrdersActive"
+            android:name=".UserActiveOrderInfo"
             android:exported="true"
             android:screenOrientation="portrait" />
         <activity
             android:name=".UserActiveOrders"
-            android:exported="true"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".UserActiveOrderInfo"
             android:exported="true"
             android:screenOrientation="portrait" />
         <activity
@@ -114,14 +114,18 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".CourierAcceptedOrder"
-            android:exported="true"
-            android:screenOrientation="portrait" />
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".UserProfile"
             android:exported="true"
             android:screenOrientation="portrait" />
         <activity
             android:name=".CardActivity"
+            android:exported="true"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ChatActivity"
             android:exported="true"
             android:screenOrientation="portrait" />
         <activity

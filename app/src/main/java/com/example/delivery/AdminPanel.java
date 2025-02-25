@@ -1,7 +1,10 @@
 package com.example.delivery;
 
+import static androidx.core.content.ContextCompat.startActivity;
+
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -28,14 +31,20 @@ public class AdminPanel extends AppCompatActivity {
         List<AdminCardItem> items = Arrays.asList(
                 new AdminCardItem(R.drawable.ic_verification, "Верификация курьеров"),
                 new AdminCardItem(R.drawable.ic_chat, "Техническая поддержка"),
-                new AdminCardItem(R.drawable.ic_users, "Управление пользователями"),
-                new AdminCardItem(R.drawable.ic_complaints, "Жалобы пользователей")
+                new AdminCardItem(R.drawable.ic_users, "Управление пользователями")
         );
 
         // Настройка адаптера и RecyclerView
         AdminPanelAdapter adapter = new AdminPanelAdapter(this, items, position -> handleCardClick(position));
         adminRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         adminRecyclerView.setAdapter(adapter);
+
+        ImageView backImageView = findViewById(R.id.backImageView);
+        backImageView.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminPanel.this, UserProfile.class);
+            startActivity(intent);
+            finish();
+        });
     }
 
     private void handleCardClick(int position) {
@@ -49,9 +58,6 @@ public class AdminPanel extends AppCompatActivity {
             case 2: // Управление пользователями
                 navigateToUserManagement();
                 break;
-            case 3: // Жалобы
-//                navigateToComplaints();
-                break;
             default:
                 break;
         }
@@ -60,11 +66,13 @@ public class AdminPanel extends AppCompatActivity {
     private void navigateToVerification() {
         Intent intent = new Intent(AdminPanel.this, VerificationActivity.class);
         startActivity(intent);
+        finish();
     }
 
     private void navigateToChats() {
         Intent intent = new Intent(AdminPanel.this, AdminChatListActivity.class);
         startActivity(intent);
+        finish();
     }
 
 
@@ -72,11 +80,6 @@ public class AdminPanel extends AppCompatActivity {
         Intent intent = new Intent(AdminPanel.this, UserCourierActivity.class);
         startActivity(intent);
     }
-}
 
-//    private void navigateToComplaints() {
-//        // Переход на экран жалоб
-//        Intent intent = new Intent(AdminPanel.this, ComplaintsActivity.class);
-//        startActivity(intent);
-//    }
-//}
+
+}

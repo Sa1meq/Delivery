@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
 import com.example.delivery.auth.Authentication;
+import com.example.delivery.model.User;
 import com.example.delivery.repository.UserRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -213,12 +214,15 @@ public class Authorization extends AppCompatActivity {
 
                     if (email.isEmpty() || nickname.isEmpty()) {
                         Toast.makeText(this, "Заполните все поля", Toast.LENGTH_SHORT).show();
-                        showPasswordRecoveryDialog();
+                        showPasswordRecoveryDialog(); // Повторно открыть диалог
+                        return;
                     }
 
+                    // Проверка пользователя в Firestore
                     userRepository.getUserByEmail(email).thenAccept(user -> {
                         if (user != null && user.getName().equals(nickname)) {
-                            showNewPasswordDialog(email);
+                            // Пользователь найден, показываем диалог для ввода нового пароля
+                            runOnUiThread(() -> showNewPasswordDialog(email));
                         } else {
                             runOnUiThread(() -> Toast.makeText(this, "Некорректные данные", Toast.LENGTH_SHORT).show());
                         }
@@ -245,10 +249,68 @@ public class Authorization extends AppCompatActivity {
 
                     if (newPassword.isEmpty()) {
                         Toast.makeText(this, "Введите новый пароль", Toast.LENGTH_SHORT).show();
+                        return;
                     }
+                    if (!isPasswordValid(newPassword)) {
+                        Toast.makeText(this, "Пароль должен содержать минимум 6 символов", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Обновление пароля в Firebase Authentication и Firestore
+                    updatePasswordInAuthAndFirestore(email, newPassword);
                 })
                 .setNegativeButton("Отмена", null)
                 .create()
                 .show();
+    }
+
+    private void updatePasswordInAuthAndFirestore(String email, String newPassword) {
+        // Шаг 1: Получить текущий пароль из Firestore
+        userRepository.getUserByEmail(email).thenAccept(user -> {
+            if (user != null) {
+                String currentPassword = user.getPassword(); // Получаем текущий пароль
+
+                // Шаг 2: Аутентификация пользователя с текущим паролем
+                FirebaseAuth.getInstance().signInWithEmailAndPassword(email, currentPassword)
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+                                if (firebaseUser != null) {
+                                    // Шаг 3: Обновление пароля в Firebase Authentication
+                                    firebaseUser.updatePassword(newPassword)
+                                            .addOnCompleteListener(updateTask -> {
+                                                if (updateTask.isSuccessful()) {
+                                                    // Шаг 4: Обновление пароля в Firestore
+                                                    userRepository.updateUserPassword(email, newPassword).thenAccept(success -> {
+                                                        if (success) {
+                                                            runOnUiThread(() -> {
+                                                                Toast.makeText(this, "Пароль успешно обновлен", Toast.LENGTH_SHORT).show();
+                                                            });
+                                                        } else {
+                                                            runOnUiThread(() -> Toast.makeText(this, "Ошибка обновления пароля в Firestore", Toast.LENGTH_SHORT).show());
+                                                        }
+                                                    });
+                                                } else {
+                                                    runOnUiThread(() -> Toast.makeText(this, "Ошибка обновления пароля в Auth", Toast.LENGTH_SHORT).show());
+                                                }
+                                            });
+                                } else {
+                                    runOnUiThread(() -> Toast.makeText(this, "Пользователь не авторизован", Toast.LENGTH_SHORT).show());
+                                }
+                            } else {
+                                runOnUiThread(() -> Toast.makeText(this, "Ошибка аутентификации", Toast.LENGTH_SHORT).show());
+                            }
+                        });
+            } else {
+                runOnUiThread(() -> Toast.makeText(this, "Пользователь не найден", Toast.LENGTH_SHORT).show());
+            }
+        }).exceptionally(ex -> {
+            runOnUiThread(() -> Toast.makeText(this, "Ошибка получения данных пользователя", Toast.LENGTH_SHORT).show());
+            return null;
+        });
+    }
+
+    private boolean isPasswordValid(String password) {
+        return password.length() >= 6; // Минимум 6 символов
     }
 }

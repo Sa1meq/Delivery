@@ -2,90 +2,66 @@ package com.example.delivery.repository;
 
 import com.example.delivery.model.SupportChat;
 import com.example.delivery.model.SupportMessage;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Date;
 
 public class SupportChatRepository {
-    private final CollectionReference chatCollection;
+    private final CollectionReference chatsRef;
+    private final CollectionReference messagesRef;
 
-    public SupportChatRepository(FirebaseFirestore db) {
-        this.chatCollection = db.collection("supportChats");
+    public SupportChatRepository() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        chatsRef = db.collection("support_chats");
+        messagesRef = db.collection("support_messages");
     }
 
-    public SupportChat addChat(String topic, String requestType, String userId) {
-        String chatId = chatCollection.document().getId();
-        SupportChat chat = new SupportChat(chatId, topic, requestType, userId, com.google.firebase.Timestamp.now(), 0, "open");
-        chatCollection.document(chatId).set(chat);
-        return chat;
+    public Query getChatsQuery(String userId) {
+        return chatsRef.whereEqualTo("userId", userId)
+                .orderBy("createdAt", Query.Direction.DESCENDING);
     }
 
-    public CompletableFuture<List<SupportChat>> getAllChats() {
-        CompletableFuture<List<SupportChat>> future = new CompletableFuture<>();
-        List<SupportChat> chatList = new ArrayList<>();
-
-        chatCollection.get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            chatList.add(document.toObject(SupportChat.class));
-                        }
-                        future.complete(chatList);
-                    }
-                });
-
-        return future;
+    public Query getAllOpenChatsQuery() {
+        return chatsRef.whereEqualTo("status", "open")
+                .orderBy("createdAt", Query.Direction.DESCENDING);
     }
 
-
-    public CompletableFuture<List<SupportChat>> getAllChatsByUserId(String userId) {
-        CompletableFuture<List<SupportChat>> future = new CompletableFuture<>();
-        List<SupportChat> chatList = new ArrayList<>();
-
-        chatCollection.whereEqualTo("userId", userId).get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            chatList.add(document.toObject(SupportChat.class));
-                        }
-                        future.complete(chatList);
-                    }
-                });
-
-        return future;
+    public Task<Void> deleteChatById(String chatId) {
+        return chatsRef.document(chatId).delete();
     }
 
-    public void deleteChatById(String chatId) {
-        chatCollection.document(chatId).delete();
+    public Task<Void> createChat(String userId, String topic, String requsetType) {
+        String chatId = chatsRef.document().getId();
+        SupportChat chat = new SupportChat(chatId, userId, topic, requsetType, "open", new Date());
+        return chatsRef.document(chatId).set(chat);
     }
 
-    public CompletableFuture<SupportChat> getChatById(String chatId) {
-        CompletableFuture<SupportChat> future = new CompletableFuture<>();
-
-        chatCollection.document(chatId).get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        SupportChat chat = documentSnapshot.toObject(SupportChat.class);
-                        future.complete(chat);
-                    } else {
-                        future.completeExceptionally(new Exception("Chat not found"));
-                    }
-                })
-                .addOnFailureListener(future::completeExceptionally);
-
-        return future;
+    public DocumentReference getChatRef(String chatId) {
+        return chatsRef.document(chatId);
     }
 
-
-    public void updateChat(SupportChat chat) {
-        chatCollection.document(chat.getId()).set(chat);
+    public Query getMessagesQuery(String chatId) {
+        return messagesRef.whereEqualTo("chatId", chatId)
+                .orderBy("timestamp", Query.Direction.ASCENDING);
     }
 
-    public void closeChat(String chatId) {
-        chatCollection.document(chatId).update("status", "closed");
+    public Task<DocumentReference> sendMessage(String chatId, String text, String userId, boolean isSupport) {
+        SupportMessage message = new SupportMessage(text, userId, chatId, new Date(), isSupport);
+        return messagesRef.add(message);
+    }
+
+    public ListenerRegistration listenForChats(EventListener<QuerySnapshot> listener) {
+        return chatsRef.addSnapshotListener(listener);
+    }
+
+    public Task<Void> closeChat(String chatId) {
+        return chatsRef.document(chatId).update("status", "closed");
     }
 }

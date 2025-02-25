@@ -15,6 +15,7 @@
             public boolean isSecond;
             public boolean isCompleted;
             public boolean isRated;
+            private boolean isCancelled;
             public double totalDistance;
             public Long travelTime;
             public String startAddress;
@@ -46,6 +47,15 @@
                 this.estimatedCost = estimatedCost;
                 this.estimatedDeliveryTime = estimatedDeliveryTime;
                 this.orderDescription = orderDescription;
+                this.isCancelled = false;
+            }
+
+            public boolean isCancelled() {
+                return isCancelled;
+            }
+
+            public void setCancelled(boolean cancelled) {
+                isCancelled = cancelled;
             }
 
             public boolean isRated() {

@@ -2,47 +2,41 @@ package com.example.delivery.model;
 
 import com.google.firebase.Timestamp;
 
+import java.util.Date;
+
 public class SupportMessage {
-    private String id; // Уникальный идентификатор сообщения
-    private String content; // Текст сообщения
-    private String senderId; // ID отправителя
-    private String chatId; // ID чата, к которому принадлежит сообщение
-    private Timestamp createTime; // Время создания сообщения
-    private boolean isAdmin; // True, если сообщение от администратора
+    private String text;
+    private String userId;
+    private String chatId;
+    private Date timestamp;
+    private boolean isSupport;
 
-    public SupportMessage(String id, String content, String senderId, String chatId, Timestamp createTime, boolean isAdmin) {
-        this.id = id;
-        this.content = content;
-        this.senderId = senderId;
+
+    public SupportMessage() {
+    }
+
+    public SupportMessage(String text, String userId, String chatId, Date timestamp, boolean isSupport) {
+        this.text = text;
+        this.userId = userId;
         this.chatId = chatId;
-        this.createTime = createTime;
-        this.isAdmin = isAdmin;
+        this.timestamp = timestamp;
+        this.isSupport = isSupport;
     }
 
-    public SupportMessage() {}
-
-    public String getId() {
-        return id;
+    public String getText() {
+        return text;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setText(String text) {
+        this.text = text;
     }
 
-    public String getContent() {
-        return content;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public String getSenderId() {
-        return senderId;
-    }
-
-    public void setSenderId(String senderId) {
-        this.senderId = senderId;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getChatId() {
@@ -53,19 +47,19 @@ public class SupportMessage {
         this.chatId = chatId;
     }
 
-    public Timestamp getCreateTime() {
-        return createTime;
+    public boolean isSupport() {
+        return isSupport;
     }
 
-    public void setCreateTime(Timestamp createTime) {
-        this.createTime = createTime;
+    public void setSupport(boolean support) {
+        isSupport = support;
     }
 
-    public boolean isAdmin() {
-        return isAdmin;
+    public Date getTimestamp() {
+        return timestamp;
     }
 
-    public void setAdmin(boolean admin) {
-        isAdmin = admin;
+    public void setTimestamp(Date timestamp) {
+        this.timestamp = timestamp;
     }
 }

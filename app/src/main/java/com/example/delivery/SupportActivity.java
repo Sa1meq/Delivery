@@ -54,6 +54,7 @@ public class SupportActivity extends AppCompatActivity {
    supportButton.setOnClickListener(v -> {
           Intent intent = new Intent(SupportActivity.this, SupportChatListActivity.class);
         startActivity(intent);
+        finish();
        });
     }
 

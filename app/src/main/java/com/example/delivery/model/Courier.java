@@ -10,27 +10,28 @@ public class Courier {
     public String typeOfCourier;
     private float rating;
     private int ratingCount;
-    public String countOfDayDeliveres;
+    private int dailyCompletedOrders;
+    private int totalCompletedOrders;
     public boolean isVerified;
     private long blockedUntil; // Время окончания
     private String status;
     private int bonusPoints; // Бонусные баллы
     private String enterCode;
     private String email;
-
+    private String avatarUrl;
+    private double tariffMultiplier = 1.0;
+    private long tariffEndTime = 0;
     // Новые поля для анкеты
-    private String hobbies; // Хобби
     private String previousJobs; // Предыдущие места работы
-    private boolean hasDrivingLicense; // Наличие водительских прав
     private String drivingLicenseCategories; // Категории водительских прав
     private String additionalInfo; // Дополнительная информация
     private String attachedFiles;
-    private boolean hasExperience;
+    private boolean hasExperience; // Стаж более 2 лет
 
     public Courier() {
     }
 
-    public Courier(String id, String firstName, String surName, String middleName, String phone, String balance, String typeOfCourier, float rating, int ratingCount, String countOfDayDeliveres, boolean isVerified, long blockedUntil, String status, int bonusPoints, String hobbies, String previousJobs, boolean hasDrivingLicense, String drivingLicenseCategories, String additionalInfo, String attachedFiles, boolean hasExperience, String enterCode, String email) {
+    public Courier(String id, String firstName, String surName, String middleName, String phone, String balance, String typeOfCourier, float rating, int ratingCount, int dailyCompletedOrders, int totalCompletedOrders, boolean isVerified, long blockedUntil, String status, int bonusPoints, String enterCode, String email, String avatarUrl, String previousJobs, String drivingLicenseCategories, String attachedFiles, String additionalInfo, boolean hasExperience, double tariffMultiplier, long tariffEndTime) {
         this.id = id;
         this.firstName = firstName;
         this.surName = surName;
@@ -40,24 +41,53 @@ public class Courier {
         this.typeOfCourier = typeOfCourier;
         this.rating = rating;
         this.ratingCount = ratingCount;
-        this.countOfDayDeliveres = countOfDayDeliveres;
+        this.totalCompletedOrders = totalCompletedOrders;
+        this.dailyCompletedOrders = dailyCompletedOrders;
         this.isVerified = isVerified;
         this.blockedUntil = blockedUntil;
         this.status = status;
         this.bonusPoints = bonusPoints;
-        this.hobbies = hobbies;
-        this.previousJobs = previousJobs;
-        this.hasDrivingLicense = hasDrivingLicense;
-        this.drivingLicenseCategories = drivingLicenseCategories;
-        this.additionalInfo = additionalInfo;
-        this.attachedFiles = attachedFiles;
-        this.hasExperience = hasExperience;
         this.enterCode = enterCode;
         this.email = email;
+        this.avatarUrl = avatarUrl;
+        this.previousJobs = previousJobs;
+        this.drivingLicenseCategories = drivingLicenseCategories;
+        this.attachedFiles = attachedFiles;
+        this.additionalInfo = additionalInfo;
+        this.hasExperience = hasExperience;
+        this.tariffEndTime = tariffEndTime;
+        this.tariffMultiplier = tariffMultiplier;
+    }
+
+
+
+    // Геттеры и сеттеры
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public String getEmail() {
         return email;
+    }
+
+    public double getTariffMultiplier() {
+        return tariffMultiplier;
+    }
+
+    public void setTariffMultiplier(double tariffMultiplier) {
+        this.tariffMultiplier = tariffMultiplier;
+    }
+
+    public long getTariffEndTime() {
+        return tariffEndTime;
+    }
+
+    public void setTariffEndTime(long tariffEndTime) {
+        this.tariffEndTime = tariffEndTime;
     }
 
     public void setEmail(String email) {
@@ -70,6 +100,22 @@ public class Courier {
 
     public void setEnterCode(String enterCode) {
         this.enterCode = enterCode;
+    }
+
+    public int getDailyCompletedOrders() {
+        return dailyCompletedOrders;
+    }
+
+    public void setDailyCompletedOrders(int dailyCompletedOrders) {
+        this.dailyCompletedOrders = dailyCompletedOrders;
+    }
+
+    public int getTotalCompletedOrders() {
+        return totalCompletedOrders;
+    }
+
+    public void setTotalCompletedOrders(int totalCompletedOrders) {
+        this.totalCompletedOrders = totalCompletedOrders;
     }
 
     public boolean isHasExperience() {
@@ -88,28 +134,12 @@ public class Courier {
         this.middleName = middleName;
     }
 
-    public String getHobbies() {
-        return hobbies;
-    }
-
-    public void setHobbies(String hobbies) {
-        this.hobbies = hobbies;
-    }
-
     public String getPreviousJobs() {
         return previousJobs;
     }
 
     public void setPreviousJobs(String previousJobs) {
         this.previousJobs = previousJobs;
-    }
-
-    public boolean isHasDrivingLicense() {
-        return hasDrivingLicense;
-    }
-
-    public void setHasDrivingLicense(boolean hasDrivingLicense) {
-        this.hasDrivingLicense = hasDrivingLicense;
     }
 
     public String getDrivingLicenseCategories() {
@@ -201,9 +231,7 @@ public class Courier {
         return typeOfCourier;
     }
 
-    public String getCountOfDayDeliveres() {
-        return countOfDayDeliveres;
-    }
+
 
     public String getBalance() {
         return balance;
@@ -217,9 +245,6 @@ public class Courier {
         return rating;
     }
 
-    public void setCountOfDayDeliveres(String countOfDayDeliveres) {
-        this.countOfDayDeliveres = countOfDayDeliveres;
-    }
 
     public void setId(String id) {
         this.id = id;

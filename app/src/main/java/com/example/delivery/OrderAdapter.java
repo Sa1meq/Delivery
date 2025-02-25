@@ -65,8 +65,10 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.OrderViewHol
             return "Курьер прибыл в точку и в пути";
         } else if (order.isAccepted()) {
             return "Заказ принят, курьер в пути";
+        } else if (order.isCancelled()){
+            return "Заказ отменен";
         } else {
-            return "Заказ еще не принят";
+            return "Заказ не принят";
         }
     }
 

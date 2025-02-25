@@ -1,27 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/message_container"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginVertical="8dp"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:padding="8dp"
+    android:gravity="end">
 
     <TextView
         android:id="@+id/message_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_message_user"
-        android:padding="8dp"
-        android:text="Сообщение"
+        android:background="@drawable/bg_message_sent"
+        android:padding="12dp"
         android:textColor="@android:color/white"
-        android:textSize="14sp" />
+        android:textSize="16sp"
+        android:maxWidth="240dp"
+        android:ellipsize="end"
+        android:singleLine="false"/>
+
     <TextView
         android:id="@+id/message_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
         android:text="12:34"
-        android:textColor="@android:color/darker_gray"
-        android:textSize="12sp" />
+        android:textSize="12sp"
+        android:textColor="@color/gray"
+        android:layout_marginTop="4dp"
+        android:gravity="end"/>
 </LinearLayout>

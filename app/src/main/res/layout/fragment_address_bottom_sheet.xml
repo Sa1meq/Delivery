@@ -1,11 +1,35 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="16dp">
 
-    <RecyclerView
+    <!-- Поле для начального адреса -->
+    <EditText
+        android:id="@+id/startAddressEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Введите начальный адрес"
+        android:imeOptions="actionNext"
+        android:inputType="text"
+        android:background="@drawable/edit_text_background" />
+
+    <!-- Поле для конечного адреса -->
+    <EditText
+        android:id="@+id/endAddressEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Введите конечный адрес"
+        android:imeOptions="actionDone"
+        android:inputType="text"
+        android:background="@drawable/edit_text_background" />
+
+    <!-- RecyclerView для подсказок -->
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/suggestionsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:nestedScrollingEnabled="false" />
+        android:layout_marginTop="8dp"
+        android:visibility="gone" />
 </LinearLayout>

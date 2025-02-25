@@ -1,197 +1,155 @@
 @startuml
-'https://plantuml.com/class-diagram
+!theme plain
+skinparam classAttributeIconSize 0
+hide empty methods
+hide empty members
+hide circle
 
-    class UserProfile {
-        - TextView userNameTextView
-        - TextView orderHistoryButton
-        - TextView activeOrdersButton
-        - TextView exitButton
-        - TextView placeOrder
-        - TextView becomeCourierButton
-        - TextView rechargeBalanceButton
-        - TextView balanceText
-        - TextView aboutServiceButton
-        - TextView adminPanelButton
-        - UserRepository userRepository
-        - CourierRepository courierRepository
-        - RouteOrderRepository routeOrderRepository
-        - ImageView avatarImage
-        - ImageView notificationIcon
-        - AlertDialog loadingDialog
-        - SharedPreferences sharedPreferences
-        + onCreate(Bundle savedInstanceState)
-        + uploadAvatarToCloudinary(Uri imageUri)
-        + updateAvatarInFirestore(String userId, String imageUrl)
-        + showLoadingDialog()
-        + hideLoadingDialog()
-        + showRechargeBalanceDialog(String userId)
-        + updateBalance(String userId, double amount)
-        + clearUserCredentials()
-        + showAboutDialog()
-        + showRatingDialog(RouteOrder order)
+package Model <<Folder>> {
+    class Card {
+        - id: String
+        - cardNumber: String
+        - cardExpiryDate: String
+        - cardCVC: int
+        - cardUserID: String
+        - isMain: boolean
+        + getters/setters()
     }
 
-    class UserRepository {
-        + getUserById(String userId)
-        + updateUser(String userId, User user)
+    class ChatMessage {
+        - messageId: String
+        - orderId: String
+        - senderId: String
+        - text: String
+        - timestamp: Timestamp
+        + getters/setters()
     }
 
-    class CourierRepository {
-        + getCourierById(String courierId)
-        + updateCourierRating(String courierId, float rating)
-    }
-
-    class RouteOrderRepository {
-        + getOrdersToRate(String userId)
-        + setOrderRated(String orderId)
+    class Courier {
+        - id: String
+        - firstName: String
+        - surName: String
+        - phone: String
+        - typeOfCourier: String
+        - rating: float
+        - balance: String
+        - dailyCompletedOrders: int
+        - totalCompletedOrders: int
+        - bonusPoints: int
+        - isVerified: boolean
+        - avatarUrl: String
+        + getters/setters()
     }
 
     class RouteOrder {
-        - String orderId
-        - String courierId
-        + getCourierId()
+        - orderId: String
+        - userId: String
+        - courierId: String
+        - routePoints: List<Point>
+        - isActive: boolean
+        - isCompleted: boolean
+        - estimatedCost: double
+        + getters/setters()
     }
 
     class User {
-        - String name
-        - String balance
-        - String avatarUrl
-        + getName()
-        + getBalance()
-        + setBalance(String balance)
-        + setAvatarUrl(String avatarUrl)
-        + isAdmin()
+        - id: String
+        - name: String
+        - email: String
+        - password: String
+        - balance: String
+        - isAdmin: boolean
+        - avatarUrl: String
+        + getters/setters()
     }
 
-    UserProfile --> UserRepository : uses
-    UserProfile --> CourierRepository : uses
-    UserProfile --> RouteOrderRepository : uses
-    UserProfile --> RouteOrder : manages
-    UserProfile --> User : manages
-    class UserOrdersHistory {
-            - RecyclerView ordersRecyclerView
-            - OrderAdapter orderAdapter
-            - List<RouteOrder> orderList
-            - RouteOrderRepository orderRepository
-            + onCreate(@Nullable Bundle savedInstanceState)
-            + loadUserOrders()
-        }
+    class SupportChat {
+        - id: String
+        - userId: String
+        - topic: String
+        - status: String
+        + getters/setters()
+    }
 
-        class OrderAdapter {
-            - List<RouteOrder> orders
-            + OrderAdapter(List<RouteOrder> orders)
-            + onCreateViewHolder(ViewGroup parent, int viewType)
-            + onBindViewHolder(RecyclerView.ViewHolder holder, int position)
-            + getItemCount()
-        }
-
-        class RouteOrderRepository {
-            + getOrdersByUserId(String userId)
-        }
-
-        class RouteOrder {
-            - String orderId
-            - String userId
-            - String details
-            + getOrderId()
-            + getUserId()
-            + getDetails()
-        }
-
-        class UserProfile {
-            + onCreate(Bundle savedInstanceState)
-        }
-
-
-        UserOrdersHistory --> OrderAdapter : uses
-        UserOrdersHistory --> RouteOrderRepository : uses
-        UserOrdersHistory --> RouteOrder : manages
-        UserOrdersHistory --> UserProfile : navigates to
-         UserActiveOrders --> OrderAdapter : uses
-         class UserActiveOrders {
-                 - RecyclerView ordersRecyclerView
-                 - OrderAdapter orderAdapter
-                 - List<RouteOrder> activeOrderList
-                 - RouteOrderRepository orderRepository
-                 + onCreate(@Nullable Bundle savedInstanceState)
-                 + loadActiveOrders()
-             }
-
-             class OrderAdapter {
-                 - List<RouteOrder> orders
-                 + OrderAdapter(List<RouteOrder> orders)
-                 + onCreateViewHolder(ViewGroup parent, int viewType)
-                 + onBindViewHolder(RecyclerView.ViewHolder holder, int position)
-                 + getItemCount()
-             }
-
-             class RouteOrderRepository {
-                 + getActiveOrdersByUserId(String userId)
-             }
-
-             class RouteOrder {
-                 - String orderId
-                 - String userId
-                 - String details
-                 + getOrderId()
-                 + getUserId()
-                 + getDetails()
-             }
-
-             class UserProfile {
-                 + onCreate(Bundle savedInstanceState)
-             }
-            UserActiveOrders --> RouteOrderRepository : uses
-            UserActiveOrders --> RouteOrder : manages
-            UserActiveOrders --> UserProfile : navigates to
-                class Registration {
-                    - UserRepository userRepository
-                    - EditText editName
-                    - EditText editEmail
-                    - EditText editPassword
-                    - EditText repeatPassword
-                    - Button registerButton
-                    - TextView loginTextView
-                    - TextView errorTextView
-                    - boolean isPasswordVisible
-                    - boolean isRepeatPasswordVisible
-                    + onCreate(Bundle savedInstanceState)
-                    + onClickRegistration(View view)
-                    - togglePasswordVisibility()
-                    - toggleRepeatPasswordVisibility()
-                    - showError(String errorMessage)
-                }
-
-                class UserRepository {
-                    + addUser(String name, String email, String password, String balance)
-                }
-
-                class User {
-                    - String name
-                    - String email
-                    - String password
-                    - String balance
-                    + getName()
-                    + getEmail()
-                    + getBalance()
-                }
-
-                class Authorization {
-                    + onCreate(Bundle savedInstanceState)
-                }
-
-                class UserProfile {
-                    + onCreate(Bundle savedInstanceState)
-                }
-
-                Registration --> UserRepository : uses
-                Registration --> User : creates
-                Registration --> Authorization : navigates to
-                Registration --> UserProfile : navigates to
-
-
-
-
+    class CourierLocation {
+        - id: String
+        - orderId: String
+        - courierId: String
+        - courierLocation: List<SerializedPoint>
+        + getters/setters()
+    }
 }
+
+package Repository <<Folder>> {
+    class CardRepository {
+        - cardsCollection: CollectionReference
+        + addCard()
+        + getCardById()
+        + updateMainCard()
+        + deleteCard()
+    }
+
+    class ChatRepository {
+        - chatsCollection: CollectionReference
+        + sendMessage()
+        + getMessagesQuery()
+        + checkChatExists()
+    }
+
+    class CourierRepository {
+        - courierCollection: CollectionReference
+        + addCourier()
+        + getCourierById()
+        + updateCourierRating()
+        + blockCourier()
+        + checkAndResetTariff()
+        + updateCourierTariff()
+        + unblockCourier()
+    }
+
+    class RouteOrderRepository {
+        - firestore: FirebaseFirestore
+        + saveRouteOrder()
+        + getRouteOrderById()
+        + completeOrder()
+        + getActiveOrderForCourier()
+        + getAllPendingRouteOrdersForCourier()
+        + setOrderRated()
+        + cancelOrder()
+        + updateCourierForOrder()
+    }
+
+    class UserRepository {
+        - usersCollection: CollectionReference
+        + addUser()
+        + getUserById()
+        + deleteUserById()
+        + makeUserAdmin()
+    }
+
+    class SupportChatRepository {
+        - chatsRef: CollectionReference
+        + createChat()
+        + getMessagesQuery()
+        + closeChat()
+    }
+
+    class CourierLocationRepository {
+        + getCourierLocationByOrderId()
+    }
+}
+
+CardRepository --> Card
+ChatRepository --> ChatMessage
+CourierRepository --> Courier
+RouteOrderRepository --> RouteOrder
+UserRepository --> User
+SupportChatRepository --> SupportChat
+CourierLocationRepository --> CourierLocation
+
+RouteOrder "1" -- "0..*" ChatMessage
+Courier "1" -- "0..*" RouteOrder
+User "1" -- "0..*" Card
+CourierLocation "1" -- "1" RouteOrder
 
 @enduml

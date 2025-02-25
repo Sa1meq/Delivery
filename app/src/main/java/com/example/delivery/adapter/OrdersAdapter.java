@@ -1,7 +1,6 @@
 package com.example.delivery.adapter;
 
 import android.content.Context;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +9,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.delivery.CourierAcceptedOrder;
 import com.example.delivery.R;
 import com.example.delivery.model.RouteOrder;
 import com.example.delivery.repository.CourierRepository;
@@ -18,6 +16,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class OrdersAdapter extends RecyclerView.Adapter<OrdersAdapter.OrderViewHolder> {
     private List<RouteOrder> routeOrders;
@@ -42,14 +41,13 @@ public class OrdersAdapter extends RecyclerView.Adapter<OrdersAdapter.OrderViewH
     public void onBindViewHolder(@NonNull OrderViewHolder holder, int position) {
         RouteOrder routeOrder = routeOrders.get(position);
 
-        holder.orderIdTextView.setText(routeOrder.orderId);
+        holder.orderIdTextView.setText("Заказ № " + (position + 1));
         holder.startAddressTextView.setText("Откуда: " + routeOrder.getStartAddress());
         holder.endAddressTextView.setText("Куда: " + routeOrder.getEndAddress());
         holder.descriptionTextView.setText("Примечание: " + routeOrder.getOrderDescription());
         double distanceInKm = routeOrder.totalDistance / 1000.0;
         holder.distanceTextView.setText("Расстояние: " + String.format("%.1f", distanceInKm) + " км");
         holder.timeTextView.setText("Время: " + routeOrder.travelTime / 60 + " минут");
-        holder.costOrder.setText("Сумма заработка: " + routeOrder.getEstimatedCost());
 
         String courierId = FirebaseAuth.getInstance().getUid();
         new CourierRepository(FirebaseFirestore.getInstance())
@@ -57,11 +55,14 @@ public class OrdersAdapter extends RecyclerView.Adapter<OrdersAdapter.OrderViewH
                 .thenAccept(courierType -> {
                     double cost = calculateCost(courierType, distanceInKm);
                     holder.costTextView.setText("Оплата: " + String.format("%.2f", cost) + " BYN");
+                    holder.costOrder.setText("Сумма заработка: " + String.format("%.2f", cost) + " BYN");
                 })
                 .exceptionally(e -> {
                     holder.costTextView.setText("Оплата: недоступно");
+                    holder.costOrder.setText("Сумма заработка: недоступно");
                     return null;
                 });
+
         holder.itemView.setOnClickListener(v -> onOrderClickListener.onOrderClick(routeOrder));
     }
 
@@ -109,12 +110,19 @@ public class OrdersAdapter extends RecyclerView.Adapter<OrdersAdapter.OrderViewH
         } else {
             costPerKm = 1.0;
         }
-        double cost = baseCost + (costPerKm * distanceInKm);
-        return cost;
+
+        AtomicReference<Double> cost = new AtomicReference<>(baseCost + (costPerKm * distanceInKm));
+
+        CourierRepository courierRepo = new CourierRepository(FirebaseFirestore.getInstance());
+        courierRepo.getCourierById(FirebaseAuth.getInstance().getUid())
+                .thenAccept(courier -> {
+                    if (courier != null && courier.getTariffEndTime() > System.currentTimeMillis()) {
+                        cost.updateAndGet(v -> new Double((double) (v * courier.getTariffMultiplier())));
+                    }
+                });
+
+        return cost.get();
     }
-
-
-
 
     public interface OnOrderClickListener {
         void onOrderClick(RouteOrder routeOrder);

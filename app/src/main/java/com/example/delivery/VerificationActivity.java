@@ -18,6 +18,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -63,13 +64,14 @@ public class VerificationActivity extends AppCompatActivity {
         Intent intent = new Intent(VerificationActivity.this, CourierDetailsActivity.class);
         intent.putExtra("COURIER_ID", courier.getId());
         startActivity(intent);
+        finish();
     }
 
 
     private void verifyCourier(Courier courier) {
         // Генерация enterCode
         String enterCode = generateEnterCode();
-        courier.setEnterCode(enterCode); // Устанавливаем код
+        courier.setEnterCode(enterCode);
 
         courierRepository.updateCourierVerification(courier.getId(), true).thenAccept(success -> {
             if (success) {
@@ -95,10 +97,14 @@ public class VerificationActivity extends AppCompatActivity {
                         // Отправка письма на email курьера
                         String email = courier.getEmail();
                         if (email != null && !email.isEmpty()) {
-                            String subject = "Поздравляем! Вы приняты в нашу команду";
-                            String body = "Поздравляем! Ознакомившись с вашим резюме, мы пришли к выводу, что вы нам подходите.\n\n" +
-                                    "Вам необходимо приехать в офис по адресу: г. Минск, ул. Казинца, д. 91 для заполнения документов и оформления на работу.\n\n" +
-                                    "Ваш код доступа: " + enterCode + " С уважением,\nКоманда Delivery Service.\n\n";
+                            String subject = "Приглашение на собеседование";
+                            String body = "Здравствуйте, " + courier.getFirstName() + "!\n\n" +
+                                    "Благодарим вас за проявленный интерес к нашей компании.\n\n" +
+                                    "Мы рассмотрели вашу анкету и рады пригласить вас на собеседование.\n\n" +
+                                    "Дата и время: Рабочие дни, с 9:00 до 16:30\n" +
+                                    "Адрес: г. Минск, ул. Казинца, д. 91\n\n" +
+                                    "Пожалуйста, подтвердите ваше участие, ответив на это письмо.\n\n" +
+                                    "С уважением,\nКоманда OnTheWay Delivery Service.\n\n";
                             EmailSender.sendEmail(email, subject, body);
                         } else {
                             Log.e("EmailSender", "Email курьера отсутствует");
@@ -127,12 +133,23 @@ public class VerificationActivity extends AppCompatActivity {
     }
 
     private void rejectCourier(Courier courier) {
-        courierRepository.updateCourierVerification(courier.getId(), false).thenAccept(success -> {
+        courierRepository.deleteCourierById(courier.getId(), FirebaseStorage.getInstance()).thenAccept(success -> {
             if (success) {
-                Toast.makeText(VerificationActivity.this, "Курьер отклонен", Toast.LENGTH_SHORT).show();
+                String email = courier.getEmail();
+                if (email != null && !email.isEmpty()) {
+                    String subject = "Результат рассмотрения вашей анкеты";
+                    String body = "Здравствуйте, " + courier.getFirstName() + "!\n\n" +
+                            "Благодарим вас за проявленный интерес к нашей компании.\n\n" +
+                            "К сожалению, после рассмотрения вашей анкеты мы вынуждены сообщить, что не можем предложить вам вакансию курьера в нашей компании.\n\n" +
+                            "Мы ценим ваше время и желаем успехов в поиске подходящей работы.\n\n" +
+                            "С уважением,\nКоманда OnTheWay Delivery Service.\n\n";
+                    EmailSender.sendEmail(email, subject, body);
+                }
+
+                Toast.makeText(VerificationActivity.this, "Курьер отклонен и удален", Toast.LENGTH_SHORT).show();
                 loadPendingCouriers();
             } else {
-                Toast.makeText(VerificationActivity.this, "Ошибка отклонения", Toast.LENGTH_SHORT).show();
+                Toast.makeText(VerificationActivity.this, "Ошибка при удалении курьера", Toast.LENGTH_SHORT).show();
             }
         });
     }

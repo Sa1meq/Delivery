@@ -43,6 +43,13 @@ android {
                 "META-INF/NOTICE.txt")
         }
     }
+    buildFeatures {
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.1.1"
+    }
 
 }
 
@@ -67,6 +74,7 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     implementation ("com.google.code.gson:gson:2.10.1")
+    implementation ("com.firebaseui:firebase-ui-firestore:8.0.0")
 
     implementation ("com.sun.mail:android-mail:1.6.7")
     implementation ("com.sun.mail:android-activation:1.6.7")

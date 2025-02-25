@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.delivery.model.Courier;
 import com.example.delivery.repository.CourierRepository;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -44,16 +45,38 @@ public class LoginCourier extends AppCompatActivity {
         errorTextView.setVisibility(View.GONE);
 
         if (validateInputs(enterCode)) {
-            // Ищем курьера по коду входа
             courierRepository.getCourierByEnterCode(enterCode).thenAccept(existingCourier -> {
                 if (existingCourier != null) {
-                    if (existingCourier.isVerified()) { // Проверяем, верифицирован ли курьер
-                        Intent intent = new Intent(LoginCourier.this, CourierProfile.class);
-                        intent.putExtra("COURIER_ID", existingCourier.getId()); // Передаем ID курьера
-                        startActivity(intent);
-                        finish();
-                    } else {
+                    // Проверка на верификацию
+                    if (!existingCourier.isVerified()) {
                         showErrorMessage("Верификация не пройдена.");
+                        return;
+                    }
+
+                    // Проверка на блокировку
+                    if (existingCourier.getStatus().equals("blocked")) {
+                        long currentTime = System.currentTimeMillis();
+                        long blockedUntil = existingCourier.getBlockedUntil();
+
+                        if (blockedUntil > currentTime) {
+                            long remainingTime = (blockedUntil - currentTime) / 1000; // Оставшееся время в секундах
+                            String message = String.format("Курьер заблокирован. До разблокировки осталось %d секунд.", remainingTime);
+                            showErrorMessage(message);
+                        } else {
+                            // Время блокировки истекло, разблокируем курьера
+                            courierRepository.unblockCourier(existingCourier.getId())
+                                    .thenAccept(success -> {
+                                        if (success) {
+                                            // Разблокировка успешна, разрешаем вход
+                                            proceedToCourierProfile(existingCourier);
+                                        } else {
+                                            showErrorMessage("Ошибка при разблокировке курьера.");
+                                        }
+                                    });
+                        }
+                    } else {
+                        // Курьер не заблокирован, разрешаем вход
+                        proceedToCourierProfile(existingCourier);
                     }
                 } else {
                     showErrorMessage("Курьер с таким кодом не найден!");
@@ -63,6 +86,13 @@ public class LoginCourier extends AppCompatActivity {
                 return null;
             });
         }
+    }
+
+    private void proceedToCourierProfile(Courier courier) {
+        Intent intent = new Intent(LoginCourier.this, CourierProfile.class);
+        intent.putExtra("COURIER_ID", courier.getId());
+        startActivity(intent);
+        finish();
     }
 
     private boolean validateInputs(String enterCode) {

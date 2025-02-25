@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.Toast;
@@ -28,10 +29,9 @@ public class RegisterCourier extends AppCompatActivity {
     private static final int PICK_FILE_REQUEST_CODE = 1;
 
     private EditText editTextFirstName, editTextSurName, editTextMiddleName, editTextPhone,
-            editTextHobbies, editTextPreviousJobs, editTextAdditionalInfo, editTextEmail ;
-    private CheckBox checkBoxDrivingLicense, checkBoxExperience;
+            editTextPreviousJobs, editTextAdditionalInfo, editTextEmail;
+    private CheckBox checkBoxExperience;
     private Button buttonUploadFile, buttonSubmit;
-    private LinearLayout linearLayoutLicenseCategories;
     private RadioGroup radioGroupCourierType;
 
     private Uri fileUri;
@@ -46,11 +46,8 @@ public class RegisterCourier extends AppCompatActivity {
         editTextSurName = findViewById(R.id.editTextSurName);
         editTextMiddleName = findViewById(R.id.editTextMiddleName);
         editTextPhone = findViewById(R.id.editTextPhone);
-        editTextHobbies = findViewById(R.id.editTextHobbies);
         editTextPreviousJobs = findViewById(R.id.editTextPreviousJobs);
-        checkBoxDrivingLicense = findViewById(R.id.checkBoxDrivingLicense);
         checkBoxExperience = findViewById(R.id.checkBoxExperience);
-        linearLayoutLicenseCategories = findViewById(R.id.linearLayoutLicenseCategories);
         editTextAdditionalInfo = findViewById(R.id.editTextAdditionalInfo);
         buttonUploadFile = findViewById(R.id.buttonUploadFile);
         buttonSubmit = findViewById(R.id.buttonSubmit);
@@ -60,16 +57,13 @@ public class RegisterCourier extends AppCompatActivity {
         buttonUploadFile.setOnClickListener(v -> openFilePicker());
 
         buttonSubmit.setOnClickListener(v -> submitQuestionnaire());
-    }
 
-    public void onDrivingLicenseChecked(View view) {
-        if (checkBoxDrivingLicense.isChecked()) {
-            linearLayoutLicenseCategories.setVisibility(View.VISIBLE);
-            checkBoxExperience.setVisibility(View.VISIBLE);
-        } else {
-            linearLayoutLicenseCategories.setVisibility(View.GONE);
-            checkBoxExperience.setVisibility(View.GONE);
-        }
+        ImageView backImageView = findViewById(R.id.backImageView);
+        backImageView.setOnClickListener(v -> {
+            Intent intent = new Intent(RegisterCourier.this, UserProfile.class);
+            startActivity(intent);
+            finish();
+        });
     }
 
     private void openFilePicker() {
@@ -124,13 +118,33 @@ public class RegisterCourier extends AppCompatActivity {
         String middleName = editTextMiddleName.getText().toString();
         String phone = editTextPhone.getText().toString();
         String email = editTextEmail.getText().toString();
-        String hobbies = editTextHobbies.getText().toString();
         String previousJobs = editTextPreviousJobs.getText().toString();
-        boolean hasDrivingLicense = checkBoxDrivingLicense.isChecked();
         String additionalInfo = editTextAdditionalInfo.getText().toString();
 
-        StringBuilder drivingLicenseCategories = new StringBuilder();
-        if (hasDrivingLicense) {
+        // Проверка уникальности телефона и почты
+        CourierRepository courierRepository = new CourierRepository(FirebaseFirestore.getInstance());
+
+        CompletableFuture.allOf(
+                courierRepository.isPhoneExists(phone).thenAccept(isPhoneExists -> {
+                    if (isPhoneExists) {
+                        runOnUiThread(() -> {
+                            editTextPhone.setError("Этот номер телефона уже используется");
+                            Toast.makeText(this, "Этот номер телефона уже используется", Toast.LENGTH_SHORT).show();
+                        });
+                        throw new RuntimeException("Phone already exists");
+                    }
+                }),
+                courierRepository.isEmailExists(email).thenAccept(isEmailExists -> {
+                    if (isEmailExists) {
+                        runOnUiThread(() -> {
+                            editTextEmail.setError("Эта почта уже используется");
+                            Toast.makeText(this, "Эта почта уже используется", Toast.LENGTH_SHORT).show();
+                        });
+                        throw new RuntimeException("Email already exists");
+                    }
+                })
+        ).thenRun(() -> {
+            StringBuilder drivingLicenseCategories = new StringBuilder();
             if (((CheckBox) findViewById(R.id.checkBoxA)).isChecked()) drivingLicenseCategories.append("A ");
             if (((CheckBox) findViewById(R.id.checkBoxA1)).isChecked()) drivingLicenseCategories.append("A1 ");
             if (((CheckBox) findViewById(R.id.checkBoxAM)).isChecked()) drivingLicenseCategories.append("AM ");
@@ -140,53 +154,53 @@ public class RegisterCourier extends AppCompatActivity {
             if (((CheckBox) findViewById(R.id.checkBoxCE)).isChecked()) drivingLicenseCategories.append("CE ");
             if (((CheckBox) findViewById(R.id.checkBoxD)).isChecked()) drivingLicenseCategories.append("D ");
             if (((CheckBox) findViewById(R.id.checkBoxDE)).isChecked()) drivingLicenseCategories.append("DE ");
-        }
 
-        // Получаем значение стажа
-        boolean hasExperience = checkBoxExperience.isChecked();
+            boolean hasExperience = checkBoxExperience.isChecked();
 
-        String courierType = "";
-        int selectedCourierTypeId = radioGroupCourierType.getCheckedRadioButtonId();
-        if (selectedCourierTypeId != -1) {
-            if (selectedCourierTypeId == R.id.radioButtonPedestrian) {
-                courierType = "Пеший";
-            } else if (selectedCourierTypeId == R.id.radioButtonCar) {
+            String courierType = "";
+            int selectedCourierTypeId = radioGroupCourierType.getCheckedRadioButtonId();
+            if (selectedCourierTypeId == R.id.radioButtonCar) {
                 courierType = "Авто";
             } else if (selectedCourierTypeId == R.id.radioButtonTruck) {
                 courierType = "Грузовой";
             }
-        }
 
+            if (courierType.isEmpty()) {
+                runOnUiThread(() -> Toast.makeText(this, "Ошибка определения типа курьера", Toast.LENGTH_SHORT).show());
+                return;
+            }
 
-        // Создаем объект Courier
-        Courier courier = new Courier();
-        courier.setFirstName(firstName);
-        courier.setSurName(surName);
-        courier.setMiddleName(middleName);
-        courier.setPhone(phone);
-        courier.setEmail(email);
-        courier.setBalance("0.0");
-        courier.setHobbies(hobbies);
-        courier.setPreviousJobs(previousJobs);
-        courier.setHasDrivingLicense(hasDrivingLicense);
-        courier.setDrivingLicenseCategories(drivingLicenseCategories.toString().trim());
-        courier.setHasExperience(hasExperience);
-        courier.setTypeOfCourier(courierType);
-        courier.setAdditionalInfo(additionalInfo);
+            Courier courier = new Courier();
+            courier.setFirstName(firstName);
+            courier.setSurName(surName);
+            courier.setMiddleName(middleName);
+            courier.setPhone(phone);
+            courier.setEmail(email);
+            courier.setBalance("0.0");
+            courier.setPreviousJobs(previousJobs);
+            courier.setDrivingLicenseCategories(drivingLicenseCategories.toString().trim());
+            courier.setHasExperience(hasExperience);
+            courier.setTypeOfCourier(courierType);
+            courier.setStatus("active");
+            courier.setAdditionalInfo(additionalInfo);
 
-        if (fileUri != null) {
-            uploadFileToCloudinary(fileUri, userId)
-                    .thenAccept(fileUrl -> {
-                        courier.setAttachedFiles(fileUrl);
-                        saveCourierProfile(courier, userId);
-                    })
-                    .exceptionally(ex -> {
-                        Toast.makeText(this, "Ошибка при загрузке файла: " + ex.getMessage(), Toast.LENGTH_SHORT).show();
-                        return null;
-                    });
-        } else {
-            saveCourierProfile(courier, userId);
-        }
+            if (fileUri != null) {
+                uploadFileToCloudinary(fileUri, userId)
+                        .thenAccept(fileUrl -> {
+                            courier.setAttachedFiles(fileUrl);
+                            saveCourierProfile(courier, userId);
+                        })
+                        .exceptionally(ex -> {
+                            runOnUiThread(() -> Toast.makeText(this, "Ошибка при загрузке файла: " + ex.getMessage(), Toast.LENGTH_SHORT).show());
+                            return null;
+                        });
+            } else {
+                saveCourierProfile(courier, userId);
+            }
+        }).exceptionally(ex -> {
+            runOnUiThread(() -> Toast.makeText(this, "Ошибка: " + ex.getMessage(), Toast.LENGTH_SHORT).show());
+            return null;
+        });
     }
 
     private void saveCourierProfile(Courier courier, String userId) {
@@ -197,7 +211,7 @@ public class RegisterCourier extends AppCompatActivity {
                         Toast.makeText(this, "Анкета успешно отправлена!", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(this, UserProfile.class);
                         startActivity(intent);
-                        finish(); // Закрываем Activity после успешной отправки
+                        finish();
                     }
                 })
                 .exceptionally(ex -> {
@@ -245,6 +259,7 @@ public class RegisterCourier extends AppCompatActivity {
     private boolean isValidEmail(String email) {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
+
     private boolean isValidPhone(String phone) {
         String phonePattern = "^\\+375\\d{2}\\d{3}\\d{2}\\d{2}$";
         return phone.matches(phonePattern);

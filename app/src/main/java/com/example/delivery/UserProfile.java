@@ -24,6 +24,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+
+
 public class UserProfile extends AppCompatActivity {
     private TextView userNameTextView;
     private TextView orderHistoryButton, activeOrdersButton, exitButton, placeOrder, becomeCourierButton, rechargeBalanceButton, courierAccountButton, aboutServiceButton, adminPanelButton, supportButton;
@@ -119,11 +121,11 @@ public class UserProfile extends AppCompatActivity {
         courierAccountButton.setOnClickListener(v -> {
             Intent intent = new Intent(UserProfile.this, LoginCourier.class);
             startActivity(intent);
-            finish();
         });
         orderHistoryButton.setOnClickListener(v -> {
             Intent intent = new Intent(UserProfile.this, UserOrdersHistory.class);
             startActivity(intent);
+            finish();
         });
         supportButton.setOnClickListener(view -> {
             Intent intent = new Intent(UserProfile.this, SupportActivity.class);
@@ -134,7 +136,6 @@ public class UserProfile extends AppCompatActivity {
         placeOrder.setOnClickListener(v -> {
             Intent intent = new Intent(UserProfile.this, MainActivity.class);
             startActivity(intent);
-            finish();
         });
         becomeCourierButton.setOnClickListener(v -> {
             Intent intent = new Intent(UserProfile.this, RegisterCourier.class);
@@ -170,7 +171,6 @@ public class UserProfile extends AppCompatActivity {
         exitButton.setOnClickListener(v -> {
             if (firebaseUser != null) {
                 clearUserCredentials();
-
                 FirebaseAuth.getInstance().signOut();
                 Intent intent = new Intent(UserProfile.this, Authorization.class);
                 startActivity(intent);

@@ -77,15 +77,15 @@ public class CourierRepository {
         return future;
     }
 
-    public CompletableFuture<Courier> getCourierById(String id) {
+    public CompletableFuture<Courier> getCourierById(String courierId) {
         CompletableFuture<Courier> future = new CompletableFuture<>();
-        courierCollection.document(id).get()
+        courierCollection.document(courierId).get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful() && task.getResult() != null) {
-                        Courier user = task.getResult().toObject(Courier.class);
-                        future.complete(user);
+                        Courier courier = task.getResult().toObject(Courier.class);
+                        future.complete(courier);
                     } else {
-                        future.complete(null);
+                        future.completeExceptionally(new Exception("Courier not found"));
                     }
                 });
         return future;
@@ -305,7 +305,7 @@ public class CourierRepository {
             if (task.isSuccessful() && task.getResult() != null) {
                 Courier courier = task.getResult().toObject(Courier.class);
                 if (courier != null) {
-                    courier.setBonusPoints(courier.getBonusPoints() + bonusPoints);
+                    courier.setBonusPoints(bonusPoints);
                     courierCollection.document(courierId).set(courier)
                             .addOnSuccessListener(aVoid -> future.complete(true))
                             .addOnFailureListener(future::completeExceptionally);
@@ -338,6 +338,8 @@ public class CourierRepository {
         }).addOnFailureListener(future::completeExceptionally);
         return future;
     }
+
+
 
 
 

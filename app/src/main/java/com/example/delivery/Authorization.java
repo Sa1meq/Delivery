@@ -255,8 +255,6 @@ public class Authorization extends AppCompatActivity {
                         Toast.makeText(this, "Пароль должен содержать минимум 6 символов", Toast.LENGTH_SHORT).show();
                         return;
                     }
-
-                    // Обновление пароля в Firebase Authentication и Firestore
                     updatePasswordInAuthAndFirestore(email, newPassword);
                 })
                 .setNegativeButton("Отмена", null)
@@ -265,12 +263,10 @@ public class Authorization extends AppCompatActivity {
     }
 
     private void updatePasswordInAuthAndFirestore(String email, String newPassword) {
-        // Шаг 1: Получить текущий пароль из Firestore
         userRepository.getUserByEmail(email).thenAccept(user -> {
             if (user != null) {
-                String currentPassword = user.getPassword(); // Получаем текущий пароль
+                String currentPassword = user.getPassword();
 
-                // Шаг 2: Аутентификация пользователя с текущим паролем
                 FirebaseAuth.getInstance().signInWithEmailAndPassword(email, currentPassword)
                         .addOnCompleteListener(task -> {
                             if (task.isSuccessful()) {
@@ -311,6 +307,6 @@ public class Authorization extends AppCompatActivity {
     }
 
     private boolean isPasswordValid(String password) {
-        return password.length() >= 6; // Минимум 6 символов
+        return password.length() >= 6;
     }
 }

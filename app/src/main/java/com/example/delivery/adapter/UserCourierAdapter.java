@@ -21,7 +21,7 @@ public class UserCourierAdapter extends RecyclerView.Adapter<UserCourierAdapter.
     private final OnItemClickListener clickListener;
 
     public interface OnItemClickListener {
-        void onItemClick(User user, Courier courier);
+        void onItemClick(User user, Courier courier, int requestCode);
     }
 
     public UserCourierAdapter(List<User> users, List<Courier> couriers, OnItemClickListener clickListener) {
@@ -43,18 +43,30 @@ public class UserCourierAdapter extends RecyclerView.Adapter<UserCourierAdapter.
             User user = users.get(position);
             holder.nameTextView.setText(user.getName());
             holder.detailTextView.setText(user.getEmail());
-            holder.itemView.setOnClickListener(v -> clickListener.onItemClick(user, null));
+            holder.itemView.setOnClickListener(v -> clickListener.onItemClick(user, null, 1001)); // requestCode для пользователей
         } else if (couriers != null) {
             Courier courier = couriers.get(position);
-            holder.nameTextView.setText(courier.getFirstName());
+            holder.nameTextView.setText(courier.getFirstName() + " " + courier.getSurName());
             holder.detailTextView.setText(courier.getPhone());
-            holder.itemView.setOnClickListener(v -> clickListener.onItemClick(null, courier));
+            holder.itemView.setOnClickListener(v -> clickListener.onItemClick(null, courier, 1002)); // requestCode для курьеров
         }
     }
 
     @Override
     public int getItemCount() {
         return users != null ? users.size() : couriers.size();
+    }
+
+    public void updateUsers(List<User> newUsers) {
+        users.clear();
+        users.addAll(newUsers);
+        notifyDataSetChanged();
+    }
+
+    public void updateCouriers(List<Courier> newCouriers) {
+        couriers.clear();
+        couriers.addAll(newCouriers);
+        notifyDataSetChanged();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -67,4 +79,3 @@ public class UserCourierAdapter extends RecyclerView.Adapter<UserCourierAdapter.
         }
     }
 }
-

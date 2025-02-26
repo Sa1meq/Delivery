@@ -163,7 +163,7 @@ public class UserProfile extends AppCompatActivity {
                 if (orders != null && !orders.isEmpty()) {
                     showRatingDialog(orders.get(0));
                 } else {
-                    Toast.makeText(UserProfile.this, "Ошибка получения заказа", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(UserProfile.this, "Нет неоцененных курьеров.", Toast.LENGTH_SHORT).show();
                 }
             });
         });

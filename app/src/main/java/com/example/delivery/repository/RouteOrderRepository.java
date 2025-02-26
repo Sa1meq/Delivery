@@ -96,7 +96,6 @@ public class RouteOrderRepository {
 
                     docRef.update("isCompleted", true, "isAccepted", false, "isActive", false)
                             .addOnSuccessListener(aVoid -> {
-                                // Обновляем баланс и бонусы
                                 updateCourierBalance(courierId, estimatedCost)
                                         .thenCompose(aVoid2 -> updateCourierStatsAndBonus(courierId))
                                         .thenRun(() -> future.complete(null))

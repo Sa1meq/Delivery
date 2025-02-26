@@ -88,7 +88,7 @@ public class Registration extends AppCompatActivity {
                 showError("Ошибка регистрации");
             }
         }).exceptionally(e -> {
-            showError("Ошибка: " + e.getMessage());
+            showError("Ошибка: почта уже используется");
             return null;
         });
     }

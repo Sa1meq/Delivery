@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.example.delivery.repository.CourierRepository;
+import com.example.delivery.repository.RouteOrderRepository;
 import com.example.delivery.repository.UserRepository;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.api.Distribution;
@@ -40,6 +41,7 @@ public class DetailActivity extends AppCompatActivity {
 
     private UserRepository userRepository;
     private CourierRepository courierRepository;
+    private RouteOrderRepository routeOrderRepository;
     private String userId;
     private String email;
 
@@ -55,6 +57,7 @@ public class DetailActivity extends AppCompatActivity {
 
         userRepository = new UserRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance());
         courierRepository = new CourierRepository(FirebaseFirestore.getInstance());
+        routeOrderRepository = new RouteOrderRepository();
 
         avatarImageView = findViewById(R.id.avatarImageView);
         nameTextView = findViewById(R.id.nameTextView);
@@ -70,12 +73,12 @@ public class DetailActivity extends AppCompatActivity {
         updateEarningsButton = findViewById(R.id.updateEarningsButton);
         setRatingButton = findViewById(R.id.updateRatingButton);
         sendEnterCode = findViewById(R.id.sendEnterCode);
-        bonusPoints = findViewById(R.id.bonusTextView); // Исправлено
-        phoneLayout = findViewById(R.id.phoneLayout); // Исправлено
-        ratingLayout = findViewById(R.id.ratingLayout); // Исправлено
-        typeLayout = findViewById(R.id.typeLayout); // Исправлено
-        balanceLayout = findViewById(R.id.balanceLayout); // Исправлено
-        bonusLayout = findViewById(R.id.bonusPoints); // Исправлено
+        bonusPoints = findViewById(R.id.bonusTextView);
+        phoneLayout = findViewById(R.id.phoneLayout);
+        ratingLayout = findViewById(R.id.ratingLayout);
+        typeLayout = findViewById(R.id.typeLayout);
+        balanceLayout = findViewById(R.id.balanceLayout);
+        bonusLayout = findViewById(R.id.bonusPoints);
 
 
 
@@ -94,7 +97,6 @@ public class DetailActivity extends AppCompatActivity {
 
         deleteUserButton.setOnClickListener(v -> showDeleteUserDialog());
         makeAdminButton.setOnClickListener(v -> makeUserAdmin());
-        blockCourierButton.setOnClickListener(v -> showBlockCourierDialog());
         updateBonusButton.setOnClickListener(v -> updateBonusPoints());
         updateEarningsButton.setOnClickListener(v -> updateEarnings());
         setRatingButton.setOnClickListener(v -> showSetRatingDialog());
@@ -116,35 +118,56 @@ public class DetailActivity extends AppCompatActivity {
     }
 
     private void loadCourierData() {
-        String name = getIntent().getStringExtra("name");
-        String phone = getIntent().getStringExtra("phone");
-        String balance = getIntent().getStringExtra("balance");
-        float rating = getIntent().getFloatExtra("rating", 0.0f);
-        String typeOfCourier = getIntent().getStringExtra("typeOfCourier");
-        String email = getIntent().getStringExtra("email");
-        String secondName = getIntent().getStringExtra("secondName");
-        int bonusPointsValue = getIntent().getIntExtra("bonusPoints", 0);
-        String avatarUrl = getIntent().getStringExtra("Url");
-        Glide.with(this).load(avatarUrl).placeholder(R.drawable.ic_avatar).into(avatarImageView);
-        nameTextView.setText(name + " " + secondName);
-        phoneTextView.setText("Телефон: " + phone);
-        balanceTextView.setText("Баланс: " + balance + " BYN");
-        ratingTextView.setText("Рейтинг: " + rating);
-        typeTextView.setText("Тип курьера: " + typeOfCourier);
-        emailTextView.setText("Адрес электронной почты: " + email);
-        bonusPoints.setText("Бонусные баллы: " + bonusPointsValue);
+        courierRepository.getCourierById(userId)
+                .thenAccept(courier -> runOnUiThread(() -> {
+                    if (courier != null) {
+                        // Обновляем все данные из объекта курьера
+                        nameTextView.setText(courier.getFirstName() + " " + courier.getSurName());
+                        phoneTextView.setText("Телефон: " + courier.getPhone());
+                        balanceTextView.setText("Баланс: " + courier.getBalance() + " BYN");
+                        ratingTextView.setText("Рейтинг: " + courier.getRating());
+                        typeTextView.setText("Тип курьера: " + courier.getTypeOfCourier());
+                        emailTextView.setText("Адрес электронной почты: " + courier.getEmail());
+                        bonusPoints.setText("Бонусные баллы: " + courier.getBonusPoints());
+                        Long blockedUntil = courier.getBlockedUntil();
 
-        phoneLayout.setVisibility(View.VISIBLE);
-        balanceLayout.setVisibility(View.VISIBLE);
-        ratingLayout.setVisibility(View.VISIBLE);
-        typeLayout.setVisibility(View.VISIBLE);
-        bonusLayout.setVisibility(View.VISIBLE);
-        blockCourierButton.setVisibility(View.VISIBLE);
-        updateBonusButton.setVisibility(View.VISIBLE);
-        updateEarningsButton.setVisibility(View.VISIBLE);
-        setRatingButton.setVisibility(View.VISIBLE);
-        sendEnterCode.setVisibility(View.VISIBLE);
+                        // Обновление аватара
+                        if (courier.getAvatarUrl() != null && !courier.getAvatarUrl().isEmpty()) {
+                            Glide.with(this)
+                                    .load(courier.getAvatarUrl())
+                                    .placeholder(R.drawable.ic_avatar)
+                                    .into(avatarImageView);
+                        }
+
+                        if (blockedUntil > System.currentTimeMillis()) {
+                            blockCourierButton.setText("Разблокировать курьера");
+                            blockCourierButton.setOnClickListener(v -> unblockCourier());
+                        } else {
+                            blockCourierButton.setText("Заблокировать курьера");
+                            blockCourierButton.setOnClickListener(v -> showBlockCourierDialog());
+                        }
+                        blockCourierButton.setVisibility(View.VISIBLE);
+                    }
+
+                    phoneLayout.setVisibility(View.VISIBLE);
+                    balanceLayout.setVisibility(View.VISIBLE);
+                    ratingLayout.setVisibility(View.VISIBLE);
+                    typeLayout.setVisibility(View.VISIBLE);
+                    bonusLayout.setVisibility(View.VISIBLE);
+                    updateBonusButton.setVisibility(View.VISIBLE);
+                    updateEarningsButton.setVisibility(View.VISIBLE);
+                    setRatingButton.setVisibility(View.VISIBLE);
+                    sendEnterCode.setVisibility(View.VISIBLE);
+                }))
+                .exceptionally(e -> {
+                    runOnUiThread(() ->
+                            Toast.makeText(this, "Ошибка загрузки данных", Toast.LENGTH_SHORT).show()
+                    );
+                    return null;
+                });
     }
+
+
 
     private void showDeleteUserDialog() {
         new AlertDialog.Builder(this)
@@ -160,19 +183,21 @@ public class DetailActivity extends AppCompatActivity {
             Toast.makeText(this, "Ошибка: ID пользователя не найден", Toast.LENGTH_SHORT).show();
             return;
         }
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.remove(KEY_BLOCKED_UNTIL + userId);
-        editor.apply();
 
         userRepository.deleteUserById(userId, CloudinaryManager.getCloudinary())
-                .thenAccept(success -> runOnUiThread(() -> {
+                .thenAccept(success -> {
                     if (success) {
                         Toast.makeText(this, "Пользователь успешно удален", Toast.LENGTH_SHORT).show();
+                        setResult(RESULT_OK);
+                        finish();
                     } else {
                         Toast.makeText(this, "Ошибка при удалении пользователя", Toast.LENGTH_SHORT).show();
                     }
-                    finish();
-                }));
+                })
+                .exceptionally(e -> {
+                    Toast.makeText(this, "Ошибка удаления ", Toast.LENGTH_SHORT).show();
+                    return null;
+                });
     }
 
     private void makeUserAdmin() {
@@ -201,7 +226,7 @@ public class DetailActivity extends AppCompatActivity {
                 .setPositiveButton("Заблокировать", (dialog, which) -> {
                     String timeText = timeInput.getText().toString();
                     if (!timeText.isEmpty()) {
-                        long blockDuration = Long.parseLong(timeText) * 3600000; // конвертируем в миллисекунды
+                        long blockDuration = Long.parseLong(timeText) * 3600000;
                         blockCourier(blockDuration);
                     } else {
                         Toast.makeText(this, "Пожалуйста, введите время блокировки", Toast.LENGTH_SHORT).show();
@@ -220,17 +245,13 @@ public class DetailActivity extends AppCompatActivity {
                 .thenAccept(success -> runOnUiThread(() -> {
                     if (success) {
                         Toast.makeText(this, "Курьер заблокирован", Toast.LENGTH_SHORT).show();
+                        loadCourierData();
                     } else {
                         Toast.makeText(this, "Ошибка блокировки", Toast.LENGTH_SHORT).show();
                     }
                 }));
     }
 
-    private void saveBlockedUntil(String courierId, long blockedUntil) {
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putLong(KEY_BLOCKED_UNTIL + courierId, blockedUntil);
-        editor.apply();
-    }
 
     private long getBlockedUntil(String courierId) {
         return sharedPreferences.getLong(KEY_BLOCKED_UNTIL + courierId, 0);
@@ -242,12 +263,11 @@ public class DetailActivity extends AppCompatActivity {
             return;
         }
 
-        saveBlockedUntil(userId, 0);
-
         courierRepository.unblockCourier(userId)
                 .thenAccept(success -> runOnUiThread(() -> {
                     if (success) {
                         Toast.makeText(this, "Курьер успешно разблокирован", Toast.LENGTH_SHORT).show();
+                        loadCourierData();
                     } else {
                         Toast.makeText(this, "Ошибка разблокировки курьера", Toast.LENGTH_SHORT).show();
                     }
@@ -288,11 +308,11 @@ public class DetailActivity extends AppCompatActivity {
             Toast.makeText(this, "Ошибка: ID курьера не найден", Toast.LENGTH_SHORT).show();
             return;
         }
-
         courierRepository.updateCourierRating(userId, rating)
                 .thenAccept(success -> runOnUiThread(() -> {
                     if (success) {
                         Toast.makeText(this, "Рейтинг курьера обновлен", Toast.LENGTH_SHORT).show();
+                        loadCourierData();
                     } else {
                         Toast.makeText(this, "Ошибка обновления рейтинга", Toast.LENGTH_SHORT).show();
                     }
@@ -344,15 +364,17 @@ public class DetailActivity extends AppCompatActivity {
                     String value = input.getText().toString();
                     if (!value.isEmpty()) {
                         double earnings = Double.parseDouble(value);
-                        courierRepository.updateCourierEarnings(userId, earnings)
-                                .thenAccept(success -> runOnUiThread(() -> {
-                                    if (success) {
-                                        Toast.makeText(this, "Заработок обновлен", Toast.LENGTH_SHORT).show();
-                                        loadCourierData();
-                                    } else {
+                        routeOrderRepository.updateCourierBalance(userId, earnings)
+                                .thenAccept(result -> runOnUiThread(() -> {
+                                    Toast.makeText(this, "Заработок обновлен", Toast.LENGTH_SHORT).show();
+                                    loadCourierData();
+                                }))
+                                .exceptionally(ex -> {
+                                    runOnUiThread(() -> {
                                         Toast.makeText(this, "Ошибка обновления", Toast.LENGTH_SHORT).show();
-                                    }
-                                }));
+                                    });
+                                    return null;
+                                });
                     }
                 })
                 .setNegativeButton("Отмена", null)
@@ -425,5 +447,7 @@ public class DetailActivity extends AppCompatActivity {
             Toast.makeText(this, "Ошибка: email курьера не найден", Toast.LENGTH_SHORT).show();
         }
     }
+
+
 
 }

@@ -96,25 +96,11 @@ public class UserRepository {
         usersCollection.document(userId).delete()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        getUserById(userId).thenAccept(user -> {
-                            if (user != null && user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
-                                try {
-                                    String publicId = extractPublicIdFromUrl(user.getAvatarUrl());
-                                    cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }).exceptionally(e -> {
-                            e.printStackTrace();
-                            future.complete(false);
-                            return null;
-                        });
+                        future.complete(true); // Успешное удаление документа
                     } else {
-                        future.complete(false);
+                        future.completeExceptionally(task.getException()); // Ошибка удаления
                     }
                 });
-
         return future;
     }
 

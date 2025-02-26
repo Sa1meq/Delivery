@@ -67,6 +67,7 @@ public class UserActiveOrderInfo extends AppCompatActivity {
             routeOrderRepository.cancelOrder(orderId)
                     .thenAccept(aVoid -> {
                         Toast.makeText(UserActiveOrderInfo.this, "Заказ успешно отменен", Toast.LENGTH_SHORT).show();
+                        setResult(RESULT_OK);
                         finish();
                     })
                     .exceptionally(e -> {

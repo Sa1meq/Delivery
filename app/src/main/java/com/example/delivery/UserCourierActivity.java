@@ -19,7 +19,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public class UserCourierActivity extends AppCompatActivity {
 
@@ -27,6 +26,7 @@ public class UserCourierActivity extends AppCompatActivity {
     private UserCourierAdapter adapter;
     private CourierRepository courierRepository;
     private UserRepository userRepository;
+    private int currentTab = R.id.menu_users;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +46,7 @@ public class UserCourierActivity extends AppCompatActivity {
     }
 
     private boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        currentTab = item.getItemId();
         if (item.getItemId() == R.id.menu_users) {
             loadUsers();
             return true;
@@ -60,18 +61,15 @@ public class UserCourierActivity extends AppCompatActivity {
         userRepository.usersCollection.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 List<User> users = task.getResult().toObjects(User.class);
-                adapter = new UserCourierAdapter(users, null, (user, courier) -> {
+                adapter = new UserCourierAdapter(users, null, (user, courier, requestCode) -> {
                     Intent intent = new Intent(this, DetailActivity.class);
-
-                    // Передача данных пользователя
                     intent.putExtra("type", "user");
                     intent.putExtra("name", user.getName());
                     intent.putExtra("userId", user.getId());
                     intent.putExtra("email", user.getEmail());
                     intent.putExtra("balance", user.getBalance());
                     intent.putExtra("avatarUrl", user.getAvatarUrl());
-
-                    startActivity(intent);
+                    startActivityForResult(intent, requestCode);
                 });
                 recyclerView.setAdapter(adapter);
             } else {
@@ -84,27 +82,26 @@ public class UserCourierActivity extends AppCompatActivity {
         courierRepository.courierCollection.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 List<Courier> couriers = task.getResult().toObjects(Courier.class);
-                adapter = new UserCourierAdapter(null, couriers, (user, courier) -> {
+                adapter = new UserCourierAdapter(null, couriers, (user, courier, requestCode) -> {
                     Intent intent = new Intent(this, DetailActivity.class);
                     intent.putExtra("type", "courier");
-                    intent.putExtra("courierID", courier.getId());
-                    intent.putExtra("userId", courier.getId());
-                    intent.putExtra("name", courier.getFirstName());
-                    intent.putExtra("secondName", courier.getSurName());
-                    intent.putExtra("email", courier.getEmail());
-                    intent.putExtra("phone", courier.getPhone());
-                    intent.putExtra("balance", courier.getBalance());
-                    intent.putExtra("Url", courier.getAvatarUrl());
-                    intent.putExtra("rating", courier.getRating());
-                    intent.putExtra("typeOfCourier", courier.getTypeOfCourier());
-                    intent.putExtra("bonusPoints", courier.getBonusPoints());
-                    startActivity(intent);
+                    intent.putExtra("userId", courier.getId()); // Только ID, остальное будем грузить при открытии
+                    startActivityForResult(intent, requestCode);
                 });
                 recyclerView.setAdapter(adapter);
-            } else {
-                Toast.makeText(this, "Ошибка загрузки курьеров", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            if (currentTab == R.id.menu_users) {
+                loadUsers();
+            } else {
+                loadCouriers();
+            }
+        }
+    }
 }

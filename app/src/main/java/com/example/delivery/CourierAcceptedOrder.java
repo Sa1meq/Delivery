@@ -105,7 +105,6 @@ public class CourierAcceptedOrder extends AppCompatActivity implements LocationL
             return;
         }
 
-        // Обработка нажатия на кнопку чата
         chatButton.setOnClickListener(v -> {
             Intent intent = new Intent(CourierAcceptedOrder.this, ChatActivity.class);
             intent.putExtra("orderId", orderId);

@@ -20,6 +20,7 @@ public class UserActiveOrders extends AppCompatActivity {
     private OrderAdapter orderAdapter;
     private List<RouteOrder> activeOrderList = new ArrayList<>();
     private RouteOrderRepository orderRepository = new RouteOrderRepository();
+    public static final int REQUEST_CODE_ORDER_INFO = 1001;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -40,6 +41,14 @@ public class UserActiveOrders extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_ORDER_INFO && resultCode == RESULT_OK) {
+            loadActiveOrders();
+        }
     }
 
     private void loadActiveOrders() {

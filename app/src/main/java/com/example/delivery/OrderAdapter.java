@@ -1,5 +1,7 @@
 package com.example.delivery;
 
+import static com.example.delivery.UserActiveOrders.REQUEST_CODE_ORDER_INFO;
+
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -42,13 +44,12 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.OrderViewHol
             holder.itemView.setOnClickListener(v -> {
                 Intent intent = new Intent(context, UserActiveOrderInfo.class);
                 intent.putExtra("orderId", order.getOrderId());
-                context.startActivity(intent);
+                ((UserActiveOrders) context).startActivityForResult(intent, REQUEST_CODE_ORDER_INFO);
             });
 
             holder.itemView.setAlpha(1.0f);
         } else {
             holder.itemView.setOnClickListener(null);
-
             holder.itemView.setAlpha(0.5f);
         }
     }

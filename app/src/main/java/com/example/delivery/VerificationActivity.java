@@ -69,14 +69,13 @@ public class VerificationActivity extends AppCompatActivity {
 
 
     private void verifyCourier(Courier courier) {
-        // Генерация enterCode
         String enterCode = generateEnterCode();
         courier.setEnterCode(enterCode);
 
         courierRepository.updateCourierVerification(courier.getId(), true).thenAccept(success -> {
             if (success) {
                 // Обновляем курьера с новым enterCode
-                courierRepository.updateCourierEnterCode(courier.getId(), enterCode).thenAccept(updateSuccess -> {
+                courierRepository.updateCourierEnterCode(courier.getId(), null).thenAccept(updateSuccess -> {
                     if (updateSuccess) {
                         Toast.makeText(VerificationActivity.this, "Курьер верифицирован", Toast.LENGTH_SHORT).show();
                         loadPendingCouriers();
